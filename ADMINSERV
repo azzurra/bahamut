@@ -1,0 +1,52 @@
+#
+# Small AdminServ FAQ
+#
+
+Q: What is AdminServ and the /as command ?
+A: AdminServ is a small tool that lets you edit the ircd's config file
+   remotely, without having to log in the box the ircd runs on.
+
+Q: What commands are available ?
+A: /as {CONF, MOTD, OPERMOTD, KLINE, REHASH, SYS}
+
+Q: How do I edit my {ircd.conf, ircd.motd, opers.txt, kline.conf} via AdminServ ?
+A: The syntax is: /as WHAT COMMAND
+
+   WHAT can only be one of the following:
+
+   * CONF     --  edits ircd.conf
+   * MOTD     --  edits ircd.motd
+   * OPERMOTD --  edits opers.txt
+   * KLINE    --  edits kline.conf
+
+   The available COMMANDs are:
+
+   * LIST                -- lists the file contents
+   * ADD :text           -- adds a line with <text> at the end of the file
+   * INSERT line :text   -- adds a line with <text> at line number <line>
+   * REPLACE line :text  -- replaces line number <line>'s text with <text>
+   * SAVE                -- saves changes (writes to file)
+   * DISCARD             -- discards changes
+   * CREATE              -- creates the file
+   * ERASE               -- deletes the file (be careful!)
+
+   /as keeps the modified file into an internal buffer, so if you make changes
+   you must save them with SAVE or discard them with DISCARD. If you don't,
+   nothing happens.
+
+   If you modified a file, you need to rehash your ircd to apply changes.
+   You can do that with either /rehash or /as rehash
+
+   Please note that you cannot use /as to edit anything in your box other than
+   the four files mentioned above.
+
+Q: I'm opered but /as CONF LIST return 'Permission denied', why is that?
+A: You must be +A (Server Administrator) to use /as.
+
+Q: I have an 'A' in my O:line and I opered but it still doesn't work!
+A: Please note that certain flags are not set when you /oper even if
+   they are present; you must set them manually. +A is one of those, so
+   use /mode YourNick +A before attempting to use /as.
+
+Q: I have questions not answered here, what can I do ?
+A: Mail me at vjt@users.sf.net and I will answer them as best as I can.

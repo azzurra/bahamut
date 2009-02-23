@@ -1,0 +1,321 @@
+# IRC - Internet Relay Chat, doc/example.conf
+# Copyright (C) 1994, Helen Rose
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 1, or (at your option)
+#   any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# This is an example configuration file for the Bahamut 1.4.30
+# and higher IRC servers.
+#
+# This document modified for use by the DALnet IRC network and its upgraded
+# server versions by Russell on 10/22/95.
+#
+# This document updated to comform to current ircd changes and features by
+# Cabal95 on 06/21/97.
+#
+# Other various updates, typo fixes and changes made by DuffJ on 01/08/97
+#
+# Updated for Bahamut by Epiphani 06/28/99
+#
+# Updated for Bahamut by driz 3/3/2001
+#
+# Revised for Bahamut by Ayukawa 10/3/2001
+#
+# The options for whether a line is needed or not are:
+# MANDATORY: you absolutely MUST have this line
+# NETWORKED: you must have this line if you are connecting this irc
+#            server to any other server (servers can run standalone).
+# SUGGESTED: it is highly suggested that you use this line
+# OPTIONAL: it's completely up to you whether to define this or not
+# DISCOURAGED: you really really should not use this line if at all
+#              possible.
+# OBSOLETE: an old or out of date line that isn't needed.
+#
+# MANDATORY lines are absolute *musts*, that is, if you do not have this
+# line then your server will not work properly. SUGGESTED lines are
+# close-to-mandatory (that is, the server will run without it, but you are
+# highly encouraged to use these lines).
+#
+# Note that "*" in a field indicates an "unused" field.
+#
+# Lines marked with {DALnet} are required if your server is connecting to
+# DALnet
+#
+# ========================================================================
+# NOTE! this entire configuration file is read UPSIDE-DOWN! So if you have
+# to put something in a specific order (for example, client-connection
+# lines), put them in reverse order!
+# ========================================================================
+#
+#
+# M: {MANDATORY} - This line sets the server name, description, port, and IP
+# address to bind to.  If you leave the IP field blank or *, it defaults to 
+# all local IP addresses on the machine.
+#
+#   {DALnet} - Port number 7000 is recommended as the default.
+#
+#   {M:Line Syntax}
+# M:Hostname:IP:Server Description:Port
+#
+M:server.dal.net:*:East Cost DALnet Server:7000
+#
+#
+# A: {MANDATORY} - This line provides your administrative information, such as
+# contact addresses.  This informationis viewed with /admin <server>.  There 
+# is no set information to put in the A:Line, but you are encouraged to put at 
+# least a contact address for the person responsible for the server.
+#
+A:Generic Internet Access:Admin John Doe:jdoe@generic.com
+#
+#
+# Y: {SUGGESTED} - These lines define connection classes, which allow you to
+# fine-tune client and server connections.  Clients and servers should be 
+# placed in seperate classes, and eachset of servers should have their own 
+# class.  You may also wish to seperate clients into seperate classes based 
+# on location.
+#
+# The class numbers are not arbitrary.  In auto-connecting servers, the higher
+# number, the higher the auto-connect priority.
+#
+#   {Y:Line Syntax}
+# Y:Class Number:Ping Frequency:Connect Frequency:Maximum Links:SendQ
+#
+# Ping Frequency - The amount of time (in seconds) that the server will wait
+# before dropping the connection with Ping Timeout.
+#
+# Connect Frequency - The amount of time between attempts to connect to servers
+# in that class.  Set this to 0 for client Y:Lines.
+#
+#
+#   {DALnet} - These are the recommended Y:Lines for connecting to DALnet.
+# You should have atleast ONE client class, and one oper class as well.
+#
+# Class 50 - Hub to hub, autoconnect
+Y:50:90:600:1:20000000
+# Class 51 - Hub to EU hub, autoconnect
+Y:51:180:600:1:20000000
+# Class 33 - Hub to AS leaf
+Y:33:240:0:0:15000000
+# Class 32 - Hub to EU leaf
+Y:32:180:0:0:15000000
+# Class 30 - Hub to US leaf
+Y:30:90:0:0:15000000
+# Class 10 - for known Operators
+Y:10:400:100:100:2000000
+# Class 1 - Normal Users
+Y:1:400:100:100:1000000
+#
+#
+# I: {MANDATORY} - These lines are client-authorization lines.  Without them,
+# clients will be unable to connect to your server.  Wildcards are permitted.
+# You may also require a password or port to connect, but are optional.
+#
+# Ident (RFC 1413) can also be used by placing a @ in the appropriate fields.
+#
+#   {I:Line Syntax}
+# I:IP Address Mask:Password:Domain-Mask:Port:Connection Class
+#
+# Standard I:Line allowing anybody to connect to the server:
+I:*@*::*@*::1
+#
+# Oper Hostmasking I:Line requiring the user to connect on a specific port (ie.
+# 7139), and provide the correct password (ie. $packWitU:opernick:operpass):
+I:*@*:oper.$packWitU:*@*:7149:10
+#
+# Putting NOMATCH in the first field will stop the ircd from matching against
+# the IP, and will force it to match against the hostname.
+I:NOMATCH::rmiller@glass.toledolink.com::1
+#
+#
+# O: {OPTIONAL} - These lines define IRC Operator access.  A well-configured
+# server should not need an operator online.  The ircd configuration can be
+# reloaded by issuing a kill -HUP.
+#
+# If the user issuing the oper command is not coming from the hostname defined,
+# the user will receive the error message "No O:Lines for your host".  Ident is
+# permitted in the hostname field.  The class field denotes the Y:Line class
+# that you want the user to end up in after they've successfully issued the
+# /oper command.
+#
+# Access flags may be left blank, or wildcarded.  Flags are in the form of a
+# string.  Any combination of the following can be used:  (CASE SENSITIVE)
+#
+# r = access to /rehash server
+# R = access to /restart server
+# D = access to /die server
+# g = oper can send /globops
+# w = oper can send /wallops
+# l = oper can send /locops
+# c = access to do local /squits and /connects
+# C = access to do remote /squits and /connects
+# k = access to do local /kills
+# K = access to do global /kills
+# b = oper can /kline users from server
+# B = oper can /unkline users from server
+# n = oper can send local server notices(/notice $servername message)
+# N = oper can send global notices(/notice $*.dal.net message)
+# A = can set umode +Aa to display server admin access in /whois
+# a = can set umode +a to display services admin access in /whois
+# u = oper can set /umode +c
+# f = oper can set /umode +f
+# s = oper can send /chatops
+# o = local oper, flags included: rhgwlckbBnuf
+# O = global oper, flags included: oCKNs
+#
+# Note: the RD flags must be manually included if you wish the
+# O:line to give /restart or /die access. They do not appear in
+# any wildcard lines, therefore a full set of operflags is OaARD
+#
+#   {O:Line Syntax}
+# O:Hostname:Password:Nickname:AccessFlags:Class
+#
+O:jdoe@*.generic.com:j0hnsPa$$:john:OaA:10
+#
+#
+# U: {OPTIONAL} - This line defines servers that are allowed to make changes to
+# the IRC environment (ie. mode changes), without obstructing them.
+#
+#   {U:Line Syntax}
+# U:Server Name:Unused:Unused
+#
+#   {DALnet} - The following U:Lines are required to connect to DALnet
+U:services.dal.net:*:*
+U:stats.dal.net:*:*
+#
+#
+# X: {SUGGESTED} - This line defines the passwords required for an oper to
+# /restart or /die the server, in addition to them having the R or D flags in
+# their O:Line.
+#
+#   {X:Line Syntax}
+# X:diepass:restartpass
+#
+#
+# C: {NETWORKED} - These lines define what servers your server tries to connect
+# to.
+#
+# N: {NETWORKED} - These lines define what servers are permitted to initiate
+# connections to your server.
+#
+# C/N Lines MUST be used in pairs.  One cannot be used without the other.
+#
+# Both the C:Line's port field and the N:Line's flag field may be left blank.
+# If a port is specified in the C:Line, your server will auto-connect.
+#
+# The flags field in the N:Line accepts a combination of the following:
+#
+# E - Use RC4 streaming compression.
+# Z - Use ZLib compression.  It's generally a good idea to compress hub<->hub
+# and hub->leaf, but compressing leaf->hub on large client servers is
+# discouraged due to higher CPU usage.
+#
+#   {C/N:Line Syntax}
+# C:Remote Hostname:Password:Remote Servername:Port:Class
+# N:Remote Hostname:Password:Remote Servername:Flags:Class
+#
+C:24.95.128.27:$eaL1ne:remote.ny.us.dal.net:7325:30
+N:24.95.128.27:3nL1ne:remote.ny.us.dal.net:EZ:30
+#
+#
+# K: {OBSOLETE} - Bans are now stored in the kline.conf file.
+#
+#
+# q: {OBSOLETE} - q:lines have been removed from bahamut.
+#
+#
+# Q: {OPTIONAL} - These lines prevent users on your server from using certain
+# nicknames.  These are 'reserved' nick names that should not be taken by
+# normal users.  Note the difference in the capitalization!
+#
+#   {Q:Line Syntax}
+# Q:*:Reason:Nickname
+#
+#   {DALnet} - These Q:Lines are required to link to DALnet:
+Q::Reserved for services:ChanServ
+Q::Reserved for services:NickServ
+Q::Reserved for services:MemoServ
+Q::Reserved for services:OperServ
+Q::Reserved for services:HelpServ
+#
+Q::Reserved for operators:DALnet
+Q::Reserved for operators:IRCop
+#
+#
+# Z: {DISCOURAGED} - These lines block ALL incoming connections from a certain
+# IP address mask.  They are more powerful than K:Lines because they stop users
+# before they've had a chance to register.  This works on servers too, so be
+# VERY careful!  These lines should be used as a LAST RESORT!
+#
+# Z:lines do NOT work on hostnames.  The :* on the end is REQUIRED.  Failure to
+# place it will cause the ircd conf to segfault!
+#
+#   {Z:Line Syntax}
+# Z:IP:Reason for zapping:*
+#
+Z:127.0.0.1:Don't IRC from the local machine:*
+#
+#
+# H: {OPTIONAL} - These lines define who you allow to act as a hub.  The first
+# field may use wildcards, and the third field MUST be an exact match for a
+# server's name (NOT the server's hostname!).
+#
+#   {H:Line Syntax}
+# H:Servers which are permitted::Hub Servername
+H:*::nowhere.hub.us.dal.net
+#
+#
+# P: {SUGGESTED} - This line allows the server to listen on various ports for
+# connections.
+#
+#   {P:Line Syntax}
+# P:Remote IP:Local IP:Unused:Port
+#
+P:*:*::6667
+#
+#
+# E: {DISCOURAGED} - These lines bypass K:Lines for matching clients.  
+# Username is optional.
+#
+# Don't use these if you can avoid it!  Services will fight with them!
+#
+#   {E:Line Syntax}
+# E:Hostmask:Unused:Username
+#
+#E:*.twcny.rr.com::ayukawa
+#
+#
+# F: {DISCOURAGED} - These lines bypass K:Lines and also class limits for 
+# matching clients.  Username is optional.
+#
+# Don't use these if you can avoid it!  Services will fight with them!
+#
+#   {F:Line Syntax}
+# F:Hostmask:Unused:Username
+#
+#F:*.twcny.rr.com::*
+#
+#
+# T: {OPTIONAL} - These lines override the default proxy monitor information.
+# You should only have one T:Line.  If either field is left empty, the default
+# will be used.
+#
+# Note: http:// is automatically prefixed on the specified URL
+#
+#   {T:Line Syntax}
+# T:Hostname:URL
+#
+T:monitorbot.dal.net:www.dal.net/proxies
+#
+#
+#   End example.conf

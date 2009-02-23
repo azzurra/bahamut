@@ -1,0 +1,7 @@
+align.h
+gmp_irc.h
+irc_endian.h
+options.h
+setup.h
+*.swp
+stamp-h1

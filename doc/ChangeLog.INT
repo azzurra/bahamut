@@ -1,0 +1,236 @@
+============================
+ELENCO DETTAGLIATO MODIFICHE
+============================
+
+------------------------------------------------
+TODO LIST (Features di imminente implementazione)
+- TROVARE EVENTUALI BUG PRIMA DELL'AGGIORNAMENTO
+------------------------------------------------
+
+
+------------------------------------------------
+  6 GENNAIO 2004 
+------------------------------------------------
+Queste modifiche si trovano in: bahamut-testing
+e nella patch INT-patch-20040106.diff
+------------------------------------------------
+
+include/config.h:
+aggiunto #define NOSPAMCHECK_CHANNEL. Se viene
+definito, in tale canale non sara' effettuato
+il controllo dello spam. 
+Se in futuro l'esigenza di questa feature dovesse
+sussistere per piu' canali, si puo' valutare la 
+possibilita' di aggiungere un mode ai canali in 
+cui non si vuole il controllo delle S-line. 
+
+s_user.c/check_for_spam():
+aggiunto ignore per il controllo di spam nel 
+canale NOSPAMCHECK_CHANNEL.
+
+s_conf.c/find_conf_match_host():
+aggiunta questa funzione per effettuare il
+match negli alberi b+ delle eline e delle 
+fline a partire dall'host.
+
+s_conf.c/find_conf_match():
+spostato il corpo di questa funzione in
+find_conf_match_host per evitare inutili
+ripetizioni di codice.
+
+s_conf.c/find_eline_host():
+aggiunta questa funzione per rilevare una eline
+a partire dall'host.
+
+throttle.c/throttle_check():
+all'inizio di questa funzione ora viene
+chiamata la find_eline_host(). Se l'host e'
+elined il controllo del throttle non viene
+eseguito. (per il momento ho preferito evitare
+di aggiungere nuove linee nel conf visto che
+le eccezioni per il throttle si prestano bene
+ad essere anche eccezioni per kline).
+
+NOTA: perche' le eccezioni al throttle funzionino
+gli IP delle ELINE devono essere numerici.
+Sono consentiti i CIDR e i wildcard.
+
+
+------------------------------------------------
+  5 GENNAIO 2004 
+------------------------------------------------
+Queste modifiche si trovano in: bahamut-testing
+e nella patch INT-patch-20040105.diff 
+------------------------------------------------
+
+D'ora in poi il file di kline della patch azzurra
+si chiamera' azzurra.conf. In questo file saranno
+memorizzate non solo le kline, ma anche altre linee
+di configurazione che dovranno essere uguali in
+tutta la rete (es: i-lines, u-lines, ecc). 
+
+
+as.c/as_cmds[]:
+Rinominato /as KLINE in /as AZZURRA
+
+include/config.h:
+Rinominato "kline.conf" in "azzurra.conf"
+Aggiunto define SPAMREPORT_CHANNEL per
+impostare il canale dei spam report (di
+default e' uguale al SECURITY_CHANNEL).  
+
+send.c/sendto_security():
+Modificati i parametri della funzione per permettere
+in futuro l'invio di messaggi anche in canali di
+sicurezza diversi da #security.
+
+s_bsd.c/add_connection():
+Se in config.h e' definito NO_SERVER_IDENTD
+viene disabilitato l'ident ai client che
+hanno l'ip uguale a quello di una N-line.
+(non funziona se la N-line e' impostata 
+ sull'host, oppure se la N-line ha l'userid). 
+Questo dovrebbe risolvere finalmente il 
+problema del SUX-MODE.
+
+
+------------------------------------------------
+  1 GENNAIO 2004 
+------------------------------------------------
+Queste modifiche si trovano in: bahamut-testing
+(attualmente linkato come devel.azzurra.org)
+------------------------------------------------
+
+s_user.c/register_user():
+aggiunto nel messaggio dei client non autorizzati
+il riferimento al sito www.azzurra.org/access.html
+
+match.c/match_cidr():
+aggiunta questa funzione per fare il match usando
+la notazione cidr. (e' stata rimossa la precedente
+match_ipmask).
+
+match.c/match():
+adesso prima di ogni match viene controllata la
+presenza della notazione cidr. Se non si usano
+i cidr le prestazioni sono sostanzialmente le stesse,
+in caso contrario il match e' circa 5 volte piu'
+lento. Questa modifica ha effetto in tutti i casi
+di match in cui si specifica un cidr: 
+iline/oline/bans/klines/akill/flines/elines/tutto il resto.
+Per il momento ho preferito tenere una sola match() perche'
+nella maggior parte dei casi il cidr non e' presente, quindi
+il degradamento di prestazioni e' abbastanza trascurabile.
+(nulla vieta di riprogettarlo in modo piu' efficiente in
+futuro con le conseguenti pesanti modifiche del caso)
+
+include/struct.h:
+modificato MAXPASSWDLEN da 63 a 127, solo se il server viene
+compilato col supporto CGIIRC.
+
+s_bsd.c/completed_connection():
+il controllo identd dei server non viene eseguito
+se NO_SERVER_IDENTD e' definito nel config.h 
+
+include/config.h:
+aggiunto #define SECURITY_CHANNEL per scegliere il
+canale di sicurezza.
+aggiunto #define NO_SERVER_IDENTD per non controllare
+l'identd dei server e rendere i connect piu' veloci.
+
+send.c/sendto_security():
+aggiunta questa funzione per gestire in modo piu' semplice
+i messaggi inviati al canale #Security.
+
+include/send.h:
+aggiunto prototipo della funzione sendto_security().
+
+s_user.c/m_umode():
+corretta la rimozione dell'umode +h agli helper che impostano
+manualmente altri umode. 
+
+s_user.c/check_for_spam():
+aggiunto controllo destinatario, il check
+viene interrotto se il destinatario e' oper
+o se e' il mittente stesso.
+
+s_serv.c/m_rehash():
+aggiunta notifica su #security dei vari rehash.
+
+s_conf.c/rehash():
+aggiunta notifica su #security del SIGHUP.
+
+------------------------------------------------
+  27 DICEMBRE 2003 
+------------------------------------------------
+Queste modifiche si trovano in: bahamut-testing
+(si e' dimostrato stabile durante i test)
+------------------------------------------------
+
+channel.c/m_invite():
+sono stati sostituiti i nomi delle macro con i 
+nomi delle variabili globali impostate con /set 
+per limitare gli inviti.
+
+s_conf.c/match_ipmask():
+aggiunta questa funzione per il controllo CIDR sia 
+in ipv4 che ipv6 per ora viene usata solo su s_conf.c 
+quindi non dovrebbe servire spostarla su s_misc.c.
+[RIMOSSA NEL SUCCESSIVO CHANGELOG]
+
+s_conf.c/attach_Iline:
+aggiunto il controllo CIDR usando la match_ipmask().
+[RIMOSSA NEL SUCCESSIVO CHANGELOG]
+
+s_err.c/#define RPL_STATSSPAM:
+s_serv.c/m_stats()
+aggiunto il campo L: %d che indica il tipo di spam line.
+
+s_serv.c/m_set()
+aggiunta la possibilita' di abilitare/disabilitare l'INVITESPAM e 
+di impostarne i limiti in runtime. (le corrispondenti var globali 
+sono definite in channel.c).
+
+s_serv.c/m_spam()
+Corretto un bug che non verificava correttamente l'abilitazione 
+dell'opzione SPAMDETECT prima di effettuare il controllo di spam.
+Modificato il protocollo per supportare i tipi (viene comunque 
+riconosciuta anche la vecchia sintassi, ma il tipo viene preso come 
+reason). 
+Le spam line ricevute da server vecchi o che usano un tipo che non 
+esiste vengono accettate e impostate al livello di default (3, definito 
+in struct.h).
+
+s_user.c/check_for_spam()
+aggiunto il controllo del tipo, ignore dei client +z e dei client su 
+server ulined. 
+Sono possibili 4 azioni possibili (di default disabilitate): 
+
+a) blocco messaggio 
+b) notifica su snotice 
+c) notifica su #security 
+d) auto-shun. 
+
+Ognuna di queste viene abilitata in base al tipo della spam line. 
+(questo sistema dovrebbe permettere quindi di aggiungere molto 
+facilmente altri livelli se in futuro dovessero servire).
+
+VALORI DEL COMANDO SPAM:
+SPAM *match* 0 :reason -> Block, no action
+SPAM *match* 1 :reason -> Block, snotice
+SPAM *match* 2 :reason -> Block, security
+SPAM *match* 3 :reason -> Block, snotice and security
+SPAM *match* 4 :reason -> Allow, security
+SPAM *match* 5 :reason -> Block, snotice, security, auto-shun
+
+Se non viene inserito il valore o se ne viene inserito uno
+errato, la spam line sara' aggiunta col valore di default=3.
+
+NUOVE OPZIONI DEL COMANDO SET:
+SET INVITESPAM [ON/OFF] -> Abilita il controllo dei massinvite.
+SET INVITENUM [NUMERO] -> Imposta il max numero di inviti per unita' di tempo.
+SET INVITETIME [SECONDI] -> Imposta la durata dell'unita' di tempo.
+SET SPAMDETECT [ON/OFF] -> Abilita il controllo dello spam nei messaggi.
+
+--
+-INT <int24@azzurra.org>

@@ -1,0 +1,31 @@
+- Activity.log, in questa versione c'è ma logga tutto in un unico file, va eventualmente fatto come quello che c'è ora su snow.
+- Half@ (%), le persone contrassegnate da questo grado possono impostare ban e kick su persone non @ e non possono oppare.
+- Utilizzare md5 per le password.
+- Cambiare da gmp a openssl
+- ricordarsi chi è stato l'ultimo utente invitato, e se è lo stesso di prima nello stesso canale non rimandare la notice.
+- Supporto nickip all'IPv6
+- rivedere resolver IPv6 con supporto .arpa
+- Fix sul dccallow per le dcc passive, che manda i messaggi al contrario
+
+C'è eventualemente da fare:
+
+- Riprogettare il sistema CGI-IRC
+- Rivedere il sistema flag per le oline locali
+- Isolare parti critiche del codice (eg: il cript) in librerie statiche separate, in modo da poter fornire il binario invece che i sorgenti di queste sezioni.
+
+Ultima versione stable bahamut-azzurra-4.5e
+
+
+Fatto nella versione bahamut-azzurra-4.5G :
+- aumentare zipbuf di default da 192k a 256k
+- cambiare CHANMODES=b,dk,l,cimMnOprRSstu in CHANMODES=b,k,l,cdimMnOprRSstu.
+- Mostrare il /names senza vincoli di +i ai +a e ai +A.
+- +F accessibile a tutti gli oper (locali e non)
+- +m accessibile solo agli oper globali
+- I +z non cadono più per Excess Flood
+- Fix sul dccallow e blocco su estensioni nuove .zip .rar .ace .hta .asp .php
+- /who +H <max hits> per limitare l'output
+- Corretto il parser dei control codes (i.e. notice Sub7 senza porta)
+- Check identd per i fastweb disabilitabile (già c'era, basta cambiare in include/config.h #define DO_IDENTD in #undef DO_IDENTD)
+- Aggiunto /quote set LANG IT|EN, per il momento modifica solo le notice inerenti le DCC, in futuro si potra' decidere cosa altro tradurre.
+- evitare che un server leaf tenti l'autoconnect se è già connesso ad un altro hub 

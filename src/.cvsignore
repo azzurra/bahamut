@@ -1,0 +1,4 @@
+Makefile
+ircd
+version.c.last
+*.swp

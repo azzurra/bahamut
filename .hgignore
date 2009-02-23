@@ -1,0 +1,26 @@
+syntax: glob
+
+ircdssl.rnd
+config.log
+Makefile
+config.status
+*.o
+src/ircd
+src/Makefile
+src/version.c.last
+configure
+tools/mkcloak
+tools/align
+tools/endian
+tools/Makefile
+tools/viconf
+tools/mkpasswd
+tools/fixklines
+tools/chkconf
+include/align.h
+include/options.h
+include/setup.h
+include/irc_endian.h
+include/stamp-h1
+zlib/Makefile
+zlib/libz.a

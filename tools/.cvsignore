@@ -1,0 +1,9 @@
+Makefile
+align
+chkconf
+endian
+fixklines
+mkcloak
+mkpasswd
+viconf
+*.swp
