@@ -6,9 +6,7 @@ Makefile
 config.status
 *.o
 src/ircd
-src/Makefile
 src/version.c.last
-configure
 tools/mkcloak
 tools/align
 tools/endian
@@ -22,5 +20,4 @@ include/options.h
 include/setup.h
 include/irc_endian.h
 include/stamp-h1
-zlib/Makefile
 zlib/libz.a
