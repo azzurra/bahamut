@@ -58,10 +58,6 @@ extern void outofmemory(void);	/*
 				 * defined in list.c 
 				 */
 				 
-#ifdef CGIIRC_HOST
-extern void find_and_increment_ip(unsigned long);
-#endif
-
 #ifdef USE_ACTIVITY_LOG
 extern void activity_log(char *, ...);
 #endif 
@@ -444,8 +440,8 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 #ifdef FASTWEB /* AZZURRA */
 	int			is_fastweb = 0;
 #endif
-#ifdef CGIIRC_HOST
-    int cgiirc_spoof = 0;
+#ifdef WEBIRC
+    int webirc_spoof = 0;
 #endif
     char        tmpstr2[512];
 
@@ -457,7 +453,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 
     /* hostip is already set by do_user if the client is remote */
     if (MyConnect(sptr))
-    {	  
+    {
     	inet_ntop(AFINET, &sptr->ip, sptr->hostip, HOSTIPLEN + 1);
 #ifdef INET6
     	ip6_expand(sptr->hostip, HOSTIPLEN);
@@ -467,7 +463,37 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     p = sptr->hostip;
     if (MyConnect(sptr)) 
     {
-	if ((i = check_client(sptr))) 
+#ifdef WEBIRC
+        if (IsWEBIRC(sptr))
+        {
+            /* Kill throttles on real host */
+            throttle_remove(sptr->hostip);
+            
+            /* Restore correct iphash mapping */
+            strncpyzt(sptr->hostip, sptr->webirc_ip, HOSTIPLEN + 1);
+#ifndef INET6
+            i = inet_pton(AFINET, sptr->hostip, (struct IN_ADDR *)&sptr->ip.S_ADDR);
+#else
+            i = inet_pton(AFINET, sptr->hostip, sptr->ip.S_ADDR);
+#endif
+            if (i == 0)
+                return exit_client(cptr, sptr, &me, "Invalid IP address");
+            
+            strncpyzt(sptr->sockhost, sptr->webirc_host, HOSTLEN + 1);
+            
+            /* Kill real hostent */
+            sptr->hostp = NULL;
+            
+            /* Try to attach an I:line to this client */
+            i = attach_Iline(sptr, NULL, sptr->sockhost);
+            
+            webirc_spoof = 1;
+        }
+        else
+#endif /* WEBIRC */
+            i = check_client(sptr);
+        
+	if (i) 
 	{
 	    /* -2 is a socket error, already reported.*/
 	    if (i != -2) 
@@ -610,48 +636,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		strcpy(tmppwd, tmpptr);
 	    }
 
-#ifdef CGIIRC_HOST
-	   /* CGI:IRC spoofed hostname - checking for I:line with CGIIRC as the password. */
-	   //syslog(LOG_INFO, "CGI:IRC spoofed hostname - checking for I:line"); /* CGIDEBUG */
-	   if(strncmp(pwaconf->passwd, CGIIRC_STRING, strlen(CGIIRC_STRING)) == 0 && 
-		 strncmp(sptr->passwd, CGIIRC_STRING "_", strlen(CGIIRC_STRING) + 1) == 0)
-	   {
-	      char *ipptr = strchr(sptr->passwd, '_');
-	      char *hostptr = strchr(ipptr + 1, '_');
-	      char ipaddr[HOSTIPLEN + 1];
-
-	      if(hostptr && ipptr && *ipptr++ && *(hostptr + 1))
-	      {
-		 strncpyzt(ipaddr, ipptr, 1 + (hostptr - ipptr > HOSTIPLEN ? HOSTIPLEN : hostptr - ipptr));
-		 hostptr++;
-
-		 /* we don't want to throttle the real CGI:IRC host */
-		 throttle_remove(sptr->hostip);
-		 remove_one_ip(sptr->ip.s_addr);
-
-		 sptr->ip.s_addr = inet_addr(ipaddr);
-
-		 if(sptr->ip.s_addr == INADDR_NONE)
-		    return exit_client(cptr, sptr, &me, "Invalid IP address");
-
-		 find_and_increment_ip(sptr->ip.s_addr);
-		 strncpyzt(sptr->hostip, ipaddr, HOSTIPLEN + 1);
-		 strncpyzt(sptr->user->host, hostptr, HOSTLEN + 1);
-		 strncpyzt(sptr->sockhost, hostptr, HOSTLEN + 1);
-
-		 cgiirc_spoof = 1; /* for +c messages */
-	      }
-	   }
-	   else if(strncmp(pwaconf->passwd, CGIIRC_STRING, strlen(CGIIRC_STRING)) == 0)
-	   {
-	      /* matched I:line but not sent correct password */
-              //syslog(LOG_INFO, "CGI:IRC matched I:line but not sent correct password"); /* CGIDEBUG */
-	   }
-
-	   else if(!StrEq(sptr->passwd, pwaconf->passwd)) 
-#else
 	   if(!StrEq(sptr->passwd, pwaconf->passwd)) 
-#endif
 	    {
 		ircstp->is_ref++;
 		sendto_one(sptr, err_str(ERR_PASSWDMISMATCH),
@@ -1217,13 +1202,13 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	sendto_realops_lev(CCONN_LEV, "Client connecting: %s (%s@%s) [%s] {%d} [%s] (%d)%s%s",
 		nick, user->username, user->host, sptr->hostip, get_client_class(sptr),
 		sptr->info,
-#ifdef CGIIRC_HOST
-		cgiirc_spoof ? 80 :
+#ifdef WEBIRC
+		webirc_spoof ? 80 :
 #endif
 		sptr->lport,
 		IsSSL(sptr) ? " SSL" : "",
-#ifdef CGIIRC_HOST
-		cgiirc_spoof ? " (Spoofed CGI:IRC Host)" : 
+#ifdef WEBIRC
+		webirc_spoof ? " (Spoofed WEBIRC Host)" : 
 #endif
 		"");
 
@@ -4911,6 +4896,55 @@ int m_dccallow(aClient *cptr, aClient *sptr, int parc, char *parv[])
     
     return 0;
 }
+
+#ifdef WEBIRC
+int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
+{
+    aConfItem *wptr;
+    
+    if (!MyConnect(sptr))
+        return 0;
+
+    if (!IsUnknown(sptr))
+    {
+        sendto_one(sptr, err_str(ERR_ALREADYREGISTRED), me.name, parv[0]);
+        return 0;
+    }
+    
+    if (parc < 5 || BadPtr(parv[1]) || BadPtr(parv[2]) || BadPtr(parv[3]) || BadPtr(parv[4]))
+    {
+        sendto_one(sptr, err_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "WEBIRC");
+        return 0;
+    }
+    
+    /* This is tricky, we need to find a valid WEBIRC conf matching this user's ip address */
+    if ((wptr = find_webirc_host(sptr->sockhost)) == NULL)
+    {
+        sendto_realops("No matching W:line for %s", sptr->sockhost);
+        return exit_client(cptr, sptr, &me, "No WEBIRC spoof block");
+    }
+    
+    if (mycmp(parv[1], wptr->passwd) == 0 && mycmp(parv[2], "cgiirc") == 0)
+    {
+        /* Password matches, check hostname and ip lengths */
+        if (strlen(parv[3]) > HOSTLEN || strlen(parv[4]) > HOSTIPLEN)
+        {
+            sendto_realops("Bad arguments for WEBIRC command from %s", sptr->sockhost);
+            return exit_client(cptr, sptr, &me, "Invalid argument");
+        }
+        strncpyzt(sptr->webirc_host, parv[3], HOSTLEN + 1);
+        strncpyzt(sptr->webirc_ip, parv[4], HOSTIPLEN + 1);
+        SetWEBIRC(sptr);
+    }
+    else
+    {
+        sendto_realops("W:line password mismatch for %s", sptr->sockhost);
+        return exit_client(cptr, sptr, &me, "Password mismatch");
+    }
+    
+    return 0;
+}
+#endif
 
 #ifdef AZZURRA
 /* CR, i 0wn j00 */

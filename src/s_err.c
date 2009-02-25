@@ -280,7 +280,11 @@ static char *replies[] =
 #else
     /* 228 RPL_STATSSPAM */	":%s 228 %s S D: %d W: %d M: %d T: %d L: %d %s :%s -> %s",
 #endif
+#ifndef WEBIRC
     /* 229 */	                NULL,
+#else
+    /* 229 RPL_STATSWEBIRC */   ":%s 229 %s %c %s * %s %d %d",
+#endif
     /* 230 */	                NULL,
     /* 231 */	                NULL,	/* In use by Undernet */
     /* 232 */	                NULL,	/* In use by Undernet */

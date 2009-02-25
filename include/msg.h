@@ -135,6 +135,9 @@
 #define MSG_SHUN     "SHUN"		/* Shun command */
 #define MSG_UNSHUN   "UNSHUN"		/* Unshun command */
 #endif
+#ifdef WEBIRC
+#define MSG_WEBIRC   "WEBIRC"           /* WEBIRC spoofing command */
+#endif
 
 #define MAXPARA      15
 
@@ -240,6 +243,9 @@ extern int m_snotice(aClient *, aClient *, int, char **);
 #ifdef SHUN
 extern int m_shun(aClient *, aClient *, int, char **);
 extern int m_unshun(aClient *, aClient *, int, char **);
+#endif
+#ifdef WEBIRC
+extern int m_webirc(aClient *, aClient *, int, char **);
 #endif
 
 #ifdef MSGTAB
@@ -347,7 +353,7 @@ struct Message msgtab[] =
     {MSG_HS, m_hs, 0, 1, 1, 1, 0, 0L},
 #ifdef AZZURRA
     {MSG_AS, m_as, 0, MAXPARA, 1, 0, 0, 0L},
-    {MSG_ST, m_st, 0, 1, 1, 1, 0, 0L},
+    {MSG_ST, m_st, 0, 1, 1, 0, 0, 0L},
     {MSG_GUEST, m_guest, 0, MAXPARA, 1, 1, 0, 0L},
     {MSG_UMODE, m_umode2, 0, MAXPARA, 1, 0, 0, 0L},
     {MSG_SPAM, m_spam, 0, MAXPARA, 1, 0, 0, 0L},
@@ -358,6 +364,9 @@ struct Message msgtab[] =
 #ifdef SHUN
     {MSG_SHUN, m_shun, 0, 3, 1, 0, 0, 0L},
     {MSG_UNSHUN, m_unshun, 0, 2, 1, 0, 0, 0L},
+#endif
+#ifdef WEBIRC
+    {MSG_WEBIRC, m_webirc, 0, MAXPARA, 1, 1, 0, 0L},
 #endif
     {(char *) 0, (int (*)()) 0, 0, 0, 0, 0, 0, 0L}
 };

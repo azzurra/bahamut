@@ -108,11 +108,7 @@ typedef struct MotdItem aMotd;
 #define	KILLLEN	            400
 #define	CHANNELLEN          32
 
-#ifndef CGIIRC_HOST /* CGIIRC Workaround */
 #define	PASSWDLEN 	    63
-#else
-#define PASSWDLEN           (63+HOSTLEN+HOSTIPLEN+2)
-#endif
 
 #define	KEYLEN		    23
 #define	BUFSIZE		    512	/* WARNING: *DONT* CHANGE THIS!!!! */
@@ -237,6 +233,9 @@ typedef struct MotdItem aMotd;
 #define FLAGS_IPV6         0x0008 /* This link uses IPv6 */
 #define FLAGS_SVSNICKED	   0x0010 /* This person has been svsnicked (can change nickname for 10 seconds) */
 #define FLAGS_REGISTERED   0x0020 /* This person has identified to a registered nick during this session. This flag is not reset when the client issues a /nick command (unlike umode +r) */
+#ifdef WEBIRC
+#define FLAGS_WEBIRC       0x0040 /* Perform WEBIRC spoofing (skip multiple getpeername() and crap like that) */
+#endif
 
 /* Capabilities of the ircd or clients */
 
@@ -442,6 +441,10 @@ typedef struct MotdItem aMotd;
 #define SetKnownNick(x)		((x)->flags2 |= FLAGS_REGISTERED)
 #define IsKnownNick(x)		((x)->flags2 & FLAGS_REGISTERED)
 /* end of AZZURRA stuff. */
+#ifdef WEBIRC
+#define SetWEBIRC(x)            ((x)->flags2 |= FLAGS_WEBIRC)
+#define IsWEBIRC(x)             ((x)->flags2 & FLAGS_WEBIRC)
+#endif
 
 #define	SetOper(x)		((x)->umode |= UMODE_o)
 #define SetRegNick(x)           ((x)->umode |= UMODE_r)
@@ -769,6 +772,9 @@ struct spam_
 #define	CONF_HUB		0x2000
 #define CONF_ELINE		0x4000
 #define CONF_FLINE		0x8000
+#ifdef WEBIRC
+#define CONF_WEBIRC             0x10000
+#endif
 #define	CONF_ZLINE		0x20000
 #define CONF_QUARANTINED_NICK 	0x40000
 #define CONF_ULINE 		0x80000
@@ -1032,6 +1038,11 @@ struct Client
     } targets[MSG_TARGET_MAX];              /* structure for target rate limiting */
     time_t last_target_complain;
     unsigned int num_target_errors;
+#endif
+
+#ifdef WEBIRC
+    char         webirc_host[HOSTLEN + 1];  /* hostname set via WEBIRC */
+    char         webirc_ip[HOSTIPLEN + 1];  /* IP address set via WEBIRC */
 #endif
 
 };

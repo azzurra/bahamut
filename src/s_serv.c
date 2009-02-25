@@ -1967,7 +1967,18 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 	show_servers(sptr, parv[0]);
 	break;
-		
+
+#ifdef WEBIRC	
+    case 'w':
+    case 'W':
+        if (!IsAnOper(sptr))
+            break;
+        
+        report_conf_links(sptr, &WList1, RPL_STATSWEBIRC, 'W');
+        report_conf_links(sptr, &WList2, RPL_STATSWEBIRC, 'W');
+        report_conf_links(sptr, &WList3, RPL_STATSWEBIRC, 'W');
+        break;
+#endif	
     case 'Y':
     case 'y':
 #ifdef AZZURRA

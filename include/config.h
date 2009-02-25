@@ -1220,17 +1220,10 @@
 #endif 
  
 
-/* CGIIRC_HOST
- * Define this if you want to enable support for CGIIRC hosts.
+/* WEBIRC
+ * Define this if you want to enable support for WEBIRC spoof.
  */
-#undef CGIIRC_HOST
-
-#ifdef CGIIRC_HOST
-/* CGIIRC_STRING
- * Password to be used on CGIIRC I:line.
- */
-#define CGIIRC_STRING "CHANGE_ME"
-#endif
+#undef WEBIRC
 
 /* IPV6_BIND_V6_ONLY
  * Define this if you want your ipv6 server to bind only ipv6 addresses

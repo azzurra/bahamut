@@ -374,18 +374,6 @@ static IP_ENTRY *find_or_add_ip(char *ip_in)
     }
 }
 
-#ifdef CGIIRC_HOST
-/* find_and_increment_ip - finds IP and ptr->count++ */
-void find_and_increment_ip(unsigned long ip_in)
-{
-   IP_ENTRY *ip_hash_ptr;
-   ip_hash_ptr = find_or_add_ip(ip_in);
-   ip_hash_ptr->count++;
-}
-
-#endif
-
-
 
 /*
  * remove_one_ip
@@ -1141,6 +1129,12 @@ int rehash(aClient *cptr, aClient *sptr, int sig)
     clear_conf_list(&FList1);
     clear_conf_list(&FList2);
     clear_conf_list(&FList3);
+    
+#ifdef WEBIRC
+    clear_conf_list(&WList1);
+    clear_conf_list(&WList2);
+    clear_conf_list(&WList3);
+#endif
 	
     (void) initconf(0, fd);
 
@@ -1447,6 +1441,13 @@ initconf(int opt, int fd)
 	case 'u':
 	    aconf->status = CONF_ULINE;
 	    break;
+
+#ifdef WEBIRC
+	case 'W':               /* WEBIRC access */
+	case 'w':
+            aconf->status = CONF_WEBIRC;
+            break;
+#endif
 
 	case 'X':		/* die/restart pass line */
 	case 'x':
@@ -1830,6 +1831,32 @@ initconf(int opt, int fd)
 	    }
 	    MyFree(host);
 	}
+	
+#ifdef WEBIRC
+        if (aconf->host && (aconf->status & CONF_WEBIRC))
+        {
+            char *host = host_field(aconf);
+            
+            /* Skip this line if there's no password */
+            if (BadPtr(aconf->passwd))
+                continue;
+            
+            dontadd = 1;
+            switch (sortable(host))
+            {
+                case 0:
+                    l_addto_conf_list(&WList3, aconf, host_field);
+                    break;
+                case 1:
+                    addto_conf_list(&WList1, aconf, host_field);
+                    break;
+                case -1:
+                    addto_conf_list(&WList2, aconf, rev_host_field);
+                    break;
+            }
+            MyFree(host);
+        }
+#endif
 
 	(void) collapse(aconf->host);
 	(void) collapse(aconf->name);
@@ -1954,6 +1981,37 @@ int find_fline(aClient *cptr)
 {
     return find_conf_match(cptr, &FList1, &FList2, &FList3);
 }
+
+#ifdef WEBIRC
+aConfItem *find_webirc_host(char *host)
+{
+    aConfList  *list;
+    aConfItem  *tmp;
+    char        rev[HOSTLEN + 1];	
+    
+    reverse(rev, host);
+
+    /* Start with hostnames of the form "*word" (most frequent) -Sol */
+
+    list = &WList2;
+    if ((tmp = find_matching_conf(list, rev)) != NULL) 
+	return (tmp);
+
+    /* Try hostnames of the form "word*" -Sol */
+    
+    list = &WList1;
+    if ((tmp = find_matching_conf(list, host)) != NULL) 
+	return (tmp);
+
+    /* If none of the above worked, try non-sorted entries -Sol */
+
+    list = &WList3;
+    if ((tmp = l_find_matching_conf(list, host)) != NULL) 
+	return (tmp);
+
+    return ((aConfItem *) NULL);
+}
+#endif
 
 /*
  * find_kill

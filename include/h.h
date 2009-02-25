@@ -55,6 +55,12 @@ extern aConfList FList1;
 extern aConfList FList2;
 extern aConfList FList3;
 
+#ifdef WEBIRC
+extern aConfList WList1;
+extern aConfList WList2;
+extern aConfList WList3;
+#endif
+
 #include "fdlist.h"
 extern int  	 lifesux;
 extern fdlist 	 serv_fdlist;
@@ -115,6 +121,9 @@ extern aConfItem *find_zkill(aClient *);
 extern aConfItem *find_zkill_perm(aClient *);
 extern aConfItem *find_uline(Link *, char *);
 extern aConfItem *find_is_ulined(char *);
+#ifdef WEBIRC
+extern aConfItem *find_webirc_host(char *);
+#endif
 
 extern void 	  report_matching_host_klines(aClient *, char *);
 

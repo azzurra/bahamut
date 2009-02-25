@@ -58,6 +58,9 @@
 #ifdef AZZURRA
 #define RPL_STATSSPAM	     228
 #endif
+#ifdef WEBIRC
+#define RPL_STATSWEBIRC      229
+#endif
 
 #define RPL_SERVLIST         234
 #define RPL_SERVLISTEND      235

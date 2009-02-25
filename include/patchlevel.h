@@ -49,8 +49,11 @@
 #else
 #define PATCH3 "-ssl(1.1)"
 #endif
-
+#ifndef WEBIRC
 #define PATCH4 ""
+#else
+#define PATCH4 "-webirc(1.0)"
+#endif
 
 #define PATCH5 ""
 

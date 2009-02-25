@@ -59,6 +59,12 @@ aConfList   FList1 = {0, NULL};			/* ordered */
 aConfList   FList2 = {0, NULL};			/* ordered, reversed */
 aConfList   FList3 = {0, NULL};			/* what we can't sort */
 
+#ifdef WEBIRC
+aConfList   WList1 = {0, NULL};                 /* ordered */
+aConfList   WList2 = {0, NULL};                 /* ordered, reversed */
+aConfList   WList3 = {0, NULL};                 /* what we can't sort */
+#endif
+
 aMotd      *motd;
 aMotd      *helpfile;		/* misnomer, aMotd could be generalized */
 
