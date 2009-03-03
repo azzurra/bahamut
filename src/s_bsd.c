@@ -1536,7 +1536,13 @@ aClient *add_connection(aClient * cptr, int fd)
        if (!memcmp((char *) &acptr->ip, 
 		   (char *) &vserv.SIN_ADDR,  sizeof(struct IN_ADDR)))
            doident = NO;
-#endif   
+#endif
+
+#ifdef WEBIRC
+    /* ident lookup on W:lined IPs is pointless */
+    if (doident && find_webirc_host(sptr->sockhost) != NULL)
+        doident = NO;
+#endif
    
     if (doident)
 #endif

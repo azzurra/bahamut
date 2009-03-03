@@ -469,6 +469,13 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
             /* Kill throttles on real host */
             throttle_remove(sptr->hostip);
             
+            /* Sanity check: kill FLAGS_GOTID (shouldn't be there, but hey...) */
+            if (sptr->flags & FLAGS_GOTID)
+            {
+                sendto_realops_lev(DEBUG_LEV, "WebIRC client %s[%s/%s] has FLAGS_GOTID set (?!)", nick, sptr->sockhost, sptr->webirc_host);
+                sptr->flags &= ~FLAGS_GOTID;
+            }
+            
             /* Restore correct iphash mapping */
             strncpyzt(sptr->hostip, sptr->webirc_ip, HOSTIPLEN + 1);
 #ifndef INET6
