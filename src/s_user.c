@@ -4931,7 +4931,8 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
         return exit_client(cptr, sptr, &me, "No WEBIRC spoof block");
     }
     
-    if (mycmp(parv[1], wptr->passwd) == 0 && mycmp(parv[2], "cgiirc") == 0)
+    /* parv[2] SHOULD be "cgiirc", but at least one client (qwebirc) uses it to advertise itself */
+    if (mycmp(parv[1], wptr->passwd) == 0)
     {
         /* Password matches, check hostname and ip lengths */
         if (strlen(parv[3]) > HOSTLEN || strlen(parv[4]) > HOSTIPLEN)
