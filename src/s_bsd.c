@@ -1540,7 +1540,7 @@ aClient *add_connection(aClient * cptr, int fd)
 
 #ifdef WEBIRC
     /* ident lookup on W:lined IPs is pointless */
-    if (doident && find_webirc_host(sptr->sockhost) != NULL)
+    if (doident && find_webirc_host(acptr->sockhost) != NULL)
         doident = NO;
 #endif
    
