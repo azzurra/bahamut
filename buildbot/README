@@ -1,0 +1,2 @@
+These files should be used ONLY during automatic buildbot builds and *MUST*
+be kept in sync with ${srcdir}/config.
