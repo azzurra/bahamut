@@ -130,6 +130,7 @@
 #define MSG_UNSPAM   "UNSPAM"		/* unspam */
 #define MSG_CLOAKEY  "CLOAKEY"          /* change cloak key */
 #define MSG_SNOTICE  "SNOTICE"		/* spam notice */
+#define MSG_RESYNCH  "RESYNCH"		/* resynch request */
 #endif
 #ifdef SHUN
 #define MSG_SHUN     "SHUN"		/* Shun command */
@@ -239,6 +240,7 @@ extern int m_spam(aClient *, aClient *, int, char **);
 extern int m_unspam(aClient *, aClient *, int, char **);
 extern int m_cloakey(aClient *, aClient *, int, char **);
 extern int m_snotice(aClient *, aClient *, int, char **);
+extern int m_resynch(aClient *, aClient *, int, char **);
 #endif
 #ifdef SHUN
 extern int m_shun(aClient *, aClient *, int, char **);
@@ -360,6 +362,7 @@ struct Message msgtab[] =
     {MSG_UNSPAM, m_unspam, 0, MAXPARA, 1, 0, 0, 0L},
     {MSG_CLOAKEY, m_cloakey, 0, MAXPARA, 1, 0, 0, 0L},
     {MSG_SNOTICE, m_snotice, 0, MAXPARA, 1, 0, 0, 0L},
+    {MSG_RESYNCH, m_resynch, 0, MAXPARA, 1, 0, 0, 0L},
 #endif
 #ifdef SHUN
     {MSG_SHUN, m_shun, 0, 3, 1, 0, 0, 0L},

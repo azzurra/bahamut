@@ -3350,6 +3350,33 @@ static inline void sjoin_sendit(aClient *cptr, aClient *sptr,
 			   chptr->chname, modebuf, parabuf);
 }
 
+#ifdef AZZURRA
+/*
+ * m_resynch
+ * parv[0] - sender
+ * parv[1] - channel
+ *
+ * Sent from a server I am directly connected to that is requesting I resend
+ * EVERYTHING I know about channel.
+ */
+int m_resynch(aClient *cptr, aClient *sptr, int parc, char *parv[])
+{
+    aChannel *chptr;
+
+    if (!MyConnect(sptr) || !IsServer(sptr) || parc < 2 || parv[1][0] == '&')
+        return 0;
+
+    chptr = find_channel(parv[1], NullChn);
+    
+    sendto_realops_lev(DEBUG_LEV, "%s is requesting a resynch of %s%s", 
+                       parv[0], parv[1], (chptr == NullChn) ? " [failed]" : "");
+
+    if (chptr != NullChn)
+        send_channel_modes(sptr, chptr);
+    return 0;
+}
+#endif
+
 /*
  * m_sjoin 
  * parv[0] - sender 
