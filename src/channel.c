@@ -3584,52 +3584,18 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	chptr->channelts = tstosend = 0;
     else if (newts == oldts)
 	tstosend = oldts;
-#ifdef OLD_WEIRD_CHANOP_NEGOTIATION
-    else if (newts < oldts)
-    {
-	/* if remote ts is older, and they have ops, don't keep our modes. */
-	if (doesop)   
-	{
-	    kill_ban_list(sptr, chptr);
-	    keepourmodes = 0;
-	}
-	if (haveops && !doesop)
-	    tstosend = oldts;
-	else
-	    chptr->channelts = tstosend = newts;
-    }
-    else /* if our TS is older, and we have ops, don't keep their modes */
-    {
-	if (haveops)
-	    keepnewmodes = 0;
-	if (doesop && !haveops)
-	{
-	    chptr->channelts = tstosend = newts;
-	    if (MyConnect(sptr) && !IsULine(sptr) 
-#ifdef AZZURRA
-		    && !IsUmodez(sptr)
-#endif
-	       )
-		ts_warn("Hacked ops on opless channel: %s",
-			chptr->chname);
-	}
-	else
-	    tstosend = oldts;
-    }
-#else
-   else if (newts < oldts) 
-   { 
-      /* if remote ts is older, don't keep our modes. */ 
-      kill_ban_list(sptr, chptr);
-      keepourmodes = 0; 
-      chptr->channelts = tstosend = newts; 
-   } 
-   else /* if our TS is older, don't keep their modes */ 
-   { 
-      keepnewmodes = 0; 
-      tstosend = oldts; 
-   } 
-#endif
+    else if (newts < oldts) 
+    { 
+       /* if remote ts is older, don't keep our modes. */ 
+       kill_ban_list(sptr, chptr);
+       keepourmodes = 0; 
+       chptr->channelts = tstosend = newts; 
+    } 
+    else /* if our TS is older, don't keep their modes */ 
+    { 
+       keepnewmodes = 0; 
+       tstosend = oldts; 
+    } 
 
     if (!keepnewmodes)
 	mode = *oldmode;
