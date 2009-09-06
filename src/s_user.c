@@ -430,7 +430,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     char       *parv[3];
     static char ubuf[12];
     char       *p;
-    short       oldstatus = sptr->status;
     anUser     *user = sptr->user;
 #ifdef SHORT_MOTD
     aMotd      *smotd;
