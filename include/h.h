@@ -271,7 +271,6 @@ extern aClient   *make_client(aClient *, aClient *);
 extern chanMember *find_user_member(chanMember *, aClient *);
 extern Link 	 *find_str_link(Link *, char *);
 extern void 	  add_client_to_list(aClient *);
-extern void 	  checklist(void);
 extern void 	  remove_client_from_list(aClient *);
 extern void 	  initlists(void);
 extern void 	  block_garbage_collect(void);	/* list.c */

@@ -1692,23 +1692,6 @@ initconf(int opt, int fd)
 	    
 	    if (me.name[0] == '\0' && aconf->host[0]) 
 	    {
-#ifdef CHECK_AZZURRA_DOMAIN
-	        /* Use a simple hash function to check if 
-		 * server name ends with ".azzurra.org" -INT */
-	        int hashvalue = 0;
-	        char *s;
-	        
-	        if ((s = index(aconf->host, '.')))
-		    while (*s && *(s+1))
-		    {
-		       hashvalue += *s ^ *(s+1);
-		       hashvalue <<= 1;
-		       s++;
-		    }
-	        if (hashvalue != 196726)
-		    continue; /* Stop processing this  M-line */
-#endif
-		    
 		strncpyzt(me.name, aconf->host,
 			  sizeof(me.name));
 		if ((aconf->passwd[0] != '\0') && (aconf->passwd[0] != '*')) 

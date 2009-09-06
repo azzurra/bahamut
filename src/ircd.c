@@ -268,7 +268,7 @@ void server_reboot()
     Debug((DEBUG_NOTICE, "Restarting server..."));
     dump_connections(me.fd);
     /*
-     * fd 0 must be 'preserved' if either the -d or -i options have
+     * fd 0 must be 'preserved' if the -x option has
      * been passed to us before restarting.
      */
 #ifdef USE_SYSLOG
@@ -285,7 +285,7 @@ void server_reboot()
     if ((bootopt & BOOT_CONSOLE) || isatty(0))
 	(void) close(0);
 
-    if (!(bootopt & (BOOT_INETD | BOOT_OPER)))
+    if (!(bootopt & BOOT_OPER))
 	(void) execve(MYNAME, myargv, NULL);
 
 #ifdef USE_SYSLOG
@@ -676,6 +676,14 @@ int main(int argc, char *argv[])
 #ifdef USE_SSL
     extern int    ssl_capable;
 #endif
+    static char star[] = "*";
+    aConfItem  *aconf;
+#ifndef	INET6
+    u_long      vaddr;
+#else
+    char        vaddr[sizeof(struct IN_ADDR)];
+#endif
+		
 	
     if ((timeofday = time(NULL)) == -1) 
     {
@@ -768,9 +776,6 @@ int main(int argc, char *argv[])
 		
 	switch (flag) 
 	{
-	case 'a':
-	    bootopt |= BOOT_AUTODIE;
-	    break;
 	case 'c':
 	    bootopt |= BOOT_CONSOLE;
 	    break;
@@ -801,9 +806,6 @@ int main(int argc, char *argv[])
 #endif
 	case 'h':
 	    strncpyzt(me.name, p, sizeof(me.name));
-	    break;
-	case 'i':
-	    bootopt |= BOOT_INETD | BOOT_AUTODIE;
 	    break;
 	case 'p':
 	    if ((portarg = atoi(p)) > 0)
@@ -994,14 +996,7 @@ int main(int argc, char *argv[])
 #endif 
     (void) init_sys();
     me.flags = FLAGS_LISTEN;
-    if (bootopt & BOOT_INETD) 
-    {
-	me.fd = 0;
-	local[0] = &me;
-	me.flags = FLAGS_LISTEN;
-    }
-    else
-	me.fd = -1;
+    me.fd = -1;
 	
 #ifdef USE_SYSLOG
 # define SYSLOG_ME     "ircd"
@@ -1047,49 +1042,29 @@ int main(int argc, char *argv[])
 	(void) initconf(0, fd);
 # endif
 #endif
-    if (!(bootopt & BOOT_INETD)) 
-    {
-	static char star[] = "*";
-	aConfItem  *aconf;
-#ifndef	INET6
-	u_long      vaddr;
-#else
-	char	    vaddr[sizeof(struct IN_ADDR)];
-#endif
-		
-	if ((aconf = find_me()) && portarg <= 0 && aconf->port > 0)
-	    portnum = aconf->port;
+    if ((aconf = find_me()) && portarg <= 0 && aconf->port > 0)
+	portnum = aconf->port;
 
-	Debug((DEBUG_ERROR, "Port = %d", portnum));
+    Debug((DEBUG_ERROR, "Port = %d", portnum));
 
-	if ((aconf->passwd[0] != '\0') && (aconf->passwd[0] != '*'))
+    if ((aconf->passwd[0] != '\0') && (aconf->passwd[0] != '*'))
 #ifndef INET6
-	    inet_pton (AFINET, aconf->passwd, &vaddr);
+	inet_pton (AFINET, aconf->passwd, &vaddr);
 #else
-	    inet_pton (AFINET, aconf->passwd, vaddr);
+	inet_pton (AFINET, aconf->passwd, vaddr);
 #endif
-	else
+    else
 #ifndef INET6
-	    vaddr = 0;
+	vaddr = 0;
 #else
-	    memset (vaddr, 0x0, sizeof(vaddr));
+	memset (vaddr, 0x0, sizeof(vaddr));
 #endif
-	if (inetport(&me, star, portnum, vaddr)) 
-	{
-	    if (bootopt & BOOT_STDERR)
-		fprintf(stderr, "Couldn't bind to primary port %d\n", portnum);
-#ifdef USE_SYSLOG
-	    (void) syslog(LOG_CRIT, "Couldn't bind to primary port %d\n", portnum);
-#endif
-	    exit(1);
-	}
-    }
-    else if (inetport(&me, "*", 0, 0)) 
+    if (inetport(&me, star, portnum, vaddr)) 
     {
 	if (bootopt & BOOT_STDERR)
-	    fprintf(stderr, "Couldn't bind to port passed from inetd\n");
+	    fprintf(stderr, "Couldn't bind to primary port %d\n", portnum);
 #ifdef USE_SYSLOG
-	(void) syslog(LOG_CRIT, "Couldn't bind to port passed from inetd\n");
+	(void) syslog(LOG_CRIT, "Couldn't bind to primary port %d\n", portnum);
 #endif
 	exit(1);
     }

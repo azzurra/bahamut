@@ -1120,8 +1120,8 @@
  * SPAMREPORT_CHANNEL: channel used for spam notices.
  * NOSPAMCHECK_CHANNEL: channel excluded from spam checks 
  */
-#define SECURITY_CHANNEL	"#Security"
-#define OPERATORS_CHANNEL	"#OperHelp" 
+#define SECURITY_CHANNEL	"#security"
+#define OPERATORS_CHANNEL	"#operhelp" 
 #define SPAMREPORT_CHANNEL      SECURITY_CHANNEL
 #define NOSPAMCHECK_CHANNEL	OPERATORS_CHANNEL
 
@@ -1145,11 +1145,6 @@
  * Enable CIDR notation support
  */
 #define CIDR_NOTATION
-
-/* CHECK_AZZURRA_DOMAIN
- * Define this if Azzurra domain must be required in ircd.conf
- */
-#undef CHECK_AZZURRA_DOMAIN
 
 /* USE_ACTIVITY_LOG
  * Define this *only* if you want to log users activities 
