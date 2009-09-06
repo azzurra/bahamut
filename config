@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash 
 #
 # Copyright 1999 Aaron Wiebe <epiphani@solarz.net>
 # Based roughly on configure for Dreamforge, by Michael Graff <explorer@flame.org>

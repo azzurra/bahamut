@@ -4,6 +4,7 @@ ircdssl.rnd
 config.log
 Makefile
 config.status
+autom4te.cache
 *.o
 src/ircd
 src/version.c.last
