@@ -675,9 +675,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 			       "Sorry, server is full - try later");
 	}
 	
-	if (oldstatus == STAT_MASTER && MyConnect(sptr))
-	    (void) m_oper(&me, sptr, 1, parv);
-
 	/* hostile username checks begin here */
 	
 	{

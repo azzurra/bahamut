@@ -285,8 +285,7 @@ void server_reboot()
     if ((bootopt & BOOT_CONSOLE) || isatty(0))
 	(void) close(0);
 
-    if (!(bootopt & BOOT_OPER))
-	(void) execve(MYNAME, myargv, NULL);
+    (void) execve(MYNAME, myargv, NULL);
 
 #ifdef USE_SYSLOG
     /* Have to reopen since it has been closed above */
@@ -786,10 +785,6 @@ int main(int argc, char *argv[])
 	    (void) setuid((uid_t) uid);
 	    dpath = p;
 	    break;
-	case 'o':		/* Per user local daemon... */
-	    (void) setuid((uid_t) uid);
-	    bootopt |= BOOT_OPER;
-	    break;
 #ifdef CMDLINE_CONFIG
 	case 'f':
 	    (void) setuid((uid_t) uid);
@@ -1086,16 +1081,7 @@ int main(int argc, char *argv[])
     (void) add_to_client_hash_table(me.name, &me);
 
     check_class();
-    if (bootopt & BOOT_OPER) 
-    {
-	aClient    *tmp = add_connection(&me, 0);
-		
-	if (!tmp)
-	    exit(1);
-	SetMaster(tmp);
-    }
-    else
-	write_pidfile();
+    write_pidfile();
 	
     Debug((DEBUG_NOTICE, "Server ready..."));
 #ifdef USE_SYSLOG

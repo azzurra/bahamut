@@ -539,7 +539,7 @@ void init_sys()
 	(void) close(2);
 
     if (((bootopt & BOOT_CONSOLE) || isatty(0)) &&
-	!(bootopt & BOOT_OPER) && !(bootopt & BOOT_STDERR))
+	!(bootopt & BOOT_STDERR))
     {
 	int pid;
 
