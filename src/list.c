@@ -373,7 +373,6 @@ void remove_client_from_list(aClient *cptr)
 	(void) free_user(cptr->user, cptr);	/* try this here */
     if (cptr->serv) 
     {
-#ifdef HAVE_ENCRYPTION_ON
 	if(cptr->serv->sessioninfo_in)
 	    dh_end_session(cptr->serv->sessioninfo_in);
 	if(cptr->serv->sessioninfo_out)
@@ -382,7 +381,6 @@ void remove_client_from_list(aClient *cptr)
 	    rc4_destroystate(cptr->serv->rc4_in);
 	if(cptr->serv->rc4_out)
 	    rc4_destroystate(cptr->serv->rc4_out);
-#endif
 	if(cptr->serv->zip_in)
 	    zip_destroy_input_session(cptr->serv->zip_in);
 	if(cptr->serv->zip_out)

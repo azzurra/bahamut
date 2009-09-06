@@ -262,10 +262,6 @@ AC_MSG_RESULT(can't tell))
 
 AC_SUBST(DFDSS)
 
-ENCRYPT_SRC="rc4.c dh.c"
-AC_SUBST(ENCRYPT_SRC)
-AC_DEFINE(HAVE_ENCRYPTION_ON)
-
 # ---------- check for openssl, half stolen from openssh
 
 tryssl=""
