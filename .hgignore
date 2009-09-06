@@ -1,5 +1,6 @@
 syntax: glob
 
+tags
 ircdssl.rnd
 config.log
 Makefile
