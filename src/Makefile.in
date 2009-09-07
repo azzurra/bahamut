@@ -14,7 +14,7 @@ SOURCES = blalloc.c bsd.c channel.c class.c dbuf.c dich_conf.c fdlist.c \
           parse.c res.c m_nick.c m_services.c m_who.c s_auth.c s_bsd.c \
           s_conf.c s_debug.c s_err.c s_misc.c s_numeric.c s_serv.c s_user.c \
           scache.c send.c support.c throttle.c whowas.c zlink.c rc4.c dh.c \
-          cloak.c as.c ssl.c shs1.c
+          cloak.c as.c ssl.c
 OBJECTS = $(SOURCES:.c=.o) version.o
 
 all: ircd
@@ -223,5 +223,3 @@ ssl.o: ssl.c \
  ../include/options.h
 as.o: as.c \
  ../include/as.h ../include/options.h
-shs1.o: shs1.c \
- ../include/patchlevel.h

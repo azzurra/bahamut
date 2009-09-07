@@ -29,7 +29,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "shs1.h"
 
 extern unsigned char *cloak_key;		/* in ircd.c --vjt */
 extern unsigned char *cloak_host;
@@ -38,6 +37,8 @@ extern unsigned short cloak_key_len;
 int cloak_init(void)
 {
     int fd;
+
+    OpenSSL_add_all_algorithms();
     
     DupString(cloak_host, CLOAK_HOST);
 
@@ -129,46 +130,27 @@ fnv_hash (const char *p, int s)
     return h;
 }
 
-/* 
-
-#define FNV_64_prime ((long long)0x100000001b3ULL)
-
-__inline long long
-fnv64_hash (const char *p, int s)
-{
-    long long h = 0;
-    int i = 0;
-
-    for (; i < s; i++)
-	h = ((h * FNV_64_prime ) ^ (p[i]));
-
-    return h;
-}
-
-*/
-
-#define SHABUFLEN 40
+/* This is LARGE */
+#define SHABUFLEN EVP_MAX_MD_SIZE*2
 
 char *sha1_hash(const char *s, size_t size) {
 
     static char shabuf[SHABUFLEN + 1];
-    char *key;
-    SHS1_INFO digest;
+    unsigned char mdbuf[EVP_MAX_MD_SIZE];
+    int mdlen, i;
+    EVP_MD_CTX digest;
 
-    DupString(key, cloak_key);
-    shs1Init(&digest);
+    EVP_MD_CTX_init(&digest);
 
-    shs1Update(&digest, (char *) s, size);
-    shs1Update(&digest, (char *) key, cloak_key_len);
-    SHS1COUNT(&digest, cloak_key_len + size);
+    EVP_DigestInit_ex(&digest, EVP_sha1(), NULL);
+    EVP_DigestUpdate(&digest, (char *) s, size);
+    EVP_DigestUpdate(&digest, (char *) cloak_key, cloak_key_len);
+    EVP_DigestFinal_ex(&digest, mdbuf, &mdlen);
+    EVP_MD_CTX_cleanup(&digest);
 
-    shs1Final(&digest);
-
-    MyFree(key);
-    
-    snprintf(shabuf, SHABUFLEN + 1, "%08lx%08lx%08lx%08lx%08lx", // Shaka 25/04/02
-	    digest.digest[0], digest.digest[1], digest.digest[2],
-	    digest.digest[3], digest.digest[4]);
+    for (i = 0; i < mdlen; i++)
+        snprintf(shabuf+2*i, sizeof(shabuf) - 2*i, "%02x", mdbuf[i]);
+    shabuf[2*mdlen] = '\0';
     
     return shabuf;
 }
@@ -182,10 +164,12 @@ int
 cloakhost(char *host, char *dest)
 {
    char virt[HOSTLEN + 1], isdns = 0, *p;
+   char *shabuf;
    unsigned short i;
    long csum;
 
-   csum = fnv_hash(sha1_hash(host, strlen(host)), SHABUFLEN);
+   shabuf = sha1_hash(host, strlen(host));
+   csum = fnv_hash(shabuf, strlen(shabuf));
 
    for (p = host, i = 0; *p; p++) {
       if(!isdns && isalpha(*p))
