@@ -54,15 +54,14 @@
 #endif
 #endif
 
-#ifdef USE_SSL
 #include <openssl/rsa.h>       /* OpenSSL stuff */
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 //#define OPENSSL_NO_KRB5		/* Define if getting krb5.h errors. */
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#endif
 
 #include "hash.h"
 
@@ -951,10 +950,8 @@ struct Client
 
 */
 
-#ifdef USE_SSL /*AZZURRA*/
     SSL *ssl;
     X509 *client_cert;
-#endif /*SSL*/
 
     /*
      * The following fields are allocated only for local clients 

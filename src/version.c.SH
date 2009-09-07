@@ -123,7 +123,6 @@ char *infotext[] =
 	 "INET6 code is available on: http://devel.azzurra.org",
 	 "",
 #endif
-#if defined(USE_SSL)
 	 "SSL code:",
 	 "void/vjt             Marcello Barnaba   void@azzurra.org",
 	 "SSL testing:",
@@ -131,7 +130,6 @@ char *infotext[] =
 	 "This server uses the OpenSSL library: http://www.openssl.org",
 	 "SSL code is available on: http://devel.azzurra.org",
 	 "",
-#endif
 #if defined(AZZURRA)
 	 "Azzurra code:",
 	 "void/vjt             Marcello Barnaba      void@azzurra.org",
@@ -143,7 +141,6 @@ char *infotext[] =
 	 "Azzurra code is available on: http://devel.azzurra.org",
 	 "",
 #endif
-#if defined(INET6) || defined(USE_SSL) || defined(AZZURRA)
 	 " _____________________________________ ",
 	 "< This bahamut has Super Cow Powers ! >",
 	 " ------------------------------------- ",
@@ -153,7 +150,6 @@ char *infotext[] =
 	 "                ||----w |",
 	 "                ||     ||",
 	 "",
-#endif
 	 0,
 };
 !SUB!THIS!

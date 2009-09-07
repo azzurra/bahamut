@@ -59,9 +59,7 @@
 #endif
 #include "resolv.h"
 
-#ifdef USE_SSL
 #include "ssl.h"
-#endif
 
 /* If FD_ZERO isn't define up to this point,
  * define it (BSD4.2 needs this) */
@@ -383,9 +381,7 @@ int add_listener(aConfItem * aconf)
     char   vaddr[sizeof(struct IN_ADDR)];
 #endif
 
-#ifdef USE_SSL
     extern int ssl_capable;
-#endif
 
     cptr = make_client(NULL, NULL);
     cptr->flags = FLAGS_LISTEN;
@@ -415,13 +411,11 @@ int add_listener(aConfItem * aconf)
 	cptr->confs->next = NULL;
 	cptr->confs->value.aconf = aconf;
 	set_non_blocking(cptr->fd, cptr);
-#ifdef USE_SSL /*AZZURRA*/
 	if((strcmp(aconf->name, "SSL")) == 0 && ssl_capable) {
 	    SetSSL(cptr);
 	    cptr->ssl = NULL;
 	    cptr->client_cert = NULL;
 	}
-#endif
     } else
 	free_client(cptr);
     return 0;
@@ -1056,19 +1050,15 @@ void close_connection(aClient * cptr)
 
     if (cptr->fd >= 0)
     {
-#ifdef USE_SSL
 	if(!IsDead(cptr))
-#endif
 	    dump_connections(cptr->fd);
 	local[cptr->fd] = NULL;
-#ifdef USE_SSL
 	if(IsSSL(cptr) && cptr->ssl) {
 	    SSL_set_shutdown(cptr->ssl, SSL_RECEIVED_SHUTDOWN);
 	    SSL_smart_shutdown(cptr->ssl);
 	    SSL_free(cptr->ssl);
 	    cptr->ssl = NULL;
 	}
-#endif
 	(void) close(cptr->fd);
 	cptr->fd = -2;
 	DBufClear(&cptr->sendQ);
@@ -1100,12 +1090,10 @@ void close_connection(aClient * cptr)
 		return;
 	    local[i] = local[j];
 	    local[i]->fd = i;
-#ifdef USE_SSL
 	    if(IsSSL(local[i])) {
 		BIO_set_fd(SSL_get_rbio(local[i]->ssl), i, BIO_NOCLOSE);
 		BIO_set_fd(SSL_get_wbio(local[i]->ssl), i, BIO_NOCLOSE);
 	    }
-#endif
 	    local[j] = NULL;
 	    /* update server list */
 	    if (IsServer(local[i]))
@@ -1294,10 +1282,8 @@ char *irc_get_sockerr(aClient *cptr)
 	return "dbuf allocation error";
     case IRCERR_ZIP:
 	return "compression general failure";
-#ifdef USE_SSL
     case IRCERR_SSL:
 	return "SSL error";
-#endif
     default:
 	return "Unknown error!";
     }
@@ -1427,7 +1413,6 @@ aClient *add_connection(aClient * cptr, int fd)
 
     acptr->lport = cptr->port;
 
-#ifdef USE_SSL /*AZZURRA*/
     if (IsSSL(cptr))
     {
 	extern SSL_CTX *ircdssl_ctx;
@@ -1464,7 +1449,6 @@ aClient *add_connection(aClient * cptr, int fd)
 	    return NULL;
 	}
     }
-#endif
 
     lin.flags = ASYNC_CLIENT;
     lin.value.cptr = acptr;	
@@ -1489,15 +1473,11 @@ aClient *add_connection(aClient * cptr, int fd)
     acptr->acpt = cptr;
     add_client_to_list(acptr);
 
-#ifdef USE_SSL
     if(!IsSSL(acptr))
     {
-#endif
 	set_non_blocking(acptr->fd, acptr);
 	set_sock_opts(acptr->fd, acptr);
-#ifdef USE_SSL
     }
-#endif
 
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     /* We do NOT want to start auth if the unknown connection
@@ -1612,13 +1592,9 @@ static int do_client_queue(aClient *cptr)
  */
 
 #define MAX_CLIENT_RECVQ 8192	/* 4 dbufs */
-#ifdef USE_SSL
 #define RECV2(from, buf, len)	IsSSL(cptr) ? \
 				safe_SSL_read(from, buf, len) : \
 				RECV(from->fd, buf, len)
-#else
-#define RECV2(from, buf, len)	RECV(from->fd, buf, len)
-#endif
 
 
 static int read_packet(aClient * cptr)
@@ -1920,7 +1896,6 @@ int read_message(time_t delay, fdlist * listp)
 		continue;
 	    if (IsLog(cptr))
 		continue;
-#ifdef USE_SSL
 	    if (cptr->ssl != NULL && IsSSL(cptr) &&
 		    !SSL_is_init_finished(cptr->ssl))
 	    {
@@ -1928,7 +1903,6 @@ int read_message(time_t delay, fdlist * listp)
 		    close_connection(cptr);
 		continue;
 	    }
-#endif
 	    if (DoingAuth(cptr)) 
 	    {
 		auth++;
@@ -2203,7 +2177,6 @@ int read_message(time_t delay, fdlist * listp)
 		continue;
 	    if (IsLog(cptr))
 		continue;
-#ifdef USE_SSL
 	    if (cptr->ssl != NULL && IsSSL(cptr) &&
 		    !SSL_is_init_finished(cptr->ssl))
 	    {
@@ -2211,7 +2184,6 @@ int read_message(time_t delay, fdlist * listp)
 		    close_connection(cptr);
 		continue;
 	    }
-#endif
 	    if (DoingAuth(cptr)) 
 	    {
 		if (auth == 0)

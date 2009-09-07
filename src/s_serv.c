@@ -5041,7 +5041,6 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	   sendto_ops("%s is rehashing throttles", parv[0]);
 	   return 0;
 	}
-#ifdef USE_SSL
 	else if(mycmp(parv[1], "SSL") == 0)
 	{
 #ifdef AZZURRA
@@ -5054,7 +5053,6 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	    rehash_ssl();
 	}
-#endif
     }
     else 
     {

@@ -4914,7 +4914,7 @@ found_openssl=""
    for ssldir in $tryssl "" /usr/local/openssl /usr/lib/openssl \
        /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt \
        /opt/openssl ; do
-      LIBS="$save_LIBS -lcrypto"
+      LIBS="$save_LIBS -lcrypto -lssl"
       SSLINC="$save_SSLINC"
 
       # if the directory isn't null, but doesn't exist, skip it
@@ -4926,9 +4926,9 @@ found_openssl=""
       if test ! -z "$ssldir" -a "z$ssldir" != "z/usr"; then
          # try to use ssldir/lib for libraries, if it exists
          if test -d "$ssldir/lib" ; then
-            LIBS="-L$ssldir/lib -lcrypto $save_LIBS"
+            LIBS="-L$ssldir/lib -lcrypto -lssl $save_LIBS"
          else
-            LIBS="-L$ssldir -lcrypto $save_LIBS"
+            LIBS="-L$ssldir -lcrypto -lssl $save_LIBS"
          fi
 
          if test -d "$ssldir/include" ; then

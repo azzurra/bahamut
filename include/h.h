@@ -371,8 +371,6 @@ extern char	* cloak_key_checksum(void);
 #define MAXSHUNS 10
 #endif
 
-#ifdef USE_SSL
 #include "ssl.h"
-#endif
 
 #include "find.h"

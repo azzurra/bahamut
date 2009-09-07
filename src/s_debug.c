@@ -87,12 +87,10 @@ char        serveropts[] =
 # endif
     ']',
 #endif
-#ifdef USE_SSL
     '-',
     'S',
     'S',
     'L',
-#endif
     '\0'
 };
 
