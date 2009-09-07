@@ -454,7 +454,7 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    } else if (parc==11)
 	    {
 		/* check if it is a long ipv4 address and convert it to char[] */
-		if (((ipv4addr.s_addr = ntohl(strtoul(parv[9], NULL, 0))) > 0) &&
+		if (((ipv4addr.s_addr = htonl(strtoul(parv[9], NULL, 0))) > 0) &&
 		    (!index(parv[9], '.')) && (!index(parv[9], ':')))
 		{
 			return do_user(nick, cptr, sptr, parv[5], parv[6], parv[7],

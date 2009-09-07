@@ -1329,7 +1329,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 			       "NICK %s %d %ld %s %s %s %s %lu %lu :%s",
 			       nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
 			       user->username, user->host, user->server, 
-			       sptr->user->servicestamp, htonl(sptr->ip.s_addr),
+			       sptr->user->servicestamp, ntohl(sptr->ip.s_addr),
 			       sptr->info);
     else   
 #endif
