@@ -13,10 +13,13 @@ fixklines_SOURCES = fixklines.c
 fixklines_OBJECT = fixklines.o
 mkcloak_SOURCES = mkcloak.c
 mkcloak_OBJECTS = mkcloak.o
+uncloak_SOURCES = uncloak.c
+uncloak_OBJECTS = uncloak.o
 
-all_OBJECTS = $(viconf_OBJECTS) $(mkpasswd_OBJECTS) $(chkconf_OBJECTS) ${fixklines_OBJECT} ${mkcloak_OBJECTS}
+all_OBJECTS = $(viconf_OBJECTS) $(mkpasswd_OBJECTS) $(chkconf_OBJECTS) \
+	      ${fixklines_OBJECT} ${mkcloak_OBJECTS} ${uncloak_OBJECTS}
 
-all: viconf chkconf mkpasswd fixklines mkcloak
+all: viconf chkconf mkpasswd fixklines mkcloak uncloak
 
 build: all
 
@@ -35,8 +38,11 @@ fixklines: fixklines.o
 mkcloak: $(mkcloak_OBJECTS)
 	$(CC) -o mkcloak $(mkcloak_OBJECTS)
 
+uncloak: $(uncloak_OBJECTS)
+	$(CC) -o uncloak $(uncloak_OBJECTS) $(IRCDLIBS)
+
 clean:
-	$(RM) -f $(all_OBJECTS) fixklines viconf chkconf mkpasswd endian align mkcloak *~ core
+	$(RM) -f $(all_OBJECTS) fixklines viconf chkconf mkpasswd endian align mkcloak uncloak *~ core
 
 distclean: clean
 	$(RM) -f Makefile

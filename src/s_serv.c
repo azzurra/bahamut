@@ -131,6 +131,8 @@ Spam *spam_list = NULL;
 extern unsigned char *cloak_key;
 extern unsigned char *cloak_host;
 extern unsigned short cloak_key_len;
+extern int expected_cloak_key_len;
+extern struct cpan_ctx *pa_ctx, *np_ctx;
 int CONF_SERVER_LANGUAGE = LANG_IT;
 #endif
 
@@ -3441,31 +3443,36 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	   }
 	}
 #if defined(AZZURRA) && defined(DYNAMIC_CLOAKING)
+#if 0
+	/* FIXME: UGLY MESS */
 	else if(!strncasecmp(command, "CLOAK_KEY", 10) && IsAdmin(sptr))
 	{
 	    if(parc > 2)
 	    {
 		int l = strlen(parv[2]);
 
-	        if (l < MIN_CLOAK_KEY_LEN)
+	        if (l < expected_cloak_key_len)
 	        {
-		    sendto_one(sptr, ":%s NOTICE %s :cloak key must be at least 64 chars long",
-			       me.name, parv[0]);
+		    sendto_one(sptr, ":%s NOTICE %s :cloak key must be at least %d chars long",
+			       me.name, parv[0], expected_cloak_key_len);
 		    return 0;
 	        }
 
-		if (l > MAX_CLOAK_KEY_LEN)
-		    l = MAX_CLOAK_KEY_LEN;
+		if (l > expected_cloak_key_len)
+		    l = expected_cloak_key_len;
 
 		if (strncmp(parv[2], cloak_key, l))
 		{
 		    int fd;
-		    
+
 		    MyFree(cloak_key);
 		    cloak_key = MyMalloc(l + 1);
 		    memcpy(cloak_key, parv[2], l);
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
+
+		    cpan_reload_key(pa_ctx, cloak_key);
+		    cpan_reload_key(np_ctx, cloak_key + (expected_key_len / 2));
 
 		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
 			    parv[0], sptr->user->username, sptr->user->host, l * 8);
@@ -3482,6 +3489,7 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 	    }
 	}
+#endif
 #endif	
 #ifdef AZZURRA
 	else if (!strncasecmp(command, "TLIMIT", 6))  {
@@ -6598,6 +6606,7 @@ int m_unspam(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
     int l; 
+    struct cpan_ctx *newpa, *newnp;
 
     if(!(IsServer(sptr) || IsULine(sptr)))
 	return 0;
@@ -6607,11 +6616,11 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     l = strlen(parv[1]);
 
-    if (l < MIN_CLOAK_KEY_LEN)
+    if (l < expected_cloak_key_len)
 	return 0;
     
-    if (l > MAX_CLOAK_KEY_LEN)
-	l = MAX_CLOAK_KEY_LEN;
+    if (l > expected_cloak_key_len)
+	l = expected_cloak_key_len;
 
     if (strncmp(parv[1], cloak_key, l))
     {
@@ -6623,19 +6632,39 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	cloak_key[l] = '\0';
 	cloak_key_len = l;
 
-	sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
-
-	if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+	/* Gracefully handle failed reinitialization */
+	if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
+	    || (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
 	{
-	    write(fd, cloak_key, cloak_key_len);
-	    close(fd);
-	    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+	    /* FAIL! FAIL! FAIL! */
+	    send_globops("From %s: Cloak key change failed, couldn't create new CryptoPan contexts",
+			 me.name);
+	    if (newpa)
+		cpan_cleanup(newpa);
 	}
 	else
 	{
-	    send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
+	    /* Throw away the old contexts and switch to new ones */
+	    cpan_cleanup(np_ctx);
+	    cpan_cleanup(pa_ctx);
+	    pa_ctx = newpa;
+	    np_ctx = newnp;
+
+	    sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
+
+	    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+	    {
+		write(fd, cloak_key, cloak_key_len);
+		close(fd);
+		sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+	    }
+	    else
+	    {
+		send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
 		    me.name, strerror(errno));
+	    }
 	}
+	/* FIXME: Send out the new key anyway */
 	sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
     }
     

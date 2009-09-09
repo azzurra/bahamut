@@ -163,6 +163,10 @@ time_t      nextexpire = 1;	   /* next expire run on the dns cache */
 unsigned char *cloak_key;
 unsigned char *cloak_host;
 unsigned short cloak_key_len;
+int expected_cloak_key_len;
+
+struct cpan_ctx *pa_ctx;
+struct cpan_ctx *np_ctx;
 
 extern int cloak_init(void);
 

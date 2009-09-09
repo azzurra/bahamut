@@ -363,8 +363,11 @@ extern aWatch 	 *hash_get_watch(char *);
 #define MAXWATCH       128
 
 #ifdef AZZURRA
-extern int	  cloakhost(char *, char *);
+extern int	  cloakhost(aClient *);
 extern char	* cloak_key_checksum(void);
+extern struct cpan_ctx * cpan_init(const EVP_CIPHER *, const unsigned char *);
+extern uint32_t	  cpan_anonymize(struct cpan_ctx *, uint32_t);
+extern void	  cpan_cleanup(struct cpan_ctx *);
 #endif
 
 #ifdef SHUN

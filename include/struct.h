@@ -747,6 +747,14 @@ struct spam_
 		time_t creationtime;
 };
 
+struct cpan_ctx
+{
+    const EVP_CIPHER *cipher;
+    EVP_CIPHER_CTX evp;
+    int blocksize;
+    uint8_t *pad;
+};
+
 #endif
 
 #define	CONF_ILLEGAL	        0x80000000
