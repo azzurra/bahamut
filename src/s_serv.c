@@ -3443,8 +3443,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	   }
 	}
 #if defined(AZZURRA) && defined(DYNAMIC_CLOAKING)
-#if 0
-	/* FIXME: UGLY MESS */
 	else if(!strncasecmp(command, "CLOAK_KEY", 10) && IsAdmin(sptr))
 	{
 	    if(parc > 2)
@@ -3464,6 +3462,7 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		if (strncmp(parv[2], cloak_key, l))
 		{
 		    int fd;
+		    struct cpan_ctx *newpa, *newnp;
 
 		    MyFree(cloak_key);
 		    cloak_key = MyMalloc(l + 1);
@@ -3471,25 +3470,38 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
 
-		    cpan_reload_key(pa_ctx, cloak_key);
-		    cpan_reload_key(np_ctx, cloak_key + (expected_key_len / 2));
-
-		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
-			    parv[0], sptr->user->username, sptr->user->host, l * 8);
-
-		    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+		    if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
+			|| (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
 		    {
-			write(fd, cloak_key, cloak_key_len);
-			close(fd);
-			sendto_realops("New cloak key successfully saved to "CKPATH);
+			/* Failure */
+			if (newpa)
+			    cpan_cleanup(newpa);
+			sendto_realops("Cloak key update failure: internal CryptoPAn error");
 		    }
 		    else
-			sendto_realops("Cannot save new cloak key to "CKPATH": %s",
-				strerror(errno));
+		    {
+			/* Release old contexts and switch to new ones */
+			cpan_cleanup(np_ctx);
+			cpan_cleanup(pa_ctx);
+			pa_ctx = newpa;
+			np_ctx = newnp;
+
+			sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
+			        parv[0], sptr->user->username, sptr->user->host, l * 8);
+
+			if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+			{
+			    write(fd, cloak_key, cloak_key_len);
+			    close(fd);
+			    sendto_realops("New cloak key successfully saved to "CKPATH);
+			}
+			else
+			    sendto_realops("Cannot save new cloak key to "CKPATH": %s",
+					strerror(errno));
+		    }
 		}
 	    }
 	}
-#endif
 #endif	
 #ifdef AZZURRA
 	else if (!strncasecmp(command, "TLIMIT", 6))  {
@@ -6636,8 +6648,9 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
 	    || (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
 	{
-	    /* FAIL! FAIL! FAIL! */
-	    send_globops("From %s: Cloak key change failed, couldn't create new CryptoPan contexts",
+	    /* OpenSSL failed, so the key is bogus (wrong length, most likely)
+	     * or we have a serious problem. */
+	    send_globops("From %s: Cloak key change failed: internal CryptoPAn error",
 			 me.name);
 	    if (newpa)
 		cpan_cleanup(newpa);
@@ -6663,9 +6676,8 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
 		    me.name, strerror(errno));
 	    }
+	    sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
 	}
-	/* FIXME: Send out the new key anyway */
-	sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
     }
     
     return 0;
