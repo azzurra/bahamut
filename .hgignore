@@ -5,7 +5,9 @@ ircdssl.rnd
 config.log
 Makefile
 config.status
+autom4te.cache
 *.o
+*.swp
 src/ircd
 src/version.c.last
 tools/mkcloak
@@ -16,6 +18,7 @@ tools/viconf
 tools/mkpasswd
 tools/fixklines
 tools/chkconf
+tools/uncloak
 include/align.h
 include/options.h
 include/setup.h

@@ -163,6 +163,10 @@ time_t      nextexpire = 1;	   /* next expire run on the dns cache */
 unsigned char *cloak_key;
 unsigned char *cloak_host;
 unsigned short cloak_key_len;
+int expected_cloak_key_len;
+
+struct cpan_ctx *pa_ctx;
+struct cpan_ctx *np_ctx;
 
 extern int cloak_init(void);
 
@@ -672,9 +676,7 @@ int main(int argc, char *argv[])
 #ifdef SAVE_MAXCLIENT_STATS
     FILE 	*mcsfp;
 #endif
-#ifdef USE_SSL
     extern int    ssl_capable;
-#endif
     static char star[] = "*";
     aConfItem  *aconf;
 #ifndef	INET6
@@ -853,10 +855,8 @@ int main(int argc, char *argv[])
     if (argc > 0)
 	return bad_command();	/* This should exit out  */
 
-#ifdef HAVE_ENCRYPTION_ON
     if(dh_init() == -1)
 	return 0;
-#endif
     
     motd = (aMotd *) NULL;
     helpfile = (aMotd *) NULL;
@@ -979,7 +979,6 @@ int main(int argc, char *argv[])
     if (portnum < 0)
 	portnum = PORTNUM;
     me.port = portnum;
-#ifdef USE_SSL
     fprintf(stderr, "SSL: Trying to intialize SSL support . . .\n");
     if(!(ssl_capable = initssl()))
         fprintf(stderr, "SSL: failure. (did you generate your "
@@ -988,7 +987,6 @@ int main(int argc, char *argv[])
                 "details.\n");
     else
 	fprintf(stderr, "SSL: success.\n");
-#endif 
     (void) init_sys();
     me.flags = FLAGS_LISTEN;
     me.fd = -1;

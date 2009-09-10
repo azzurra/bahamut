@@ -7,15 +7,6 @@
 	test -r "$dir/lib/libcrypto.so" -o -r "$dir/lib/libcrypto.dylib" &&
 	test -r "$dir/lib/libssl.so" -o -r "$dir/lib/libssl.dylib" && {
 	    openssl="${dir}/bin/openssl";
-	    test "$dir" != '/usr' && {
-	    	SSL_INCLUDE="-I${dir}/include";
-	        SSL_LIB="-L${dir}/lib";
-	    }
-	    SSL_LIB="$SSL_LIB -lcrypto -lssl"
-
-	    test -r "${dir}/include/openssl/kssl.h" -a -d "/usr/kerberos/include" && {
-	    	SSL_INCLUDE="$SSL_INCLUDE -I/usr/include/openssl -I/usr/kerberos/include"
-	    }
 	    break;
         }
     done
