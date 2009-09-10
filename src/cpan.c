@@ -154,7 +154,7 @@ uint32_t cpan_anonymize(struct cpan_ctx *ctx, uint32_t orig_addr)
             goto cleanup;
         }
 
-        /* Take the MSB of the output (host byte order) and combine with
+        /* Take the MSB of the output (host byte order) and combine it with
          * the pseudorandom one-time pad
          */
         result |= ((ntohl(*(uint32_t *)rin_output)) & 0x8000000) >> pos;
