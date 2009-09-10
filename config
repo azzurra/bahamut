@@ -640,7 +640,7 @@ runonce=""
 while [ -z "$FOO" ] ; do
     FOO="Yes"
     echo ""
-    echo "Would you like me to generate a random cloak key (1024 bits) ?"
+    echo "Would you like me to generate a random cloak key (512 bits) ?"
     $ECHO "[$FOO] -> $c"
     if [ -z "$AUTO_CONFIG" -o -n "$runonce" ] ; then
 	read cc
@@ -655,7 +655,7 @@ while [ -z "$FOO" ] ; do
 	[Yy]*)
 	    make -C tools mkcloak
 	    echo ''
-	    tools/mkcloak 1024 > $DPATH/ircd.cloak
+	    tools/mkcloak 512 > $DPATH/ircd.cloak
 	    if [ $? -ne 0 ] ; then
 	        echo 'Failed, you must supply a cloak key and place it in ircd.cloak.'
 	    else
