@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 
-AC_INIT(bahamut-azzurra, 1.4.34, "devel@ml.azzurra.org", "bahamut-azzurra")
+AC_INIT(bahamut-azzurra, 1.4.34, "devel@azzurra.org", "bahamut-azzurra")
 
 PACKAGE=bahamut-azzurra
 VERSION="1.4.34"
