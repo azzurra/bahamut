@@ -1,6 +1,7 @@
 syntax: glob
 
 tags
+autom4te.cache
 ircdssl.rnd
 config.log
 Makefile

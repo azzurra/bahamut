@@ -359,6 +359,11 @@ int throttle_check(char *host, int fd, time_t sotime) {
     if (find_eline_host(host))
         return 1;
 #endif   
+#ifdef WEBIRC
+    /* Don't throttle WLINED hosts --morph */
+    if (find_webirc_host(host))
+	return 1;
+#endif
 
     /* If this is an old remote signon, just ignore it */
     if(fd == -1 && (NOW - sotime > throttle_ttime))
