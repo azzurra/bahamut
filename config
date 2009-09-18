@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash 
 #
 # Copyright 1999 Aaron Wiebe <epiphani@solarz.net>
 # Based roughly on configure for Dreamforge, by Michael Graff <explorer@flame.org>
@@ -144,12 +144,6 @@ if [ -n "$INET6" ] ; then
 else
    INET6="1"
 fi
-USE_SSL="`grep 'USE_SSL' $OPTIONS_H | sed s/'.define USE_SSL'// | xargs $ECHO`"
-if [ -n "$USE_SSL" ] ; then
-   USE_SSL=""
-else
-   USE_SSL="1"
-fi
 AZZURRA="`grep 'AZZURRA' $OPTIONS_H | sed s/'.define AZZURRA'// | xargs $ECHO`"
 if [ -n "$AZZURRA" ] ; then
    AZZURRA=""
@@ -197,7 +191,6 @@ CRYPTPASS=""
 DOTHROTTLE="1" # Default setting, no question asked.
 INET6=""
 IRCDCONF_DELIMITER=':'
-USE_SSL="1"
 AZZURRA="1" # Default setting, no question asked.
 ADMINSERV="1" # Default setting, no question asked.
 STAFF_ADDRESS="staff.azzurra.org" # Default setting, no question asked.
@@ -379,62 +372,6 @@ else
      IRCDCONF_DELIMITER=':' 
 fi 
 
-FOO=""
-runonce=""
-while [ -z "$FOO" ] ; do
-    if [ -n "$USE_SSL" ] ; then
-	FOO="Yes"
-    else
-	FOO="No"
-    fi
-    echo ""
-    echo "Do you want an SSL Server ? (needs OpenSSL 0.9.6 installed)"
-    $ECHO "[$FOO] -> $c"
-    if [ -z "$AUTO_CONFIG" -o -n "$runonce" ] ; then
-	read cc
-	runonce=Yes
-    else
-	cc=""
-    fi
-    if [ -z "$cc" ] ; then
-	cc=$FOO
-    fi
-    case "$cc" in
-	[Yy]*)
-	    USE_SSL="1"
-	    ;;
-	[Nn]*)
-	    USE_SSL=""
-	    ;;
-	*)
-	    echo ""
-	    echo "You need to enter either Yes or No here..."
-	    echo ""
-	    FOO=""
-	    ;;
-    esac
-done
-
-if [ "$AZZURRA" = "1" ]; then # maybe useless..
-
-    $ECHO
-    $ECHO "Verifying your system endianness for SHA1 . . "
-
-    # Fall back to cc if $CC is empty
-    if [ -z "$CC" ] ; then
-        CC=cc
-    fi
-    
-    $CC -o tools/endian tools/endian.c
-    $CC -o tools/align tools/must_align.c
-
-    tools/endian > include/irc_endian.h
-    tools/align > include/align.h
-
-    echo "done"
-
-fi
-
 OS=`uname -a`
 case "$OS" in
     *SunOS*4.*DBE*)
@@ -540,12 +477,6 @@ while [ -z "$FOO" ] ; do
     esac
 done
 
-if [ -n "$USE_SSL" ] ; then
-
-. tools/ssl-search.sh
-
-fi
-
 #############
 # Thats all for the user part, now to write to a file...
 
@@ -598,11 +529,6 @@ else
     echo "#undef INET6" >> $OPTIONS_H
     echo "#define RECV(fd, buf, size) recv(fd, buf, size, 0)" >> $OPTIONS_H
     echo "#define SEND(fd, buf, size) send(fd, buf, size, 0)" >> $OPTIONS_H
-fi
-if [ -n "$USE_SSL" ] ; then
-    echo "#define USE_SSL" >> $OPTIONS_H
-else
-    echo "#undef USE_SSL" >> $OPTIONS_H
 fi
 if [ -n "$AZZURRA" ] ; then
     echo "#define AZZURRA" >> $OPTIONS_H
@@ -703,15 +629,6 @@ fi
 echo "#endif" >> $OPTIONS_H
 echo "" >> $OPTIONS_H
 echo "#endif /* This is the endif for the ifdef at the top. */" >> $OPTIONS_H
-### use SSL ?
-if [ -n "$USE_SSL" ] ; then
-   cat Makefile | sed "s#^\(SSLFLAGS=\).*#\1 $SSL_INCLUDE#" > Makefile.tmp
-   cat Makefile.tmp | sed "s#^\(LDFLAGS=\).*#\1 $SSL_LIB#" > Makefile
-else
-   cat Makefile | sed "s#^\(SSLFLAGS=\).*#\1#" > Makefile.tmp
-   cat Makefile.tmp | sed "s#^\(LDFLAGS=\).*#\1#" > Makefile
-fi
-rm -f Makefile.tmp
 
 echo "Done."
 echo ""
@@ -723,7 +640,7 @@ runonce=""
 while [ -z "$FOO" ] ; do
     FOO="Yes"
     echo ""
-    echo "Would you like me to generate a random cloak key (1024 bits) ?"
+    echo "Would you like me to generate a random cloak key (512 bits) ?"
     $ECHO "[$FOO] -> $c"
     if [ -z "$AUTO_CONFIG" -o -n "$runonce" ] ; then
 	read cc
@@ -738,7 +655,7 @@ while [ -z "$FOO" ] ; do
 	[Yy]*)
 	    make -C tools mkcloak
 	    echo ''
-	    tools/mkcloak 1024 > $DPATH/ircd.cloak
+	    tools/mkcloak 512 > $DPATH/ircd.cloak
 	    if [ $? -ne 0 ] ; then
 	        echo 'Failed, you must supply a cloak key and place it in ircd.cloak.'
 	    else
@@ -761,6 +678,7 @@ while [ -z "$FOO" ] ; do
 done
 fi
 
+. tools/ssl-search.sh
 . tools/ssl-cert.sh
 
 echo "Now your include/options.h is configured.  Please look over" 

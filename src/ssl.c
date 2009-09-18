@@ -25,8 +25,6 @@
 #include <sys/types.h>
 #include "h.h"
 
-#ifdef USE_SSL
-
 #define SAFE_SSL_READ	1
 #define SAFE_SSL_WRITE	2
 #define SAFE_SSL_ACCEPT	3
@@ -295,4 +293,3 @@ static int fatal_ssl_error(int ssl_error, int where, aClient *sptr)
     sptr->flags |= FLAGS_DEADSOCKET;
     return -1;
 }
-#endif

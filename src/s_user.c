@@ -995,10 +995,8 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     else
 	strncpyzt(user->username, username, USERLEN + 1);
 #ifdef AZZURRA
-    if(IsIPv6(sptr))
-	strncpyzt(user->virthost, user->host, HOSTLEN);
-    else if(!cloakhost(user->host, user->virthost))
-	strncpyzt(user->virthost, user->host, HOSTLEN);
+    if (!cloakhost(sptr))
+        strncpyzt(user->virthost, user->host, HOSTLEN);
 #endif
  
     SetClient(sptr);
@@ -2671,10 +2669,8 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 	    SetCloak(sptr);
 #endif
 #endif
-#ifdef USE_SSL
 	if(IsSSL(sptr))
 	    SetSSLUmode(sptr);
-#endif
 	
 	sptr->umode |= (UFLAGS & atoi(host));
 	strncpyzt(user->host, host, sizeof(user->host));
