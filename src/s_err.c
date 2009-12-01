@@ -36,7 +36,7 @@ static char *replies[] =
                                 "biklLmMnoOprRstvc",
 #else
     /* 004 RPL_MYINFO */	":%s 004 %s %s %s oOiwscrknfydaAbghexzSjFI "
-                                "bhijklmMnoOprRstvcdSuU ",
+                                "bhijklmMnoOprRstvcdSuU bklohv",
 #endif
     /* 005 RPL_PROTOCTL*/       ":%s 005 %s NOQUIT WATCH=%i SAFELIST MODES=%i "
                                 "MAXCHANNELS=%i MAXBANS=%i NICKLEN=%i "

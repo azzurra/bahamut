@@ -52,7 +52,7 @@
 #ifndef WEBIRC
 #define PATCH4 ""
 #else
-#define PATCH4 "-webirc(1.0)"
+#define PATCH4 "-webirc(1.2)"
 #endif
 
 #define PATCH5 ""
