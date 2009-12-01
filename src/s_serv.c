@@ -131,6 +131,8 @@ Spam *spam_list = NULL;
 extern unsigned char *cloak_key;
 extern unsigned char *cloak_host;
 extern unsigned short cloak_key_len;
+extern int expected_cloak_key_len;
+extern struct cpan_ctx *pa_ctx, *np_ctx;
 int CONF_SERVER_LANGUAGE = LANG_IT;
 #endif
 
@@ -1112,14 +1114,10 @@ int m_server_estab(aClient *cptr)
 	
 	/* Pass my info to the new server */
 	
-#ifdef HAVE_ENCRYPTION_ON
 	if(!WantDKEY(cptr))
 	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
 	else
 	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE");
-#else /* ENCRYPTION_ON */
-	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
-#endif /* ENCRYPTION_ON */
 
 	sendto_one(cptr, "SERVER %s 1 :%s",
 		   my_name_for_link(me.name, aconf),
@@ -1191,7 +1189,6 @@ int m_server_estab(aClient *cptr)
     strcpy(cptr->hostip, "127.0.0.1");
     strcpy(cptr->sockhost, "localhost");
 
-#ifdef HAVE_ENCRYPTION_ON
     if(!CanDoDKEY(cptr) || !WantDKEY(cptr))
 	return do_server_estab(cptr);
     else
@@ -1199,9 +1196,6 @@ int m_server_estab(aClient *cptr)
 	SetNegoServer(cptr); /* VERY IMPORTANT THAT THIS IS HERE */
 	sendto_one(cptr, "DKEY START");
     }
-#else
-    return do_server_estab(cptr);
-#endif
 
     return 0;
 }
@@ -3455,38 +3449,56 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    {
 		int l = strlen(parv[2]);
 
-	        if (l < MIN_CLOAK_KEY_LEN)
+	        if (l < expected_cloak_key_len)
 	        {
-		    sendto_one(sptr, ":%s NOTICE %s :cloak key must be at least 64 chars long",
-			       me.name, parv[0]);
+		    sendto_one(sptr, ":%s NOTICE %s :cloak key must be at least %d chars long",
+			       me.name, parv[0], expected_cloak_key_len);
 		    return 0;
 	        }
 
-		if (l > MAX_CLOAK_KEY_LEN)
-		    l = MAX_CLOAK_KEY_LEN;
+		if (l > expected_cloak_key_len)
+		    l = expected_cloak_key_len;
 
 		if (strncmp(parv[2], cloak_key, l))
 		{
 		    int fd;
-		    
+		    struct cpan_ctx *newpa, *newnp;
+
 		    MyFree(cloak_key);
 		    cloak_key = MyMalloc(l + 1);
 		    memcpy(cloak_key, parv[2], l);
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
 
-		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
-			    parv[0], sptr->user->username, sptr->user->host, l * 8);
-
-		    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+		    if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
+			|| (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
 		    {
-			write(fd, cloak_key, cloak_key_len);
-			close(fd);
-			sendto_realops("New cloak key successfully saved to "CKPATH);
+			/* Failure */
+			if (newpa)
+			    cpan_cleanup(newpa);
+			sendto_realops("Cloak key update failure: internal CryptoPAn error");
 		    }
 		    else
-			sendto_realops("Cannot save new cloak key to "CKPATH": %s",
-				strerror(errno));
+		    {
+			/* Release old contexts and switch to new ones */
+			cpan_cleanup(np_ctx);
+			cpan_cleanup(pa_ctx);
+			pa_ctx = newpa;
+			np_ctx = newnp;
+
+			sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
+			        parv[0], sptr->user->username, sptr->user->host, l * 8);
+
+			if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+			{
+			    write(fd, cloak_key, cloak_key_len);
+			    close(fd);
+			    sendto_realops("New cloak key successfully saved to "CKPATH);
+			}
+			else
+			    sendto_realops("Cannot save new cloak key to "CKPATH": %s",
+					strerror(errno));
+		    }
 		}
 	    }
 	}
@@ -5049,7 +5061,6 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	   sendto_ops("%s is rehashing throttles", parv[0]);
 	   return 0;
 	}
-#ifdef USE_SSL
 	else if(mycmp(parv[1], "SSL") == 0)
 	{
 #ifdef AZZURRA
@@ -5062,7 +5073,6 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	    rehash_ssl();
 	}
-#endif
     }
     else 
     {
@@ -6608,6 +6618,7 @@ int m_unspam(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
     int l; 
+    struct cpan_ctx *newpa, *newnp;
 
     if(!(IsServer(sptr) || IsULine(sptr)))
 	return 0;
@@ -6617,11 +6628,11 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     l = strlen(parv[1]);
 
-    if (l < MIN_CLOAK_KEY_LEN)
+    if (l < expected_cloak_key_len)
 	return 0;
     
-    if (l > MAX_CLOAK_KEY_LEN)
-	l = MAX_CLOAK_KEY_LEN;
+    if (l > expected_cloak_key_len)
+	l = expected_cloak_key_len;
 
     if (strncmp(parv[1], cloak_key, l))
     {
@@ -6633,20 +6644,40 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	cloak_key[l] = '\0';
 	cloak_key_len = l;
 
-	sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
-
-	if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+	/* Gracefully handle failed reinitialization */
+	if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
+	    || (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
 	{
-	    write(fd, cloak_key, cloak_key_len);
-	    close(fd);
-	    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+	    /* OpenSSL failed, so the key is bogus (wrong length, most likely)
+	     * or we have a serious problem. */
+	    send_globops("From %s: Cloak key change failed: internal CryptoPAn error",
+			 me.name);
+	    if (newpa)
+		cpan_cleanup(newpa);
 	}
 	else
 	{
-	    send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
+	    /* Throw away the old contexts and switch to new ones */
+	    cpan_cleanup(np_ctx);
+	    cpan_cleanup(pa_ctx);
+	    pa_ctx = newpa;
+	    np_ctx = newnp;
+
+	    sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
+
+	    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+	    {
+		write(fd, cloak_key, cloak_key_len);
+		close(fd);
+		sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+	    }
+	    else
+	    {
+		send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
 		    me.name, strerror(errno));
+	    }
+	    sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
 	}
-	sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
     }
     
     return 0;
@@ -6668,7 +6699,6 @@ int m_dkey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    return 0;
 	return exit_client(sptr, sptr, sptr, "Not negotiating now");
     }
-#ifdef HAVE_ENCRYPTION_ON
     if(mycmp(parv[1], "START") == 0)
     {
 	char keybuf[1024];
@@ -6767,6 +6797,5 @@ int m_dkey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	ClearNegoServer(sptr);
 	return do_server_estab(sptr);
     }
-#endif
     return 0;
 }

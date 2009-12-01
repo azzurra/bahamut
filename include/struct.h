@@ -54,15 +54,14 @@
 #endif
 #endif
 
-#ifdef USE_SSL
 #include <openssl/rsa.h>       /* OpenSSL stuff */
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 //#define OPENSSL_NO_KRB5		/* Define if getting krb5.h errors. */
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#endif
 
 #include "hash.h"
 
@@ -748,6 +747,14 @@ struct spam_
 		time_t creationtime;
 };
 
+struct cpan_ctx
+{
+    const EVP_CIPHER *cipher;
+    EVP_CIPHER_CTX evp;
+    int blocksize;
+    uint8_t *pad;
+};
+
 #endif
 
 #define	CONF_ILLEGAL	        0x80000000
@@ -860,12 +867,10 @@ struct Server
     char        byhost[HOSTLEN + 1];
     aConfItem  *nline;		  /* N-line pointer for this server */
     int         dkey_flags; 	  /* dkey flags */
-#ifdef HAVE_ENCRYPTION_ON
     void       *sessioninfo_in;   /* pointer to opaque sessioninfo structure */
     void       *sessioninfo_out;  /* pointer to opaque sessioninfo structure */
     void       *rc4_in;           /* etc */
     void       *rc4_out;          /* etc */
-#endif
     void       *zip_out;
     void       *zip_in;
 };
@@ -953,10 +958,8 @@ struct Client
 
 */
 
-#ifdef USE_SSL /*AZZURRA*/
     SSL *ssl;
     X509 *client_cert;
-#endif /*SSL*/
 
     /*
      * The following fields are allocated only for local clients 

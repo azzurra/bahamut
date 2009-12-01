@@ -7,19 +7,13 @@ A: You need the openssl library, a freely-available SSL implementation.
    You can download it from http://www.openssl.org
 
 Q: Which version should I install ?
-A: I suggest you install 0.9.6e or later, because previous versions
-   contain remote vulnerabilities.
+A: You need 0.9.7 or later.
+   Please make sure you stay up-to-date with security patches.
 
 Q: Where do I have to install the openssl library ?
 A: The config script looks for the library in the most obvious locations:
    /usr /usr/local/ssl /usr/local/openssl /usr/local /opt/ssl /opt/openssl
    You must install the library in one of these directories (I suggest /usr/local ).
-
-Q: How do I compile in SSL support ?
-A: When you run configure, it will ask you if you want to install it or not.
-   Simply answer 'yes' to that question. Note that if you answer 'yes' and you
-   didn`t install the openssl library, the config script will tell you so and
-   return an error.
 
 Q: I succesfully compiled in SSL support, how do I enable it at runtime ?
 A: You must open a port for SSL connections. On our network we use port 9999.
@@ -44,10 +38,11 @@ A: All SSL users are set +S when connecting. +S is a usermode that
    via SSL. If they are, an extra line will be shown:
 
    -!- user is using a secure connection (SSL)
-   The raw used here is 275.
+   The numeric used here is 275.
 
    IRC Operators can list all users connecting via SSL to the network by typing
    /who -m S
 
 Q: I have questions not answered here, what can I do ?
-A: Mail me at vjt@users.sf.net and I will answer them as best as I can.
+A: Mail us at devel@azzurra.org or join #services on Azzurra IRC Network and
+   we will answer them as best as we can.
