@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "zlib.h"
+#include <zlib.h>
 
 #define COMPRESSION_LEVEL 	3 	/* 0 to 9, 0 = none */
 #define ZIP_MIN_BLOCK		1024	/* smallest block to compress */

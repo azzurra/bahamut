@@ -1,7 +1,7 @@
 CC=@CC@
 RM=@RM@
-IRCDLIBS=@LIBS@ ../zlib/libz.a
-INCLUDEDIR=-I../include -I../zlib
+IRCDLIBS=@LIBS@
+INCLUDEDIR=-I../include
 OPENSSLINC=@SSLINC@
 
 CONF_SRC = @ENCRYPT_SRC@

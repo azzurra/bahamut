@@ -5,7 +5,6 @@ VERSION="1.4.34"
 AC_INIT(PACKAGE, VERSION, "devel@ml.azzurra.org", "bahamut-azzurra")
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER(include/setup.h)
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
@@ -261,6 +260,55 @@ AC_MSG_RESULT(can't tell))
 
 AC_SUBST(DFDSS)
 
+dnl ---------- check for zlib, half stolen from http://www.gnu.org/software/autoconf-archive/ax_check_zlib.html
+
+tryzlib=""
+
+AC_ARG_WITH(zlib-dir,
+[  --with-zlib-dir=PATH    Path to zlib installation ],
+[ tryzlib=$withval ]
+)
+
+ZLIB_HOME=""
+
+AC_MSG_CHECKING([for zlib path])
+
+for zlibdir in $tryzlib /usr/local /usr ; do
+   if test -f "$zlibdir/include/zlib.h" ; then
+     ZLIB_HOME=$zlibdir
+     break
+   fi
+done
+
+if test "$ZLIB_HOME" = "" ; then
+  AC_MSG_RESULT(failed)
+  AC_MSG_ERROR([zlib development files were not found, please install them or specify their location with --with-zlib-dir])
+fi
+
+AC_MSG_RESULT($ZLIB_HOME)
+
+if test "$ZLIB_HOME" != "/usr" ; then
+  LDFLAGS="$LDFLAGS -L$ZLIB_HOME/lib"
+  CPPFLAGS="$CPPFLAGS -I$ZLIB_HOME/include"
+fi
+
+AC_LANG_SAVE
+AC_LANG_C
+AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
+AC_CHECK_HEADER(zlib.h, [zlib_cv_zlib_h=yes], [zlib_cv_zlib_h=no])
+AC_LANG_RESTORE
+if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes" ; then
+  LIBS="$LIBS -lz"
+  AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
+  AC_MSG_RESULT(ok)
+else
+  AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
+  AC_MSG_RESULT(failed)
+  AC_MSG_ERROR([zlib development files were not found or are incomplete, please install zlib1g-dev (on Debian) or specify their location with --with-zlib-dir])
+fi
+
+dnl ---------- end of zlib checks
+
 if test $enable_encryption = no; then
 echo "encryption disabled, skipping openssl checks..."
 ENCRYPT_SRC=""
@@ -406,11 +454,6 @@ case "$target" in
 esac
 
 AC_OUTPUT(Makefile src/Makefile tools/Makefile)
-
-echo configuring zlib...
-cd zlib
-./configure
-cd ..
 
 if test ! -f include/options.h; then
 	echo running ./config...
