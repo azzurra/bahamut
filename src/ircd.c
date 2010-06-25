@@ -160,8 +160,8 @@ time_t      nextdnscheck = 0;	   /* next time to poll dns to force timeout */
 time_t      nextexpire = 1;	   /* next expire run on the dns cache */
 
 #ifdef AZZURRA
-unsigned char *cloak_key;
-unsigned char *cloak_host;
+char *cloak_key;
+char *cloak_host;
 unsigned short cloak_key_len;
 
 extern int cloak_init(void);

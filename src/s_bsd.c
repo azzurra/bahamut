@@ -197,7 +197,8 @@ void report_error(char *text, aClient * cptr)
 {
     int errtmp = errno;		/* debug may change 'errno' */
     char *host;
-    int err, len = sizeof(err);
+    int err;
+    socklen_t len = sizeof(err);
     extern char *strerror();
 
     host =
@@ -243,7 +244,8 @@ int inetport(aClient *cptr, char *name, int port, char *bind_addr)
 #endif
 {
     static struct SOCKADDR_IN server;
-    int ad[4], len = sizeof(server);
+    int ad[4];
+    socklen_t len = sizeof(server);
     char ipname[20];
 
     ad[0] = ad[1] = ad[2] = ad[3] = 0;
@@ -620,7 +622,7 @@ in6_is_addr_loopback(uint32_t * f)
 static int check_init(aClient * cptr, char *sockn)
 {
     struct SOCKADDR_IN sk;
-    int len = sizeof(struct SOCKADDR_IN);
+    socklen_t len = sizeof(struct SOCKADDR_IN);
 
     /* If descriptor is a tty, special checking... * IT can't EVER be a tty */
 
@@ -1199,7 +1201,7 @@ static void set_sock_opts(int fd, aClient * cptr)
 #if defined(MAXBUFFERS)
     if (rcvbufmax == 0)
     {
-	int optlen;
+	socklen_t optlen;
 
 	optlen = sizeof(rcvbufmax);
 	getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char *) &rcvbufmax, &optlen);
@@ -1224,7 +1226,7 @@ static void set_sock_opts(int fd, aClient * cptr)
 #if defined(MAXBUFFERS)
     if (sndbufmax == 0)
     {
-	int optlen;
+	socklen_t optlen;
 	
 	optlen = sizeof(sndbufmax);
 	getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char *) &sndbufmax, &optlen);
@@ -1246,19 +1248,20 @@ static void set_sock_opts(int fd, aClient * cptr)
 #endif
 #if defined(IP_OPTIONS) && defined(IPPROTO_IP) && !defined(INET6) /* controlla STRONZONE */
     {
+        socklen_t optlen;
 # if defined(MAXBUFFERS)
 	char *s = readbuf, *t = readbuf + (rcvbufmax * sizeof(char)) / 2;
-	opt = (rcvbufmax * sizeof(char)) / 8;
+	optlen = (rcvbufmax * sizeof(char)) / 8;
 # else
 	char *s = readbuf, *t = readbuf + sizeof(readbuf) / 2;
 	
-	opt = sizeof(readbuf) / 8;
+	optlen = sizeof(readbuf) / 8;
 # endif
-	if (getsockopt(fd, IPPROTO_IP, IP_OPTIONS, t, &opt) < 0)
+	if (getsockopt(fd, IPPROTO_IP, IP_OPTIONS, t, &optlen) < 0)
 	    silent_report_error("getsockopt(IP_OPTIONS) %s:%s", cptr);
-	else if (opt > 0)
+	else if (optlen > 0)
 	{
-	    for (*readbuf = '\0'; opt > 0; opt--, s += 3)
+	    for (*readbuf = '\0'; optlen > 0; optlen--, s += 3)
 		(void) ircsprintf(s, "%02.2x:", *t++);
 	    *s = '\0';
 	    sendto_realops("Connection %s using IP opts: (%s)",
@@ -1271,7 +1274,8 @@ static void set_sock_opts(int fd, aClient * cptr)
 
 int get_sockerr(aClient * cptr)
 {
-    int errtmp = errno, err = 0, len = sizeof(err);
+    int errtmp = errno, err = 0;
+    socklen_t len = sizeof(err);
     
 #ifdef	SO_ERROR
     if (cptr->fd >= 0)
@@ -1363,7 +1367,7 @@ aClient *add_connection(aClient * cptr, int fd)
     aConfItem *aconf = NULL;
     char *s, *t;
     struct SOCKADDR_IN addr;
-    int len;
+    socklen_t len;
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     aConfItem *tmpconf;
     int doident = YES;
@@ -1758,7 +1762,7 @@ void accept_connection(aClient *cptr)
     aConfItem *tmp;
     char dumpstring[491];
     static struct SOCKADDR_IN addr;
-    int addrlen = sizeof(struct SOCKADDR_IN);
+    socklen_t addrlen = sizeof(struct SOCKADDR_IN);
     char host[HOSTLEN + 2];
     int newfd;
     

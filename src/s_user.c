@@ -4954,9 +4954,9 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
 /* CR, i 0wn j00 */
 int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)
 {
-    static char nick[24];
+    static char nick[NICKLEN + 1];
     static char *user = "JAVA", *realname = "JavaUser";
-    static char *prv[5];
+    static char *prv[6];
 
     if (!MyConnect(sptr))
     {

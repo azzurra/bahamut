@@ -3465,12 +3465,12 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		if (l > MAX_CLOAK_KEY_LEN)
 		    l = MAX_CLOAK_KEY_LEN;
 
-		if (strncmp(parv[2], cloak_key, l))
+		if (strncmp(parv[2], (const char *)cloak_key, l))
 		{
 		    int fd;
 		    
 		    MyFree(cloak_key);
-		    cloak_key = MyMalloc(l + 1);
+		    cloak_key = (unsigned char *) MyMalloc(l + 1);
 		    memcpy(cloak_key, parv[2], l);
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
@@ -6623,12 +6623,12 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (l > MAX_CLOAK_KEY_LEN)
 	l = MAX_CLOAK_KEY_LEN;
 
-    if (strncmp(parv[1], cloak_key, l))
+    if (strncmp(parv[1], (const char *) cloak_key, l))
     {
 	int fd;
 		    
 	MyFree(cloak_key);
-	cloak_key = MyMalloc(l + 1);
+	cloak_key = (unsigned char *) MyMalloc(l + 1);
 	memcpy(cloak_key, parv[1], l);
 	cloak_key[l] = '\0';
 	cloak_key_len = l;
@@ -6728,13 +6728,13 @@ int m_dkey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    if(!dh_get_s_shared(keybuf, &keylen, sptr->serv->sessioninfo_in))
 		return exit_client(sptr, sptr, sptr,
 				   "Could not setup encrypted session");
-	    sptr->serv->rc4_in = rc4_initstate(keybuf, keylen);
+	    sptr->serv->rc4_in = rc4_initstate((unsigned char *)keybuf, keylen);
 	    
 	    keylen = 1024;
 	    if(!dh_get_s_shared(keybuf, &keylen, sptr->serv->sessioninfo_out))
 		return exit_client(sptr, sptr, sptr,
 				   "Could not setup encrypted session");
-	    sptr->serv->rc4_out = rc4_initstate(keybuf, keylen);
+	    sptr->serv->rc4_out = rc4_initstate((unsigned char *)keybuf, keylen);
 
 	    dh_end_session(sptr->serv->sessioninfo_in);
 	    dh_end_session(sptr->serv->sessioninfo_out);

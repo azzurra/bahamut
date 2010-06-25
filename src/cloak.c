@@ -31,8 +31,8 @@
 #include <sys/stat.h>
 #include "shs1.h"
 
-extern unsigned char *cloak_key;		/* in ircd.c --vjt */
-extern unsigned char *cloak_host;
+extern char *cloak_key;		/* in ircd.c --vjt */
+extern char *cloak_host;
 extern unsigned short cloak_key_len;
 
 int cloak_init(void)
@@ -158,8 +158,8 @@ char *sha1_hash(const char *s, size_t size) {
     DupString(key, cloak_key);
     shs1Init(&digest);
 
-    shs1Update(&digest, (char *) s, size);
-    shs1Update(&digest, (char *) key, cloak_key_len);
+    shs1Update(&digest, (unsigned char *) s, size);
+    shs1Update(&digest, (unsigned char *) key, cloak_key_len);
     SHS1COUNT(&digest, cloak_key_len + size);
 
     shs1Final(&digest);

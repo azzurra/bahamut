@@ -276,7 +276,7 @@ int dh_generate_shared(void *session, char *public_key)
     
     si->session_shared_length = DH_size(si->dh);
     si->session_shared = (char *) malloc(DH_size(si->dh));
-    len = DH_compute_key(si->session_shared, tmp, si->dh);
+    len = DH_compute_key((unsigned char *)(si->session_shared), tmp, si->dh);
     BN_free(tmp);
 
     if(len < 0)

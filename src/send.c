@@ -212,7 +212,7 @@ static int send_message(aClient *to, char *msg, int len)
     if(IsRC4OUT(to))
     {
 	/* don't destroy the data in 'msg' */
-	rc4_process_stream_to_buf(to->serv->rc4_out, msg, rc4buf, len);
+	rc4_process_stream_to_buf(to->serv->rc4_out, (unsigned char *)msg, (unsigned char *)rc4buf, len);
 	msg = rc4buf;
     }
 #endif
@@ -311,7 +311,7 @@ int send_queued(aClient *to)
 
 #ifdef HAVE_ENCRYPTION_ON
 	    if(IsRC4OUT(to))
-		rc4_process_stream(to->serv->rc4_out, msg, len);
+		rc4_process_stream(to->serv->rc4_out, (unsigned char *)msg, len);
 #endif
 	    /* silently stick this on the sendq... */
 	    if (!dbuf_put(&to->sendQ, msg, len))
@@ -352,7 +352,7 @@ int send_queued(aClient *to)
 	    
 #ifdef HAVE_ENCRYPTION_ON
 	    if(IsRC4OUT(to))
-		rc4_process_stream(to->serv->rc4_out, msg, len);
+		rc4_process_stream(to->serv->rc4_out, (unsigned char *)msg, len);
 #endif
 	    /* silently stick this on the sendq... */
 	    if (!dbuf_put(&to->sendQ, msg, len))

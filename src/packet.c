@@ -51,7 +51,7 @@ int dopacket(aClient *cptr, char *buffer, int length)
     
 #ifdef HAVE_ENCRYPTION_ON
     if(IsRC4IN(cptr))
-	rc4_process_stream(cptr->serv->rc4_in, buffer, length);
+	rc4_process_stream(cptr->serv->rc4_in, (unsigned char *)buffer, length);
 #endif
     
     me.receiveB += length;	   /* Update bytes received */
@@ -145,7 +145,7 @@ zcontinue:
 #ifdef HAVE_ENCRYPTION_ON
 	    case RC4_NEXT_BUFFER:
 		if(length)
-		    rc4_process_stream(cptr->serv->rc4_in, ch2, length);
+		    rc4_process_stream(cptr->serv->rc4_in, (unsigned char *)ch2, length);
 		break;
 #endif
 
