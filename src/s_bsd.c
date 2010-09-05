@@ -1372,6 +1372,9 @@ aClient *add_connection(aClient * cptr, int fd)
     aConfItem *tmpconf;
     int doident = YES;
 #endif   
+#ifdef INET6
+    size_t off = 0;
+#endif /* INET6 */
    
     acptr = make_client(NULL, &me);
     
@@ -1554,6 +1557,32 @@ aClient *add_connection(aClient * cptr, int fd)
    
 #ifdef INET6
     SetIPv6(acptr);
+    /* Detect 6to4 and/or Teredo tunnels */
+    memset(acptr->tunnel_host, '\0', HOSTIPLEN + 1);
+    if (acptr->ip.s6_addr[0] == 0x20 && acptr->ip.s6_addr[1] == 0x02)
+    {
+        Set6to4(acptr);
+        off = 2;
+    }
+    else if (acptr->ip.s6_addr[0] == 0x20 && acptr->ip.s6_addr[1] == 0x01 && acptr->ip.s6_addr[2] == 0 && acptr->ip.s6_addr[3] == 0)
+    {
+        SetTeredo(acptr);
+        off = 12;
+    }
+    if (IsTunnel(acptr))
+    {
+        struct in_addr endpoint_addr;
+        memcpy(&endpoint_addr.s_addr, acptr->ip.s6_addr + off, sizeof(endpoint_addr.s_addr));
+        /* Flip all bits if this is a Teredo tunnel */
+        if (IsTeredo(acptr))
+            endpoint_addr.s_addr ^= 0xFFFFFFFFU;
+        if (inet_ntop(AF_INET, &endpoint_addr, acptr->tunnel_host, HOSTIPLEN + 1) == NULL)
+        {
+            /* Clear flags and log error */
+            ClearTunnel(acptr);
+            sendto_realops_lev(DEBUG_LEV, "inet_ntop failed while resolving tunnel endpoint for %s", get_client_name(acptr, TRUE));
+        }
+    }
 #endif
 
     return acptr;

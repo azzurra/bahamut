@@ -5837,47 +5837,47 @@ int m_akill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     int i;
 
     if(!IsServer(sptr) || (parc < 6))
-	return 0;
+	    return 0;
 	
     if(!IsULine(sptr)) 
     {
-	sendto_serv_butone(&me,":%s GLOBOPS :Non-ULined server %s trying to "
-			   "AKILL!", me.name, sptr->name);
-	send_globops("From %s: Non-ULined server %s trying to AKILL!", me.name,
-		     sptr->name);
-	return 0;
+    	sendto_serv_butone(&me,":%s GLOBOPS :Non-ULined server %s trying to "
+    			   "AKILL!", me.name, sptr->name);
+    	send_globops("From %s: Non-ULined server %s trying to AKILL!", me.name,
+    		     sptr->name);
+    	return 0;
     }
 	
-    host=parv[1];
-    user=parv[2];
-    akiller=parv[4];
-    length=atoi(parv[3]);
-    timeset=atoi(parv[5]);
-    reason=(parv[6] ? parv[6] : "<no reason>");
+    host = parv[1];
+    user = parv[2];
+    akiller = parv[4];
+    length = atoi(parv[3]);
+    timeset = atoi(parv[5]);
+    reason = (parv[6] ? parv[6] : "<no reason>");
 
-    current_date=smalldate((time_t)timeset);
+    current_date = smalldate((time_t)timeset);
     /* cut reason down a little, eh? */
     /* 250 chars max */
     if(strlen(reason)>250)
-	reason[251]=0;
+        reason[251]=0;
 	
     /* if this is already klined, don't akill it now */
-    ac2=find_is_klined(host, user);
-    if(ac2!=NULL) 
+    ac2 = find_is_klined(host, user);
+    if (ac2 != NULL) 
     {
 #ifndef AZZURRA
-	/* pass along the akill anyways */
-	sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
-			   sptr->name, host, user, length, akiller,
-			   timeset, reason);
-	return 0;
+    	/* pass along the akill anyways */
+    	sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
+    			   sptr->name, host, user, length, akiller,
+    			   timeset, reason);
+    	return 0;
 #else
-	remove_temp_kline(host, user, CONF_KILL);
+    	remove_temp_kline(host, user, CONF_KILL);
 #endif
     }
     /* fill out aconf */
-    aconf=make_conf();
-    aconf->status=CONF_AKILL;
+    aconf = make_conf();
+    aconf->status = CONF_AKILL;
     DupString(aconf->host, host);
     DupString(aconf->name, user);
     
@@ -5890,38 +5890,46 @@ int m_akill(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * akill and set ->hold to 0xFFFFFFFF to indicate such
      * this is a hack to prevent
      * forever akills from being removed unless by an explicit /rehash */
-    if(length>86400 || !length)
-	aconf->hold=0xFFFFFFFF;  
+    /* FIXME: we should REALLY fix this so we can safely enable AKILL duration from services --morph */
+    if (length > 86400 || !length)
+        aconf->hold = 0xFFFFFFFF;  
     else
-	aconf->hold=timeset+length;
+        aconf->hold = timeset+length;
 	
     add_temp_kline(aconf);
     /* Check local users against it */
     for (i = 0; i <= highest_fd; i++)
     {
-	if (!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr))
-            continue;
-	if (IsPerson(acptr))
-	{
-	    if ((acptr->user->username)&&(((acptr->sockhost)&& 
-					   (!match(host,acptr->sockhost)&&
-					    !match(user,
-						   acptr->user->username)))||
-					  ((acptr->hostip)&&
-					   (!match(host,acptr->hostip)&&
-					    !match(user,
-						   acptr->user->username)))))
+    	if (!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr))
+                continue;
+    	if (IsPerson(acptr))
+    	{
+    	    if ((acptr->user->username)&&(((acptr->sockhost)&& 
+    					   (!match(host,acptr->sockhost)&&
+    					    !match(user,
+    						   acptr->user->username)))||
+    					  ((acptr->hostip)&&
+    					   (!match(host,acptr->hostip)&&
+    					    !match(user,
+    						   acptr->user->username)))
+#ifdef INET6
+                            ||((IsTunnel(acptr))&&
+                            (!match(host,acptr->tunnel_host)&&
+                             !match(user,
+                                acptr->user->username)))
+#endif
+    						   ))
 		
-	    {
-		sendto_ops("Autokill active for %s",
-			   get_client_name(acptr, FALSE));
-		ircsprintf(fbuf,"Autokilled: %s",reason);
-		(void) exit_client(acptr,acptr,&me,fbuf);
-		i--; /* AZZURRA: fix for akill bug .. */
-	    }
-	}
+    	    {
+        		sendto_ops("Autokill active for %s",
+        			   get_client_name(acptr, FALSE));
+        		ircsprintf(fbuf,"Autokilled: %s",reason);
+        		(void) exit_client(acptr,acptr,&me,fbuf);
+        		i--; /* AZZURRA: fix for akill bug .. */
+    	    }
+    	}
     }
-    zline_in_progress=NO;
+    zline_in_progress = NO;
 	
     /* now finally send it off to any other servers! */
     sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",

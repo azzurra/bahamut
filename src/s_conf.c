@@ -2009,21 +2009,32 @@ aConfItem *find_kill(aClient *cptr)
     char       *host, *name;
     aConfItem  *ret;
     if (!cptr->user)
-	return 0;
+	    return 0;
 
     host = cptr->sockhost;
     name = cptr->user->username;
 
     if (strlen(host) > (size_t) HOSTLEN ||
-	(name ? strlen(name) : 0) > (size_t) HOSTLEN)
-	return (0);
+	    (name ? strlen(name) : 0) > (size_t) HOSTLEN)
+	    return (0);
 
     if (find_eline(cptr))
-	return 0;
+	    return 0;
    
-    ret=find_is_klined(host, name);
-    if (ret!=NULL) return ret;
-    host=cptr->hostip;
+    ret = find_is_klined(host, name);
+    if (ret != NULL)
+        return ret;
+    
+#ifdef INET6
+    if (IsTunnel(cptr))
+    {
+        ret = find_is_klined(cptr->tunnel_host, name);
+        if (ret != NULL)
+            return ret;
+    }
+#endif
+    
+    host = cptr->hostip;
     return (find_is_klined(host, name));
 }
 
