@@ -59,7 +59,9 @@
 #endif
 #include "resolv.h"
 
+#ifdef USE_SSL
 #include "ssl.h"
+#endif
 
 /* If FD_ZERO isn't define up to this point,
  * define it (BSD4.2 needs this) */
@@ -195,7 +197,8 @@ void report_error(char *text, aClient * cptr)
 {
     int errtmp = errno;		/* debug may change 'errno' */
     char *host;
-    int err, len = sizeof(err);
+    int err;
+    socklen_t len = sizeof(err);
     extern char *strerror();
 
     host =
@@ -241,7 +244,8 @@ int inetport(aClient *cptr, char *name, int port, char *bind_addr)
 #endif
 {
     static struct SOCKADDR_IN server;
-    int ad[4], len = sizeof(server);
+    int ad[4];
+    socklen_t len = sizeof(server);
     char ipname[20];
 
     ad[0] = ad[1] = ad[2] = ad[3] = 0;
@@ -381,7 +385,9 @@ int add_listener(aConfItem * aconf)
     char   vaddr[sizeof(struct IN_ADDR)];
 #endif
 
+#ifdef USE_SSL
     extern int ssl_capable;
+#endif
 
     cptr = make_client(NULL, NULL);
     cptr->flags = FLAGS_LISTEN;
@@ -411,11 +417,13 @@ int add_listener(aConfItem * aconf)
 	cptr->confs->next = NULL;
 	cptr->confs->value.aconf = aconf;
 	set_non_blocking(cptr->fd, cptr);
+#ifdef USE_SSL /*AZZURRA*/
 	if((strcmp(aconf->name, "SSL")) == 0 && ssl_capable) {
 	    SetSSL(cptr);
 	    cptr->ssl = NULL;
 	    cptr->client_cert = NULL;
 	}
+#endif
     } else
 	free_client(cptr);
     return 0;
@@ -614,7 +622,7 @@ in6_is_addr_loopback(uint32_t * f)
 static int check_init(aClient * cptr, char *sockn)
 {
     struct SOCKADDR_IN sk;
-    int len = sizeof(struct SOCKADDR_IN);
+    socklen_t len = sizeof(struct SOCKADDR_IN);
 
     /* If descriptor is a tty, special checking... * IT can't EVER be a tty */
 
@@ -955,10 +963,14 @@ static int completed_connection(aClient * cptr)
 	sendto_one(cptr, "PASS %s :TS", aconf->passwd);
 
     /* pass on our capabilities to the server we /connect'd */
+#ifdef HAVE_ENCRYPTION_ON
     if(!(nconf->port & CAPAB_DODKEY))
 	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
     else
 	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE");
+#else
+    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
+#endif
 
     aconf = nconf;
     sendto_one(cptr, "SERVER %s 1 :%s",
@@ -1050,15 +1062,19 @@ void close_connection(aClient * cptr)
 
     if (cptr->fd >= 0)
     {
+#ifdef USE_SSL
 	if(!IsDead(cptr))
+#endif
 	    dump_connections(cptr->fd);
 	local[cptr->fd] = NULL;
+#ifdef USE_SSL
 	if(IsSSL(cptr) && cptr->ssl) {
 	    SSL_set_shutdown(cptr->ssl, SSL_RECEIVED_SHUTDOWN);
 	    SSL_smart_shutdown(cptr->ssl);
 	    SSL_free(cptr->ssl);
 	    cptr->ssl = NULL;
 	}
+#endif
 	(void) close(cptr->fd);
 	cptr->fd = -2;
 	DBufClear(&cptr->sendQ);
@@ -1090,10 +1106,12 @@ void close_connection(aClient * cptr)
 		return;
 	    local[i] = local[j];
 	    local[i]->fd = i;
+#ifdef USE_SSL
 	    if(IsSSL(local[i])) {
 		BIO_set_fd(SSL_get_rbio(local[i]->ssl), i, BIO_NOCLOSE);
 		BIO_set_fd(SSL_get_wbio(local[i]->ssl), i, BIO_NOCLOSE);
 	    }
+#endif
 	    local[j] = NULL;
 	    /* update server list */
 	    if (IsServer(local[i]))
@@ -1183,7 +1201,7 @@ static void set_sock_opts(int fd, aClient * cptr)
 #if defined(MAXBUFFERS)
     if (rcvbufmax == 0)
     {
-	int optlen;
+	socklen_t optlen;
 
 	optlen = sizeof(rcvbufmax);
 	getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char *) &rcvbufmax, &optlen);
@@ -1208,7 +1226,7 @@ static void set_sock_opts(int fd, aClient * cptr)
 #if defined(MAXBUFFERS)
     if (sndbufmax == 0)
     {
-	int optlen;
+	socklen_t optlen;
 	
 	optlen = sizeof(sndbufmax);
 	getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char *) &sndbufmax, &optlen);
@@ -1230,19 +1248,20 @@ static void set_sock_opts(int fd, aClient * cptr)
 #endif
 #if defined(IP_OPTIONS) && defined(IPPROTO_IP) && !defined(INET6) /* controlla STRONZONE */
     {
+        socklen_t optlen;
 # if defined(MAXBUFFERS)
 	char *s = readbuf, *t = readbuf + (rcvbufmax * sizeof(char)) / 2;
-	opt = (rcvbufmax * sizeof(char)) / 8;
+	optlen = (rcvbufmax * sizeof(char)) / 8;
 # else
 	char *s = readbuf, *t = readbuf + sizeof(readbuf) / 2;
 	
-	opt = sizeof(readbuf) / 8;
+	optlen = sizeof(readbuf) / 8;
 # endif
-	if (getsockopt(fd, IPPROTO_IP, IP_OPTIONS, t, &opt) < 0)
+	if (getsockopt(fd, IPPROTO_IP, IP_OPTIONS, t, &optlen) < 0)
 	    silent_report_error("getsockopt(IP_OPTIONS) %s:%s", cptr);
-	else if (opt > 0)
+	else if (optlen > 0)
 	{
-	    for (*readbuf = '\0'; opt > 0; opt--, s += 3)
+	    for (*readbuf = '\0'; optlen > 0; optlen--, s += 3)
 		(void) ircsprintf(s, "%02.2x:", *t++);
 	    *s = '\0';
 	    sendto_realops("Connection %s using IP opts: (%s)",
@@ -1255,7 +1274,8 @@ static void set_sock_opts(int fd, aClient * cptr)
 
 int get_sockerr(aClient * cptr)
 {
-    int errtmp = errno, err = 0, len = sizeof(err);
+    int errtmp = errno, err = 0;
+    socklen_t len = sizeof(err);
     
 #ifdef	SO_ERROR
     if (cptr->fd >= 0)
@@ -1282,8 +1302,10 @@ char *irc_get_sockerr(aClient *cptr)
 	return "dbuf allocation error";
     case IRCERR_ZIP:
 	return "compression general failure";
+#ifdef USE_SSL
     case IRCERR_SSL:
 	return "SSL error";
+#endif
     default:
 	return "Unknown error!";
     }
@@ -1345,11 +1367,14 @@ aClient *add_connection(aClient * cptr, int fd)
     aConfItem *aconf = NULL;
     char *s, *t;
     struct SOCKADDR_IN addr;
-    int len;
+    socklen_t len;
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     aConfItem *tmpconf;
     int doident = YES;
 #endif   
+#ifdef INET6
+    size_t off = 0;
+#endif /* INET6 */
    
     acptr = make_client(NULL, &me);
     
@@ -1413,6 +1438,7 @@ aClient *add_connection(aClient * cptr, int fd)
 
     acptr->lport = cptr->port;
 
+#ifdef USE_SSL /*AZZURRA*/
     if (IsSSL(cptr))
     {
 	extern SSL_CTX *ircdssl_ctx;
@@ -1449,6 +1475,7 @@ aClient *add_connection(aClient * cptr, int fd)
 	    return NULL;
 	}
     }
+#endif
 
     lin.flags = ASYNC_CLIENT;
     lin.value.cptr = acptr;	
@@ -1473,11 +1500,15 @@ aClient *add_connection(aClient * cptr, int fd)
     acptr->acpt = cptr;
     add_client_to_list(acptr);
 
+#ifdef USE_SSL
     if(!IsSSL(acptr))
     {
+#endif
 	set_non_blocking(acptr->fd, acptr);
 	set_sock_opts(acptr->fd, acptr);
+#ifdef USE_SSL
     }
+#endif
 
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     /* We do NOT want to start auth if the unknown connection
@@ -1526,6 +1557,32 @@ aClient *add_connection(aClient * cptr, int fd)
    
 #ifdef INET6
     SetIPv6(acptr);
+    /* Detect 6to4 and/or Teredo tunnels */
+    memset(acptr->tunnel_host, '\0', HOSTIPLEN + 1);
+    if (acptr->ip.s6_addr[0] == 0x20 && acptr->ip.s6_addr[1] == 0x02)
+    {
+        Set6to4(acptr);
+        off = 2;
+    }
+    else if (acptr->ip.s6_addr[0] == 0x20 && acptr->ip.s6_addr[1] == 0x01 && acptr->ip.s6_addr[2] == 0 && acptr->ip.s6_addr[3] == 0)
+    {
+        SetTeredo(acptr);
+        off = 12;
+    }
+    if (IsTunnel(acptr))
+    {
+        struct in_addr endpoint_addr;
+        memcpy(&endpoint_addr.s_addr, acptr->ip.s6_addr + off, sizeof(endpoint_addr.s_addr));
+        /* Flip all bits if this is a Teredo tunnel */
+        if (IsTeredo(acptr))
+            endpoint_addr.s_addr ^= 0xFFFFFFFFU;
+        if (inet_ntop(AF_INET, &endpoint_addr, acptr->tunnel_host, HOSTIPLEN + 1) == NULL)
+        {
+            /* Clear flags and log error */
+            ClearTunnel(acptr);
+            sendto_realops_lev(DEBUG_LEV, "inet_ntop failed while resolving tunnel endpoint for %s", get_client_name(acptr, TRUE));
+        }
+    }
 #endif
 
     return acptr;
@@ -1592,9 +1649,13 @@ static int do_client_queue(aClient *cptr)
  */
 
 #define MAX_CLIENT_RECVQ 8192	/* 4 dbufs */
+#ifdef USE_SSL
 #define RECV2(from, buf, len)	IsSSL(cptr) ? \
 				safe_SSL_read(from, buf, len) : \
 				RECV(from->fd, buf, len)
+#else
+#define RECV2(from, buf, len)	RECV(from->fd, buf, len)
+#endif
 
 
 static int read_packet(aClient * cptr)
@@ -1730,7 +1791,7 @@ void accept_connection(aClient *cptr)
     aConfItem *tmp;
     char dumpstring[491];
     static struct SOCKADDR_IN addr;
-    int addrlen = sizeof(struct SOCKADDR_IN);
+    socklen_t addrlen = sizeof(struct SOCKADDR_IN);
     char host[HOSTLEN + 2];
     int newfd;
     
@@ -1896,6 +1957,7 @@ int read_message(time_t delay, fdlist * listp)
 		continue;
 	    if (IsLog(cptr))
 		continue;
+#ifdef USE_SSL
 	    if (cptr->ssl != NULL && IsSSL(cptr) &&
 		    !SSL_is_init_finished(cptr->ssl))
 	    {
@@ -1903,6 +1965,7 @@ int read_message(time_t delay, fdlist * listp)
 		    close_connection(cptr);
 		continue;
 	    }
+#endif
 	    if (DoingAuth(cptr)) 
 	    {
 		auth++;
@@ -2177,6 +2240,7 @@ int read_message(time_t delay, fdlist * listp)
 		continue;
 	    if (IsLog(cptr))
 		continue;
+#ifdef USE_SSL
 	    if (cptr->ssl != NULL && IsSSL(cptr) &&
 		    !SSL_is_init_finished(cptr->ssl))
 	    {
@@ -2184,6 +2248,7 @@ int read_message(time_t delay, fdlist * listp)
 		    close_connection(cptr);
 		continue;
 	    }
+#endif
 	    if (DoingAuth(cptr)) 
 	    {
 		if (auth == 0)

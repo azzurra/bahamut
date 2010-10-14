@@ -123,6 +123,7 @@ char *infotext[] =
 	 "INET6 code is available on: http://devel.azzurra.org",
 	 "",
 #endif
+#if defined(USE_SSL)
 	 "SSL code:",
 	 "void/vjt             Marcello Barnaba   void@azzurra.org",
 	 "SSL testing:",
@@ -130,6 +131,7 @@ char *infotext[] =
 	 "This server uses the OpenSSL library: http://www.openssl.org",
 	 "SSL code is available on: http://devel.azzurra.org",
 	 "",
+#endif
 #if defined(AZZURRA)
 	 "Azzurra code:",
 	 "void/vjt             Marcello Barnaba      void@azzurra.org",
@@ -140,15 +142,8 @@ char *infotext[] =
 	 "        #sniffo    :: WuhrerHouse, nextime, kazam, tsk, jx, *",
 	 "Azzurra code is available on: http://devel.azzurra.org",
 	 "",
-	 "Host encryption code:",
-	 "morph                Matteo Panella    morpheus@azzurra.org",
-	 "Thanks: #it-opers  :: Md, Sonic, *",
-	 "        #univaq    :: ftp21, *",
-	 "        #altrove   :: vjt, t, *",
-	 "Many thanks to Jinliang Fan for CryptoPAn and to David Stott",
-	 "for his non prefix-preserving implementation.",
-	 "Host encryption code is available on http://devel.azzurra.org",
 #endif
+#if defined(INET6) || defined(USE_SSL) || defined(AZZURRA)
 	 " _____________________________________ ",
 	 "< This bahamut has Super Cow Powers ! >",
 	 " ------------------------------------- ",
@@ -158,6 +153,7 @@ char *infotext[] =
 	 "                ||----w |",
 	 "                ||     ||",
 	 "",
+#endif
 	 0,
 };
 !SUB!THIS!

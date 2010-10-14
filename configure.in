@@ -1,17 +1,15 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.59)
-
-AC_INIT(bahamut-azzurra, 1.4.34, "devel@azzurra.org", "bahamut-azzurra")
-
 PACKAGE=bahamut-azzurra
 VERSION="1.4.34"
 
+AC_INIT(PACKAGE, VERSION, "devel@ml.azzurra.org", "bahamut-azzurra")
 AC_CANONICAL_TARGET
 
-dnl AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER(include/setup.h)
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
+
+AC_ARG_ENABLE(encryption, [  --disable-encryption    disable rc4 link encryption (removes OpenSSL dependancy)],,enable_encryption=yes)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -262,6 +260,65 @@ AC_MSG_RESULT(can't tell))
 
 AC_SUBST(DFDSS)
 
+dnl ---------- check for zlib, half stolen from http://www.gnu.org/software/autoconf-archive/ax_check_zlib.html
+
+tryzlib=""
+
+AC_ARG_WITH(zlib-dir,
+[  --with-zlib-dir=PATH    Path to zlib installation ],
+[ tryzlib=$withval ]
+)
+
+ZLIB_HOME=""
+
+AC_MSG_CHECKING([for zlib path])
+
+for zlibdir in $tryzlib /usr/local /usr ; do
+   if test -f "$zlibdir/include/zlib.h" ; then
+     ZLIB_HOME=$zlibdir
+     break
+   fi
+done
+
+if test "$ZLIB_HOME" = "" ; then
+  AC_MSG_RESULT(failed)
+  AC_MSG_ERROR([zlib development files were not found, please install them or specify their location with --with-zlib-dir])
+fi
+
+AC_MSG_RESULT($ZLIB_HOME)
+
+if test "$ZLIB_HOME" != "/usr" ; then
+  LDFLAGS="$LDFLAGS -L$ZLIB_HOME/lib"
+  CPPFLAGS="$CPPFLAGS -I$ZLIB_HOME/include"
+fi
+
+AC_LANG_SAVE
+AC_LANG_C
+AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
+AC_CHECK_HEADER(zlib.h, [zlib_cv_zlib_h=yes], [zlib_cv_zlib_h=no])
+AC_LANG_RESTORE
+if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes" ; then
+  LIBS="$LIBS -lz"
+  AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
+  AC_MSG_RESULT(ok)
+else
+  AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
+  AC_MSG_RESULT(failed)
+  AC_MSG_ERROR([zlib development files were not found or are incomplete, please install zlib1g-dev (on Debian) or specify their location with --with-zlib-dir])
+fi
+
+dnl ---------- end of zlib checks
+
+if test $enable_encryption = no; then
+echo "encryption disabled, skipping openssl checks..."
+ENCRYPT_SRC=""
+AC_SUBST(ENCRYPT_SRC)
+else
+echo "encryption enabled, looking for openssl library..."
+ENCRYPT_SRC="rc4.c dh.c"
+AC_SUBST(ENCRYPT_SRC)
+AC_DEFINE(HAVE_ENCRYPTION_ON)
+
 # ---------- check for openssl, half stolen from openssh
 
 tryssl=""
@@ -281,7 +338,7 @@ found_openssl=""
    for ssldir in $tryssl "" /usr/local/openssl /usr/lib/openssl \
        /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt \
        /opt/openssl ; do
-      LIBS="$save_LIBS -lcrypto -lssl"
+      LIBS="$save_LIBS -lcrypto"
       SSLINC="$save_SSLINC"
 
       # if the directory isn't null, but doesn't exist, skip it
@@ -293,9 +350,9 @@ found_openssl=""
       if test ! -z "$ssldir" -a "z$ssldir" != "z/usr"; then
          # try to use ssldir/lib for libraries, if it exists
          if test -d "$ssldir/lib" ; then
-            LIBS="-L$ssldir/lib -lcrypto -lssl $save_LIBS"
+            LIBS="-L$ssldir/lib -lcrypto $save_LIBS"
          else
-            LIBS="-L$ssldir -lcrypto -lssl $save_LIBS"
+            LIBS="-L$ssldir -lcrypto $save_LIBS"
          fi
 
          if test -d "$ssldir/include" ; then
@@ -314,7 +371,6 @@ found_openssl=""
 #include <openssl/rand.h>
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
 int main(void)
 {
    FILE *fp;
@@ -338,11 +394,6 @@ int main(void)
    RAND_add(a, 2048, 2048);
    if(RAND_status() <= 0)
       return 1;
-
-   OpenSSL_add_all_ciphers();
-
-   if (EVP_get_cipherbyname("aes-128-ecb") == NULL)
-      return 1;
    return 0;
 }
                  ],
@@ -360,7 +411,11 @@ if test -z "$found_openssl"; then
   echo ""
   echo "I can't find OpenSSL on this system, or I found an older version."
   echo ""
-  echo "bahamut requires OpenSSL version 0.9.7 or later"
+  echo "bahamut requires OpenSSL version 0.9.5 or later to compile with"
+  echo "encryption enabled."
+  echo ""
+  echo "If you wish to disable server link encryption, run configure with"
+  echo "the option --disable-encryption."
   echo ""
   echo "If you have openssl, you may wish to run configure with the"
   echo "--with-ssl-dir=DIR option to specify the OpenSSL installation"
@@ -381,6 +436,7 @@ CFLAGS="$save_CFLAGS"
 echo " - openssl library version: `cat .openssl_l_version`"
 echo " - openssl header version : `cat .openssl_h_version`"
 $RM -f .openssl_l_version .openssl_h_version
+fi
 
 dnl end of openssl library test
 
@@ -398,11 +454,6 @@ case "$target" in
 esac
 
 AC_OUTPUT(Makefile src/Makefile tools/Makefile)
-
-echo configuring zlib...
-cd zlib
-./configure
-cd ..
 
 if test ! -f include/options.h; then
 	echo running ./config...

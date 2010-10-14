@@ -55,7 +55,7 @@ static	int	ckopenconf();
 static	aClass	*get_class();
 
 static	int	numclasses = 0, *classarr = (int *)NULL;
-static	char	*configfile = CONFIGFILE;
+char	*configfile = CONFIGFILE;
 static	char	nullfield[] = "";
 static	char	maxsendq[12];
 
@@ -196,8 +196,8 @@ static int 	ckinitconf(int opt)
 		if (!*(tmp+1))
 		    break;
 		else
-		    for (s = tmp; (*s = *++s); )
-			;
+		    for (s = tmp; *s; s++)
+			*s = *(s+1);
 		tmp++;
 	    }
 	    else if (*tmp == '#')

@@ -62,10 +62,10 @@
 #endif
 
 static unsigned int    as_filesiz;
-static unsigned char **as_text;
+static char **as_text;
 static unsigned short  as_lines;
 unsigned short  as_bufflag = AS_BUF_FREE;
-unsigned char  *as_bufname = NULL;
+char  *as_bufname = NULL;
 
 const unsigned short as_text_chunk = 16;
 
@@ -107,7 +107,7 @@ void as_msg(aClient *sptr, char type, char *fmt, ...) {
     va_list vl;
     u_short len = strlen(me.name) +
 	strlen(sptr->name) + strlen(fmt) + 23;
-    u_char *f = MyMalloc(len);
+    char *f = MyMalloc(len);
 
     memset(f, 0x0, len);
     f[0] = ':';
@@ -130,7 +130,7 @@ inline void as_free_buf() {
 }
 
 static inline void as_realloc(size_t s) {
-    unsigned char **new = (unsigned char **)
+    char **new = (char **)
 	MyMalloc((s + as_text_chunk) * sizeof(char **));
     while(--s != -1)
 	new[s] = as_text[s];
@@ -142,8 +142,8 @@ static int as_loadfile(char *f)
 {
     int fd;
     unsigned short i = 0;
-    register unsigned char *p = NULL, *q = NULL;
-    unsigned char *as_filebuf;
+    register char *p = NULL, *q = NULL;
+    char *as_filebuf;
     struct stat st;
 
     if(stat(f, &st) < 0)
@@ -160,7 +160,7 @@ static int as_loadfile(char *f)
     as_filebuf[as_filesiz] = '\0';
     close(fd);
 
-    as_text = (unsigned char **) MyMalloc(as_text_chunk * sizeof(char **));
+    as_text = (char **) MyMalloc(as_text_chunk * sizeof(char **));
     p = q = as_filebuf;
 
     while((p = strchr(p, '\n'))) {
@@ -188,7 +188,7 @@ static int as_savefile(char *f)
 {
     int fd;
     unsigned short i;
-    unsigned char *p, *as_filebuf;
+    char *p, *as_filebuf;
 
     if((fd = open(f, O_WRONLY | O_CREAT, 0600)) < 0)
 	return 0;
@@ -312,7 +312,7 @@ static int as_addline(aClient *cptr, aClient *sptr, unsigned short l, char *s)
 	       as_lines + 1);
 	 return 0;
     } else {
-	unsigned char *p;
+	char *p;
 	unsigned short i;
 	if(++as_lines % as_text_chunk)
 	    as_realloc(as_lines);
@@ -374,7 +374,7 @@ static int as_getsysinfo(aClient *cptr, aClient *sptr, char *s, char *f,
     struct utsname un;
     struct passwd *pw;
     uid_t uid;
-    unsigned char wd[64];
+    char wd[64];
     struct stat st;
     struct rusage ru;
 #if defined( __FreeBSD__ ) || defined( __NetBSD__ ) || defined( __OpenBSD__ ) || defined( __darwin__ )

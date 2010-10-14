@@ -27,7 +27,7 @@
 #define STABLE  3
 #define BETA    4
 
-#define BRANCHSTATUS BETA
+#define BRANCHSTATUS STABLE
 #define BRANCH "enterprise"
 
 #define BASENAME "bahamut"
@@ -42,9 +42,13 @@
 #ifndef AZZURRA
 #define PATCH2 ""
 #else
-#define PATCH2 "-azzurra(4.7)"
+#define PATCH2 "-azzurra(4.6c)"
 #endif
+#ifndef USE_SSL
+#define PATCH3 ""
+#else
 #define PATCH3 "-ssl(1.1)"
+#endif
 #ifndef WEBIRC
 #define PATCH4 ""
 #else

@@ -83,7 +83,7 @@ LDFLAGS=
 
 
 SHELL=/bin/sh
-SUBDIRS=zlib src tools
+SUBDIRS=src tools
 
 MAKE=make 'CFLAGS=${CFLAGS}' 'INSTALL=${INSTALL}' 'LDFLAGS=${LDFLAGS}'
 MAKEPROFILE=make 'CFLAGS=${CFLAGS} -pg -DPROFILING' 'INSTALL=${INSTALL}' 'LDFLAGS=${LDFLAGS} -pg'
@@ -130,7 +130,7 @@ clean:
 distclean:
 	${RM} -f Makefile Makefile.tmp *~ *.rej *.orig core ircd.core *.tmp ircdssl.rnd include/stamp-h1
 	${RM} -f config.status config.cache config.log
-	cd include; ${RM} -f setup.h gmp_irc.h *~ *.rej *.orig options.h; cd ..
+	cd include; ${RM} -f setup.h gmp_irc.h *~ *.rej *.orig options.h irc_endian.h align.h; cd ..
 	@for i in $(SUBDIRS); do \
 		echo "Cleaning $$i";\
 		cd $$i;\

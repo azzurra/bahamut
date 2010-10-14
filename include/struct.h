@@ -54,14 +54,15 @@
 #endif
 #endif
 
+#ifdef USE_SSL
 #include <openssl/rsa.h>       /* OpenSSL stuff */
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/evp.h>
 //#define OPENSSL_NO_KRB5		/* Define if getting krb5.h errors. */
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#endif
 
 #include "hash.h"
 
@@ -227,9 +228,9 @@ typedef struct MotdItem aMotd;
 #define FLAGS_IPV6         0x0008 /* This link uses IPv6 */
 #define FLAGS_SVSNICKED	   0x0010 /* This person has been svsnicked (can change nickname for 10 seconds) */
 #define FLAGS_REGISTERED   0x0020 /* This person has identified to a registered nick during this session. This flag is not reset when the client issues a /nick command (unlike umode +r) */
-#ifdef WEBIRC
 #define FLAGS_WEBIRC       0x0040 /* Perform WEBIRC spoofing (skip multiple getpeername() and crap like that) */
-#endif
+#define FLAGS_6TO4         0x0080 /* User is behind a 6to4 tunnel */
+#define FLAGS_TEREDO       0x0100 /* User is behind a Teredo tunnel */
 
 /* Capabilities of the ircd or clients */
 
@@ -435,10 +436,17 @@ typedef struct MotdItem aMotd;
 #define SetKnownNick(x)		((x)->flags2 |= FLAGS_REGISTERED)
 #define IsKnownNick(x)		((x)->flags2 & FLAGS_REGISTERED)
 /* end of AZZURRA stuff. */
-#ifdef WEBIRC
 #define SetWEBIRC(x)            ((x)->flags2 |= FLAGS_WEBIRC)
 #define IsWEBIRC(x)             ((x)->flags2 & FLAGS_WEBIRC)
-#endif
+/* 6to4 */
+#define Set6to4(x)          ((x)->flags2 |= FLAGS_6TO4)
+#define Is6to4(x)           ((x)->flags2 & FLAGS_6TO4)
+/* Teredo */
+#define SetTeredo(x)        ((x)->flags2 |= FLAGS_TEREDO)
+#define IsTeredo(x)         ((x)->flags2 & FLAGS_TEREDO)
+/* 6to4+Teredo */
+#define ClearTunnel(x)      ((x)->flags2 &= ~(FLAGS_TEREDO|FLAGS_6TO4))
+#define IsTunnel(x)         ((x)->flags2 & (FLAGS_6TO4|FLAGS_TEREDO))
 
 #define	SetOper(x)		((x)->umode |= UMODE_o)
 #define SetRegNick(x)           ((x)->umode |= UMODE_r)
@@ -747,14 +755,6 @@ struct spam_
 		time_t creationtime;
 };
 
-struct cpan_ctx
-{
-    const EVP_CIPHER *cipher;
-    EVP_CIPHER_CTX evp;
-    int blocksize;
-    uint8_t *pad;
-};
-
 #endif
 
 #define	CONF_ILLEGAL	        0x80000000
@@ -867,10 +867,12 @@ struct Server
     char        byhost[HOSTLEN + 1];
     aConfItem  *nline;		  /* N-line pointer for this server */
     int         dkey_flags; 	  /* dkey flags */
+#ifdef HAVE_ENCRYPTION_ON
     void       *sessioninfo_in;   /* pointer to opaque sessioninfo structure */
     void       *sessioninfo_out;  /* pointer to opaque sessioninfo structure */
     void       *rc4_in;           /* etc */
     void       *rc4_out;          /* etc */
+#endif
     void       *zip_out;
     void       *zip_in;
 };
@@ -958,8 +960,10 @@ struct Client
 
 */
 
+#ifdef USE_SSL /*AZZURRA*/
     SSL *ssl;
     X509 *client_cert;
+#endif /*SSL*/
 
     /*
      * The following fields are allocated only for local clients 
@@ -1041,6 +1045,10 @@ struct Client
 #ifdef WEBIRC
     char         webirc_host[HOSTLEN + 1];  /* hostname set via WEBIRC */
     char         webirc_ip[HOSTIPLEN + 1];  /* IP address set via WEBIRC */
+#endif
+
+#ifdef INET6
+    char        tunnel_host[HOSTIPLEN + 1]; /* IPv4 endpoint of a 6to4/Teredo tunnel (if any) */
 #endif
 
 };

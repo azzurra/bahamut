@@ -715,7 +715,11 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 	    }
 	}
 #endif
-	if (sptr->fd >= 0 && !IsDead(sptr))
+	if (sptr->fd >= 0
+#ifdef USE_SSL
+		&& !IsDead(sptr)
+#endif
+		)
 	{
 	    if (cptr != NULL && sptr != cptr)
 		sendto_one(sptr, "ERROR :Closing Link: %s %s (%s)",

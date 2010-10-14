@@ -131,8 +131,6 @@ Spam *spam_list = NULL;
 extern unsigned char *cloak_key;
 extern unsigned char *cloak_host;
 extern unsigned short cloak_key_len;
-extern int expected_cloak_key_len;
-extern struct cpan_ctx *pa_ctx, *np_ctx;
 int CONF_SERVER_LANGUAGE = LANG_IT;
 #endif
 
@@ -1114,10 +1112,14 @@ int m_server_estab(aClient *cptr)
 	
 	/* Pass my info to the new server */
 	
+#ifdef HAVE_ENCRYPTION_ON
 	if(!WantDKEY(cptr))
 	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
 	else
 	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE");
+#else /* ENCRYPTION_ON */
+	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
+#endif /* ENCRYPTION_ON */
 
 	sendto_one(cptr, "SERVER %s 1 :%s",
 		   my_name_for_link(me.name, aconf),
@@ -1189,6 +1191,7 @@ int m_server_estab(aClient *cptr)
     strcpy(cptr->hostip, "127.0.0.1");
     strcpy(cptr->sockhost, "localhost");
 
+#ifdef HAVE_ENCRYPTION_ON
     if(!CanDoDKEY(cptr) || !WantDKEY(cptr))
 	return do_server_estab(cptr);
     else
@@ -1196,6 +1199,9 @@ int m_server_estab(aClient *cptr)
 	SetNegoServer(cptr); /* VERY IMPORTANT THAT THIS IS HERE */
 	sendto_one(cptr, "DKEY START");
     }
+#else
+    return do_server_estab(cptr);
+#endif
 
     return 0;
 }
@@ -3449,56 +3455,38 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    {
 		int l = strlen(parv[2]);
 
-	        if (l < expected_cloak_key_len)
+	        if (l < MIN_CLOAK_KEY_LEN)
 	        {
-		    sendto_one(sptr, ":%s NOTICE %s :cloak key must be at least %d chars long",
-			       me.name, parv[0], expected_cloak_key_len);
+		    sendto_one(sptr, ":%s NOTICE %s :cloak key must be at least 64 chars long",
+			       me.name, parv[0]);
 		    return 0;
 	        }
 
-		if (l > expected_cloak_key_len)
-		    l = expected_cloak_key_len;
+		if (l > MAX_CLOAK_KEY_LEN)
+		    l = MAX_CLOAK_KEY_LEN;
 
-		if (strncmp(parv[2], cloak_key, l))
+		if (strncmp(parv[2], (const char *)cloak_key, l))
 		{
 		    int fd;
-		    struct cpan_ctx *newpa, *newnp;
-
+		    
 		    MyFree(cloak_key);
-		    cloak_key = MyMalloc(l + 1);
+		    cloak_key = (unsigned char *) MyMalloc(l + 1);
 		    memcpy(cloak_key, parv[2], l);
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
 
-		    if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
-			|| (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
+		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
+			    parv[0], sptr->user->username, sptr->user->host, l * 8);
+
+		    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
 		    {
-			/* Failure */
-			if (newpa)
-			    cpan_cleanup(newpa);
-			sendto_realops("Cloak key update failure: internal CryptoPAn error");
+			write(fd, cloak_key, cloak_key_len);
+			close(fd);
+			sendto_realops("New cloak key successfully saved to "CKPATH);
 		    }
 		    else
-		    {
-			/* Release old contexts and switch to new ones */
-			cpan_cleanup(np_ctx);
-			cpan_cleanup(pa_ctx);
-			pa_ctx = newpa;
-			np_ctx = newnp;
-
-			sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
-			        parv[0], sptr->user->username, sptr->user->host, l * 8);
-
-			if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
-			{
-			    write(fd, cloak_key, cloak_key_len);
-			    close(fd);
-			    sendto_realops("New cloak key successfully saved to "CKPATH);
-			}
-			else
-			    sendto_realops("Cannot save new cloak key to "CKPATH": %s",
-					strerror(errno));
-		    }
+			sendto_realops("Cannot save new cloak key to "CKPATH": %s",
+				strerror(errno));
 		}
 	    }
 	}
@@ -5061,6 +5049,7 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	   sendto_ops("%s is rehashing throttles", parv[0]);
 	   return 0;
 	}
+#ifdef USE_SSL
 	else if(mycmp(parv[1], "SSL") == 0)
 	{
 #ifdef AZZURRA
@@ -5073,6 +5062,7 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	    rehash_ssl();
 	}
+#endif
     }
     else 
     {
@@ -5847,47 +5837,47 @@ int m_akill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     int i;
 
     if(!IsServer(sptr) || (parc < 6))
-	return 0;
+	    return 0;
 	
     if(!IsULine(sptr)) 
     {
-	sendto_serv_butone(&me,":%s GLOBOPS :Non-ULined server %s trying to "
-			   "AKILL!", me.name, sptr->name);
-	send_globops("From %s: Non-ULined server %s trying to AKILL!", me.name,
-		     sptr->name);
-	return 0;
+    	sendto_serv_butone(&me,":%s GLOBOPS :Non-ULined server %s trying to "
+    			   "AKILL!", me.name, sptr->name);
+    	send_globops("From %s: Non-ULined server %s trying to AKILL!", me.name,
+    		     sptr->name);
+    	return 0;
     }
 	
-    host=parv[1];
-    user=parv[2];
-    akiller=parv[4];
-    length=atoi(parv[3]);
-    timeset=atoi(parv[5]);
-    reason=(parv[6] ? parv[6] : "<no reason>");
+    host = parv[1];
+    user = parv[2];
+    akiller = parv[4];
+    length = atoi(parv[3]);
+    timeset = atoi(parv[5]);
+    reason = (parv[6] ? parv[6] : "<no reason>");
 
-    current_date=smalldate((time_t)timeset);
+    current_date = smalldate((time_t)timeset);
     /* cut reason down a little, eh? */
     /* 250 chars max */
     if(strlen(reason)>250)
-	reason[251]=0;
+        reason[251]=0;
 	
     /* if this is already klined, don't akill it now */
-    ac2=find_is_klined(host, user);
-    if(ac2!=NULL) 
+    ac2 = find_is_klined(host, user);
+    if (ac2 != NULL) 
     {
 #ifndef AZZURRA
-	/* pass along the akill anyways */
-	sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
-			   sptr->name, host, user, length, akiller,
-			   timeset, reason);
-	return 0;
+    	/* pass along the akill anyways */
+    	sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
+    			   sptr->name, host, user, length, akiller,
+    			   timeset, reason);
+    	return 0;
 #else
-	remove_temp_kline(host, user, CONF_KILL);
+    	remove_temp_kline(host, user, CONF_KILL);
 #endif
     }
     /* fill out aconf */
-    aconf=make_conf();
-    aconf->status=CONF_AKILL;
+    aconf = make_conf();
+    aconf->status = CONF_AKILL;
     DupString(aconf->host, host);
     DupString(aconf->name, user);
     
@@ -5900,38 +5890,46 @@ int m_akill(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * akill and set ->hold to 0xFFFFFFFF to indicate such
      * this is a hack to prevent
      * forever akills from being removed unless by an explicit /rehash */
-    if(length>86400 || !length)
-	aconf->hold=0xFFFFFFFF;  
+    /* FIXME: we should REALLY fix this so we can safely enable AKILL duration from services --morph */
+    if (length > 86400 || !length)
+        aconf->hold = 0xFFFFFFFF;  
     else
-	aconf->hold=timeset+length;
+        aconf->hold = timeset+length;
 	
     add_temp_kline(aconf);
     /* Check local users against it */
     for (i = 0; i <= highest_fd; i++)
     {
-	if (!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr))
-            continue;
-	if (IsPerson(acptr))
-	{
-	    if ((acptr->user->username)&&(((acptr->sockhost)&& 
-					   (!match(host,acptr->sockhost)&&
-					    !match(user,
-						   acptr->user->username)))||
-					  ((acptr->hostip)&&
-					   (!match(host,acptr->hostip)&&
-					    !match(user,
-						   acptr->user->username)))))
+    	if (!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr))
+                continue;
+    	if (IsPerson(acptr))
+    	{
+    	    if ((acptr->user->username)&&(((acptr->sockhost)&& 
+    					   (!match(host,acptr->sockhost)&&
+    					    !match(user,
+    						   acptr->user->username)))||
+    					  ((acptr->hostip)&&
+    					   (!match(host,acptr->hostip)&&
+    					    !match(user,
+    						   acptr->user->username)))
+#ifdef INET6
+                            ||((IsTunnel(acptr))&&
+                            (!match(host,acptr->tunnel_host)&&
+                             !match(user,
+                                acptr->user->username)))
+#endif
+    						   ))
 		
-	    {
-		sendto_ops("Autokill active for %s",
-			   get_client_name(acptr, FALSE));
-		ircsprintf(fbuf,"Autokilled: %s",reason);
-		(void) exit_client(acptr,acptr,&me,fbuf);
-		i--; /* AZZURRA: fix for akill bug .. */
-	    }
-	}
+    	    {
+        		sendto_ops("Autokill active for %s",
+        			   get_client_name(acptr, FALSE));
+        		ircsprintf(fbuf,"Autokilled: %s",reason);
+        		(void) exit_client(acptr,acptr,&me,fbuf);
+        		i--; /* AZZURRA: fix for akill bug .. */
+    	    }
+    	}
     }
-    zline_in_progress=NO;
+    zline_in_progress = NO;
 	
     /* now finally send it off to any other servers! */
     sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
@@ -6618,7 +6616,6 @@ int m_unspam(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
     int l; 
-    struct cpan_ctx *newpa, *newnp;
 
     if(!(IsServer(sptr) || IsULine(sptr)))
 	return 0;
@@ -6628,56 +6625,36 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     l = strlen(parv[1]);
 
-    if (l < expected_cloak_key_len)
+    if (l < MIN_CLOAK_KEY_LEN)
 	return 0;
     
-    if (l > expected_cloak_key_len)
-	l = expected_cloak_key_len;
+    if (l > MAX_CLOAK_KEY_LEN)
+	l = MAX_CLOAK_KEY_LEN;
 
-    if (strncmp(parv[1], cloak_key, l))
+    if (strncmp(parv[1], (const char *) cloak_key, l))
     {
 	int fd;
 		    
 	MyFree(cloak_key);
-	cloak_key = MyMalloc(l + 1);
+	cloak_key = (unsigned char *) MyMalloc(l + 1);
 	memcpy(cloak_key, parv[1], l);
 	cloak_key[l] = '\0';
 	cloak_key_len = l;
 
-	/* Gracefully handle failed reinitialization */
-	if ((newpa = cpan_init(pa_ctx->cipher, cloak_key)) == NULL
-	    || (newnp = cpan_init(np_ctx->cipher, cloak_key + (expected_cloak_key_len / 2))) == NULL)
+	sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
+
+	if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
 	{
-	    /* OpenSSL failed, so the key is bogus (wrong length, most likely)
-	     * or we have a serious problem. */
-	    send_globops("From %s: Cloak key change failed: internal CryptoPAn error",
-			 me.name);
-	    if (newpa)
-		cpan_cleanup(newpa);
+	    write(fd, cloak_key, cloak_key_len);
+	    close(fd);
+	    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
 	}
 	else
 	{
-	    /* Throw away the old contexts and switch to new ones */
-	    cpan_cleanup(np_ctx);
-	    cpan_cleanup(pa_ctx);
-	    pa_ctx = newpa;
-	    np_ctx = newnp;
-
-	    sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
-
-	    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
-	    {
-		write(fd, cloak_key, cloak_key_len);
-		close(fd);
-		sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
-	    }
-	    else
-	    {
-		send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
+	    send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
 		    me.name, strerror(errno));
-	    }
-	    sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
 	}
+	sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
     }
     
     return 0;
@@ -6699,6 +6676,7 @@ int m_dkey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    return 0;
 	return exit_client(sptr, sptr, sptr, "Not negotiating now");
     }
+#ifdef HAVE_ENCRYPTION_ON
     if(mycmp(parv[1], "START") == 0)
     {
 	char keybuf[1024];
@@ -6758,13 +6736,13 @@ int m_dkey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    if(!dh_get_s_shared(keybuf, &keylen, sptr->serv->sessioninfo_in))
 		return exit_client(sptr, sptr, sptr,
 				   "Could not setup encrypted session");
-	    sptr->serv->rc4_in = rc4_initstate(keybuf, keylen);
+	    sptr->serv->rc4_in = rc4_initstate((unsigned char *)keybuf, keylen);
 	    
 	    keylen = 1024;
 	    if(!dh_get_s_shared(keybuf, &keylen, sptr->serv->sessioninfo_out))
 		return exit_client(sptr, sptr, sptr,
 				   "Could not setup encrypted session");
-	    sptr->serv->rc4_out = rc4_initstate(keybuf, keylen);
+	    sptr->serv->rc4_out = rc4_initstate((unsigned char *)keybuf, keylen);
 
 	    dh_end_session(sptr->serv->sessioninfo_in);
 	    dh_end_session(sptr->serv->sessioninfo_out);
@@ -6797,5 +6775,6 @@ int m_dkey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	ClearNegoServer(sptr);
 	return do_server_estab(sptr);
     }
+#endif
     return 0;
 }

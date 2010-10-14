@@ -1089,12 +1089,13 @@
  */
 #define SHUN
 
-/* CPAN_CIPHER_NAME
- * Cipher used by CryptoPan to generate the pseudo-random
- * one-time pad.
- * !!!DON'T CHANGE IT UNLESS TOLD OTHERWISE!!!
+/* MIN_CLOAK_KEY_LEN
+ * MAX_CLOACK_KEY_LEN
+ * Sets minimum and maximum length for cloack key.
+ * Default is 64 for MIN and 512 for MAX
  */
-#define CPAN_CIPHER_NAME	"aes-128-ecb"
+#define MIN_CLOAK_KEY_LEN	64
+#define MAX_CLOAK_KEY_LEN	512
 
 /* CKPATH
  * Name of the file that contains the cloak key

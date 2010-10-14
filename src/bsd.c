@@ -88,9 +88,11 @@ int deliver_it(aClient *cptr, char *str, int len)
 #ifdef	DEBUGMODE
     writecalls++;
 #endif
+#ifdef USE_SSL
     if(IsSSL(cptr) && cptr->ssl)
 	retval = safe_SSL_write(cptr, str, len);
     else
+#endif
 	retval = SEND(cptr->fd, str, len);
     /*
      * Convert WOULDBLOCK to a return of "0 bytes moved". This 
