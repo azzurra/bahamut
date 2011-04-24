@@ -339,12 +339,13 @@ int inetport(aClient *cptr, char *name, int port, char *bind_addr)
 
     if (cptr == &me)
     {
+	int rv;
 	/* KLUDGE to get it work... */
 	char buf[1024];
 
 	(void) ircsprintf(buf, rpl_str(RPL_MYPORTIS), me.name, "*",
 			  ntohs(server.SIN_PORT));
-	(void) write(0, buf, strlen(buf));
+	rv = write(0, buf, strlen(buf));
     }
     if (cptr->fd > highest_fd)
 	highest_fd = cptr->fd;
@@ -547,8 +548,9 @@ void init_sys()
 
 	if ((pid = fork()) < 0)
 	{
+	    int rv;
 	    if ((fd = open("/dev/tty", O_RDWR)) >= 0)
-		write(fd, "Couldn't fork!\n", 15);  /* crude, but effective */
+		rv = write(fd, "Couldn't fork!\n", 15);  /* crude, but effective */
 	    exit(0);
 	} else if (pid > 0)
 	    exit(0);
@@ -1822,9 +1824,10 @@ void accept_connection(aClient *cptr)
 
     if ((tmp=find_is_zlined(host))!=NULL) 
     {
+	int rv;
 	ircstp->is_ref++;
 	ircsprintf(dumpstring,"ERROR :Host zlined: %s\r\n",tmp->passwd);
-	write(newfd, dumpstring, strlen(dumpstring));
+	rv = write(newfd, dumpstring, strlen(dumpstring));
 	close(newfd);
 	return;
     }

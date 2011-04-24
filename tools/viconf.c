@@ -24,7 +24,7 @@
 int main(int argc, char *argv[])
 {
 #ifdef LOCKFILE
-	int fd;
+	int fd, rv;
 	char s[20], *ed, *p, *filename = CONFIGFILE;
 
 	if((p = strrchr(argv[0], '/')) == NULL)
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	sprintf(s, "%d\n", (int) getpid());
-	write(fd, s, strlen(s));
+	rv = write(fd, s, strlen(s));
 	close(fd);
 
 	/* ed config file */

@@ -720,7 +720,8 @@ int main(int argc, char *argv[])
     mcsfp=fopen(DPATH "/.maxclients", "r");
     if(mcsfp!=NULL) 
     {
-	fscanf(mcsfp, "%d %d %li %li %li %ld %ld %ld %ld", &Count.max_loc, 
+	int rv;
+	rv = fscanf(mcsfp, "%d %d %li %li %li %ld %ld %ld %ld", &Count.max_loc,
 	       &Count.max_tot, &Count.weekly, &Count.monthly, &Count.yearly, 
 	       &Count.start, &Count.week, &Count.month, &Count.year);
 	fclose(mcsfp);
@@ -1645,6 +1646,7 @@ void activity_log(char *pattern, ...)
     static char buf[1024];
     va_list vl;
     int len;
+    int rv;
     char *s;
 #ifdef ACTIVITY_LOG_ROTATE
     static time_t nextrotate = 0;
@@ -1670,11 +1672,11 @@ void activity_log(char *pattern, ...)
     {
 	va_start(vl, pattern);
 	s = myctime(time(NULL));
-	write(activity_fd, s, strlen(s));
-	write(activity_fd, " ", 1);
+	rv = write(activity_fd, s, strlen(s));
+	rv = write(activity_fd, " ", 1);
 	len = ircvsprintf(buf, pattern, vl);
 	strcat(buf, "\n");
-	write(activity_fd, buf, len+1);
+	rv = write(activity_fd, buf, len+1);
 	va_end(vl);
     }
     

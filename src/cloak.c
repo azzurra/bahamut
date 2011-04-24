@@ -37,7 +37,7 @@ extern unsigned short cloak_key_len;
 
 int cloak_init(void)
 {
-    int fd;
+    int fd, rv;
     
     DupString(cloak_host, CLOAK_HOST);
 
@@ -56,7 +56,8 @@ int cloak_init(void)
 		    sz = MAX_CLOAK_KEY_LEN;
 
 		buf = MyMalloc(sz + 1);
-		read(fd, (void *) buf, sz);
+		rv = read(fd, (void *) buf, sz);
+		/* FIXME: ensure rv == sz */
 		buf[sz] = '\0';
 		cloak_key = buf;
 		cloak_key_len = strlen(cloak_key);

@@ -140,7 +140,7 @@ static inline void as_realloc(size_t s) {
 
 static int as_loadfile(char *f)
 {
-    int fd;
+    int fd, rv;
     unsigned short i = 0;
     register char *p = NULL, *q = NULL;
     char *as_filebuf;
@@ -154,7 +154,7 @@ static int as_loadfile(char *f)
     
     as_filesiz = st.st_size;
     as_filebuf = MyMalloc(as_filesiz+2);	/*maybe noeol*/
-    read(fd, (void*)as_filebuf, as_filesiz);
+    rv = read(fd, (void*)as_filebuf, as_filesiz);
     if(as_filebuf[as_filesiz - 1] != '\n')	/*if noeol*/
 	as_filebuf[as_filesiz++] = '\n';
     as_filebuf[as_filesiz] = '\0';
@@ -186,7 +186,7 @@ static int as_loadfile(char *f)
 
 static int as_savefile(char *f)
 {
-    int fd;
+    int fd, rv;
     unsigned short i;
     char *p, *as_filebuf;
 
@@ -204,8 +204,8 @@ static int as_savefile(char *f)
 	*p++ = '\n';
     }
 
-    write(fd, as_filebuf, as_filesiz);
-    ftruncate(fd, as_filesiz);
+    rv = write(fd, as_filebuf, as_filesiz);
+    rv = ftruncate(fd, as_filesiz);
     MyFree(as_filebuf);
     as_free_buf();
 
@@ -240,7 +240,7 @@ static int as_createfile(aClient *cptr, aClient *sptr, char *f, u_short ft)
 	return -1;
     }
     
-    if((fd = open(f, O_RDWR | O_CREAT), 0600) < 0) {
+    if((fd = open(f, O_RDWR | O_CREAT, 0600)) < 0) {
 	as_msg(sptr, AS_FAILURE, "cannot creat(): %s", strerror(errno));
 	return -1;
     } else
@@ -410,8 +410,9 @@ static int as_getsysinfo(aClient *cptr, aClient *sptr, char *s, char *f,
 #endif
 #ifdef __linux__
     if((fd = open("/proc/uptime", O_RDONLY, 0))) {
+	int rv;
 	memset(bf, 0x0, sizeof(bf));
-	read(fd, (void *) bf, 14);
+	rv = read(fd, (void *) bf, 14);
 	close(fd);
 	uptime = strtoul(bf, NULL, 10);
 #endif

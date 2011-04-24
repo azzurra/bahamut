@@ -3480,7 +3480,8 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 		    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
 		    {
-			write(fd, cloak_key, cloak_key_len);
+			int rv;
+			rv = write(fd, cloak_key, cloak_key_len);
 			close(fd);
 			sendto_realops("New cloak key successfully saved to "CKPATH);
 		    }
@@ -4894,7 +4895,7 @@ int m_zline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 #else /* LOCKFILE - MDP */
 
-    if ((out = open(zlinefile, O_RDWR | O_APPEND | O_CREAT)) == -1) 
+    if ((out = open(zlinefile, O_RDWR | O_APPEND | O_CREAT, 0644)) == -1) 
     {
 	sendto_one(sptr, ":%s NOTICE %s :Problem opening %s ",
 		   me.name, parv[0], zlinefile);
@@ -5718,6 +5719,7 @@ int lock_kline_file()
 void do_pending_klines()
 {
     int         fd;
+    int         rv;
     char        s[20];
     struct pkl *k, *ok;
 
@@ -5732,7 +5734,7 @@ void do_pending_klines()
 	return;
     }
     (void) ircsprintf(s, "%d\n", getpid());
-    (void) write(fd, s, strlen(s));
+    rv = write(fd, s, strlen(s));
     close(fd);
 
     /* Open klinefile */
@@ -5749,8 +5751,8 @@ void do_pending_klines()
     k = pending_klines;
     while (k) 
     {
-	write(fd, k->comment, strlen(k->comment));
-	write(fd, k->kline, strlen(k->kline));
+	rv = write(fd, k->comment, strlen(k->comment));
+	rv = write(fd, k->kline, strlen(k->kline));
 	free(k->comment);
 	free(k->kline);
 	ok = k;
@@ -6634,6 +6636,7 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (strncmp(parv[1], (const char *) cloak_key, l))
     {
 	int fd;
+	int rv;
 		    
 	MyFree(cloak_key);
 	cloak_key = (unsigned char *) MyMalloc(l + 1);
@@ -6645,7 +6648,7 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
 	{
-	    write(fd, cloak_key, cloak_key_len);
+	    rv = write(fd, cloak_key, cloak_key_len);
 	    close(fd);
 	    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
 	}
