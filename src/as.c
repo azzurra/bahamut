@@ -102,6 +102,9 @@ as_cmd as_cmds[] = {
    {NULL, NULL, 0, 0, NULL}
 };
 
+/* Template string for mkstemp */
+#define AS_TEMPTPL DPATH "/as.XXXXXXXX"
+
 /* sendto_one wrapper for AS */
 void as_msg(aClient *sptr, char type, char *fmt, ...) {
     va_list vl;
@@ -140,7 +143,7 @@ static inline void as_realloc(size_t s) {
 
 static int as_loadfile(char *f)
 {
-    int fd, rv;
+    int fd;
     unsigned short i = 0;
     register char *p = NULL, *q = NULL;
     char *as_filebuf;
@@ -149,12 +152,16 @@ static int as_loadfile(char *f)
     if(stat(f, &st) < 0)
 	return AS_FILE_ERROR;
     
-    if (!(fd = open(f, O_RDONLY, 0)))
+    if ((fd = open(f, O_RDONLY, 0)) == -1)
 	return AS_FILE_ERROR;
     
     as_filesiz = st.st_size;
     as_filebuf = MyMalloc(as_filesiz+2);	/*maybe noeol*/
-    rv = read(fd, (void*)as_filebuf, as_filesiz);
+    if (read(fd, (void*)as_filebuf, as_filesiz) == -1) {
+	MyFree(as_filebuf);
+	close(fd);
+	return AS_FILE_ERROR;
+    }
     if(as_filebuf[as_filesiz - 1] != '\n')	/*if noeol*/
 	as_filebuf[as_filesiz++] = '\n';
     as_filebuf[as_filesiz] = '\0';
@@ -186,11 +193,14 @@ static int as_loadfile(char *f)
 
 static int as_savefile(char *f)
 {
-    int fd, rv;
+    int fd, rv, oerrno;
     unsigned short i;
     char *p, *as_filebuf;
+    char templ[PATH_MAX];
 
-    if((fd = open(f, O_WRONLY | O_CREAT, 0600)) < 0)
+    /* DON'T clobber the original file */
+    strncpyzt(templ, AS_TEMPTPL, sizeof(templ));
+    if((fd = mkstemp(templ)) < 0)
 	return 0;
 
     p = as_filebuf = MyMalloc(as_filesiz);
@@ -204,13 +214,31 @@ static int as_savefile(char *f)
 	*p++ = '\n';
     }
 
-    rv = write(fd, as_filebuf, as_filesiz);
-    rv = ftruncate(fd, as_filesiz);
+    if ((rv = write(fd, as_filebuf, as_filesiz)) != -1)
+	rv = ftruncate(fd, as_filesiz);
+    /* Save errno from file operations so that AS XXX SAVE sends useful error messages */
+    oerrno = errno;
     MyFree(as_filebuf);
     as_free_buf();
 
-    close(fd);
-    return 1;
+    if (close(fd) == -1 || rv == -1) {
+	/* File writing failed, unlink the temporary file and bail out */
+	if (rv == -1)
+	    /* An operation before close(fd) failed, restore proper errno */
+	    errno = oerrno;
+	goto bailout;
+    } else {
+	/* Move the temporary file in place of the original one */
+	if (rename(templ, f) == -1)
+	    goto bailout;
+	return 1;
+    }
+bailout:
+    /* Ignore errno and return value for unlink() */
+    oerrno = errno;
+    rv = unlink(templ);
+    errno = oerrno;
+    return 0;
 }
 
 static int as_viewfile(aClient *cptr, aClient *sptr)
@@ -407,20 +435,23 @@ static int as_getsysinfo(aClient *cptr, aClient *sptr, char *s, char *f,
     len = sizeof(boottime);
     if(sysctl(mib, 2, &boottime, &len, NULL, 0) != -1) {
 	uptime = NOW - boottime.tv_sec;
+    }
 #endif
 #ifdef __linux__
-    if((fd = open("/proc/uptime", O_RDONLY, 0))) {
-	int rv;
+    if((fd = open("/proc/uptime", O_RDONLY, 0)) >= 0) {
 	memset(bf, 0x0, sizeof(bf));
-	rv = read(fd, (void *) bf, 14);
+	if (read(fd, (void *) bf, 14) != -1)
+	    uptime = strtoul(bf, NULL, 10);
 	close(fd);
-	uptime = strtoul(bf, NULL, 10);
+    }
 #endif
 #ifdef sun
     id.ut_type = BOOT_TIME;
     if((u = getutxid(&id))) {
 	uptime = NOW - u->ut_xtime;
+    }
 #endif
+    if (uptime != 0xffffffff) {
 	if (uptime > 60)
 	    uptime += 30;
 	days = uptime / 86400;

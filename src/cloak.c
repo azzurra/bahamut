@@ -41,7 +41,7 @@ int cloak_init(void)
     
     DupString(cloak_host, CLOAK_HOST);
 
-    if ((fd = open(CKPATH, O_RDONLY)))
+    if ((fd = open(CKPATH, O_RDONLY)) != -1)
     {
 	struct stat st;
 	char *buf;
@@ -56,8 +56,18 @@ int cloak_init(void)
 		    sz = MAX_CLOAK_KEY_LEN;
 
 		buf = MyMalloc(sz + 1);
-		rv = read(fd, (void *) buf, sz);
-		/* FIXME: ensure rv == sz */
+		if ((rv = read(fd, (void *) buf, sz)) != sz)
+		{
+		    int oerrno = errno;
+		    close(fd);
+#if defined(USE_SYSLOG)
+		    syslog(LOG_ERR, "Error while reading "CKPATH": %s",
+			    rv == -1 ? strerror(oerrno) : "short read");
+#endif
+		    fprintf(stderr, "Error while reading "CKPATH": %s\n",
+			    rv == -1 ? strerror(oerrno) : "short read");
+		    return 0;
+		}
 		buf[sz] = '\0';
 		cloak_key = buf;
 		cloak_key_len = strlen(cloak_key);

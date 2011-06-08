@@ -724,6 +724,9 @@ int main(int argc, char *argv[])
 	rv = fscanf(mcsfp, "%d %d %li %li %li %ld %ld %ld %ld", &Count.max_loc,
 	       &Count.max_tot, &Count.weekly, &Count.monthly, &Count.yearly, 
 	       &Count.start, &Count.week, &Count.month, &Count.year);
+	if (rv < 9)
+	    (void) fprintf(stderr, "WARNING: %d out of 9 entries from maxclients file were not loaded properly",
+			   9 - rv);
 	fclose(mcsfp);
     }
 #endif
@@ -1646,7 +1649,6 @@ void activity_log(char *pattern, ...)
     static char buf[1024];
     va_list vl;
     int len;
-    int rv;
     char *s;
 #ifdef ACTIVITY_LOG_ROTATE
     static time_t nextrotate = 0;
@@ -1670,16 +1672,19 @@ void activity_log(char *pattern, ...)
        
     if (activity_fd>=0)
     {
+	struct iovec iov[3];
+	char spc = ' ';
 	va_start(vl, pattern);
-	s = myctime(time(NULL));
-	rv = write(activity_fd, s, strlen(s));
-	rv = write(activity_fd, " ", 1);
 	len = ircvsprintf(buf, pattern, vl);
-	strcat(buf, "\n");
-	rv = write(activity_fd, buf, len+1);
 	va_end(vl);
+	strcat(buf, "\n");
+	s = myctime(time(NULL));
+	/* Perform activity_log I/O in a single transaction */
+	iov[0].iov_base = s; iov[0].iov_len = strlen(s);
+	iov[1].iov_base = &spc; iov[1].iov_len = 1;
+	iov[2].iov_base = buf; iov[2].iov_len = len + 1;
+	if (writev(activity_fd, iov, 3) == -1)
+	    sendto_realops_lev(DEBUG_LEV, "Unable to write to current activity log file: %s", strerror(errno));
     }
-    
 }
 #endif
-
