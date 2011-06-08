@@ -132,6 +132,9 @@ extern unsigned char *cloak_key;
 extern unsigned char *cloak_host;
 extern unsigned short cloak_key_len;
 int CONF_SERVER_LANGUAGE = LANG_IT;
+#ifdef DYNAMIC_CLOAKING
+#define CK_TEMPTPL	DPATH "/.cloak.XXXXXXXX"
+#endif
 #endif
 
 #ifdef RESTRICT_USERS
@@ -3467,7 +3470,8 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 		if (strncmp(parv[2], (const char *)cloak_key, l))
 		{
-		    int fd;
+		    int fd, oerrno, rv = -1;
+		    char templ[PATH_MAX];
 		    
 		    MyFree(cloak_key);
 		    cloak_key = (unsigned char *) MyMalloc(l + 1);
@@ -3478,16 +3482,36 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
 			    parv[0], sptr->user->username, sptr->user->host, l * 8);
 
-		    if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+		    strncpyzt(templ, CK_TEMPTPL, sizeof(templ));
+		    if ((fd = mkstemp(templ)) != -1)
 		    {
-			int rv;
 			rv = write(fd, cloak_key, cloak_key_len);
-			close(fd);
-			sendto_realops("New cloak key successfully saved to "CKPATH);
+			if (rv == cloak_key_len)
+			{
+			    if (((rv = close(fd)) == 0) && ((rv = rename(templ, CKPATH)) == 0))
+				sendto_realops("New cloak key successfully saved to "CKPATH);
+			    else
+			    {
+				oerrno = errno;
+				(void) unlink(templ);
+				errno = oerrno;
+				fd = -1;
+			    }
+			}
+			else
+			{
+			    oerrno = errno;
+			    (void) close(fd);
+			    (void) unlink(templ);
+			    errno = oerrno;
+			    fd = -1;
+			}
 		    }
-		    else
+
+		    /* We use fd == -1 to signal an error */
+		    if (fd == -1)
 			sendto_realops("Cannot save new cloak key to "CKPATH": %s",
-				strerror(errno));
+				rv == -1 ? strerror(errno) : "short write");
 		}
 	    }
 	}
@@ -6635,8 +6659,8 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (strncmp(parv[1], (const char *) cloak_key, l))
     {
-	int fd;
-	int rv;
+	int fd, oerrno, rv = -1;
+	char templ[PATH_MAX];
 		    
 	MyFree(cloak_key);
 	cloak_key = (unsigned char *) MyMalloc(l + 1);
@@ -6646,16 +6670,37 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
 
-	if((fd = open(CKPATH, O_WRONLY | O_TRUNC)))
+	strncpyzt(templ, CK_TEMPTPL, sizeof(templ));
+	if ((fd = mkstemp(templ)) != -1)
 	{
 	    rv = write(fd, cloak_key, cloak_key_len);
-	    close(fd);
-	    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+	    if (rv == cloak_key_len)
+	    {
+		if (((rv = close(fd)) == 0) && ((rv = rename(templ, CKPATH)) == 0))
+		    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+		else
+		{
+		    oerrno = errno;
+		    (void) unlink(templ);
+		    errno = oerrno;
+		    fd = -1;
+		}
+	    }
+	    else
+	    {
+		oerrno = errno;
+		(void) close(fd);
+		(void) unlink(templ);
+		errno = oerrno;
+		fd = -1;
+	    }
 	}
-	else
+
+	/* fd == -1 -> we got an error */
+	if (fd == -1)
 	{
 	    send_globops("From %s: Cannot save new cloak key to "CKPATH": %s",
-		    me.name, strerror(errno));
+		    me.name, rv == -1 ? strerror(errno) : "short write");
 	}
 	sendto_serv_butone(cptr, ":%s CLOAKEY :%s", sptr->name, cloak_key);
     }
