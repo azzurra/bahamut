@@ -52,14 +52,14 @@
 #endif
 #define FOREVER for(;;)
 /* -Dianora */
-#if !defined(STDC_HEADERS)
-char        *malloc(), *calloc();
-void        free();
-#else
-#ifdef MALLOCH
-#include MALLOCH
-#endif
-#endif
+# if !defined(STDC_HEADERS)
+#    if !defined(HAVE_MALLOC_H)
+	char        *malloc(), *calloc();
+	void        free();
+#    else
+#	include <malloc.h>
+#    endif /* !defined(HAVE_MALLOC_H) */
+# endif /* !defined(STDC_HEADERS) */
 extern void flush_fdlist_connections();
 extern int  match(char *, char *);
 extern int  mycmp(char *, char *);

@@ -30,12 +30,7 @@ AC_CHECK_FUNC(res_mkquery, AC_DEFINE(HAVE_RES_MKQUERY, [1], [Define if you have 
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(sys/param.h unistd.h string.h strings.h sys/syslog.h sys/uio.h stdlib.h stddef.h stropts.h limits.h)
-AH_VERBATIM([MALLOCH],[/* Define to <malloc.h> if you need it */
-#if !defined(STDC_HEADERS)
-#undef MALLOCH
-#endif]) dnl
-AC_CHECK_HEADER(malloc.h, AC_DEFINE(MALLOCH, <malloc.h>))
+AC_CHECK_HEADERS(sys/param.h unistd.h string.h strings.h sys/syslog.h sys/uio.h stdlib.h stddef.h stropts.h limits.h malloc.h)
 AC_MSG_CHECKING(MIN and MAX definition)
 AC_EGREP_CPP(yes,
 [

@@ -57,6 +57,9 @@
 /* Define to 1 if you have the `lrand48' function. */
 #undef HAVE_LRAND48
 
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -134,11 +137,6 @@
 
 /* Define if you have the __res_mkquery function */
 #undef HAVE___RES_MKQUERY
-
-/* Define to <malloc.h> if you need it */
-#if !defined(STDC_HEADERS)
-#undef MALLOCH
-#endif
 
 /* Define if you have BSD non-blocking sockets (O_NDELAY) */
 #undef NBLOCK_BSD
