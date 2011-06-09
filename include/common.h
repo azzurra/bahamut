@@ -85,7 +85,7 @@ extern int  inet_netof(struct in_addr);
 #endif
 extern char *myctime(time_t);
 extern char *strtoken(char **, char *, char *);
-#if !defined(HAVE_MINMAX)
+#if !defined(HAVE_SYS_PARAM_H) || !defined(HAVE_MINMAX)
 #ifndef MAX
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif

@@ -52,6 +52,10 @@
 #include <limits.h>
 #endif
 
+#if defined( HAVE_SYS_UIO_H )
+#include <sys/uio.h>
+#endif
+
 #define	strcasecmp	mycmp
 #define	strncasecmp	myncmp
 

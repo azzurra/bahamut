@@ -50,6 +50,15 @@
 # 	endif
 # endif
 
+# if !defined(HAVE_WRITEV)
+# error Your platform does not support writev()
+# endif
+
+/* FIXME: we should provide an alternative to mkstemp() */
+# if !defined(HAVE_MKSTEMP)
+# error Your platform does not support mkstemp()
+# endif
+
 /*
  * The following OS specific stuff is a compatibility kludge it would
  * be nice to get rid of all of this eventually.
