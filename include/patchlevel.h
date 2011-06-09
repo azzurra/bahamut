@@ -42,7 +42,7 @@
 #ifndef AZZURRA
 #define PATCH2 ""
 #else
-#define PATCH2 "-azzurra(4.6c)"
+#define PATCH2 "-azzurra(4.6d)"
 #endif
 #ifndef USE_SSL
 #define PATCH3 ""
