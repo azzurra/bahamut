@@ -1189,6 +1189,7 @@ struct Channel
     chanMember       *members;
     Link       *invites;
     aBan       *banlist;
+    aBan	*restrictlist;
     ts_val      channelts;
 #ifdef FLUD
     time_t      fludblock;
@@ -1249,6 +1250,7 @@ struct Channel
 #define MODE_SSLONLY	0x200000
 #define MODE_NOUNKNOWN	0x400000 /* cmode +j, allow only registered users to join */
 #define MODE_UNRESTRICT	0x800000 /* cmode +U, allow restricted users to join */
+#define MODE_RESTRICT	0x1000000 /*cmode +z, disallow a matching client to join without a registered nick*/
 #endif
 
 /* mode flags which take another parameter (With PARAmeterS) */
@@ -1256,7 +1258,7 @@ struct Channel
 #ifndef AZZURRA
 #define	MODE_WPARAS	(MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
 #else
-#define	MODE_WPARAS	(MODE_CHANOP|MODE_HALFOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
+#define	MODE_WPARAS	(MODE_CHANOP|MODE_HALFOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_RESTRICT)
 #endif
 
 /*

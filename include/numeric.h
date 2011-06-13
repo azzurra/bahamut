@@ -282,6 +282,11 @@
 /* rpl_endofnames above (366) */
 #define RPL_BANLIST          367
 #define RPL_ENDOFBANLIST     368
+#ifdef AZZURRA
+#define RPL_RESTRICTLIST     344
+#define RPL_ENDOFRESTRICTLIST 345
+#define ERR_RESTRICTLISTFULL 346
+#endif
 /* rpl_endofwhowas above (369) */
 
 #define	RPL_INFO             371

@@ -36,7 +36,7 @@ static char *replies[] =
                                 "biklLmMnoOprRstvc",
 #else
     /* 004 RPL_MYINFO */	":%s 004 %s %s %s oOiwscrknfydaAbghexzSjFI "
-                                "bhijklmMnoOprRstvcdSuU bklohv",
+                                "bzhijklmMnoOprRstvcdSuU bzklohv",
 #endif
     /* 005 RPL_PROTOCTL*/       ":%s 005 %s NOQUIT WATCH=%i SAFELIST MODES=%i "
                                 "MAXCHANNELS=%i MAXBANS=%i NICKLEN=%i "
@@ -50,7 +50,7 @@ static char *replies[] =
 #ifndef AZZURRA
                                 "CHANMODES=b,k,l,ciLmMnOprRst "
 #else
-                                "CHANMODES=b,k,l,cdijmMnOprRsStuU "
+                                "CHANMODES=bz,k,l,cdijmMnOprRsStuU "
 #endif
                                 ":are available on this server",
     /* 006 */	                NULL,
@@ -428,9 +428,15 @@ static char *replies[] =
     /* 341 RPL_INVITING */	":%s 341 %s %s %s",
     /* 342 RPL_SUMMONING */     ":%s 342 %s %s :User summoned to irc",
     /* 343 */	                NULL,
+#ifdef AZZURRA
+    /* 344 RPL_RESTRICTLIST */       ":%s 344 %s %s %s %s %lu",
+    /* 345 RPL_ENDOFRESTRICTLIST */  ":%s 345 %s %s :End of Channel Restrict List",
+    /* 346 ERR_RESTRICTLISTFULL  */  ":%s 478 %s %s %s :Channel Restrict list is full",
+#else
     /* 344 */	                NULL,
     /* 345 */	                NULL,
     /* 346 */	                NULL,
+#endif
     /* 347 */	                NULL,
     /* 348 */	                NULL,
     /* 349 */	                NULL,

@@ -136,6 +136,7 @@ static int make_entropy()
     char randbuf[RAND_BYTES * 4];
     FILE *fp;
     int i;
+    int tmp; /*Ugly hack --Sonic*/
 
 	printf("No random state found, trying to generate entropy from /dev/random...\n");
 	printf("This may take a moment.\n");
@@ -195,7 +196,7 @@ static int make_entropy()
 	return 0;
     }
     
-    fwrite(randbuf, RAND_BYTES * 4, 1, fp);
+    tmp = fwrite(randbuf, RAND_BYTES * 4, 1, fp);
     fclose(fp);
     
     RAND_load_file(".ircd.entropy", -1);

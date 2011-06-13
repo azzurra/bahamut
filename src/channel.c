@@ -41,10 +41,20 @@ aChannel   *channel = NullChn;
 
 static void add_invite(aClient *, aChannel *);
 static int  add_banid(aClient *, aChannel *, char *);
+#ifdef AZZURRA
+static int  add_restrictid(aClient *, aChannel *, char *);
+#endif
 static int  can_join(aClient *, aChannel *, char *);
 static void channel_modes(aClient *, char *, char *, aChannel *);
 static int  del_banid(aChannel *, char *);
+#ifdef AZZURRA
+static int  del_restrictid(aChannel*, char *);
+#endif
 static aBan *is_banned(aClient *, aChannel *);
+#ifdef AZZURRA
+static aBan *is_restricted(aClient *, aChannel *);
+#endif
+
 static int  set_mode(aClient *, aClient *, aChannel *, int, 
 		     int, char **, char *, char *);
 static void sub1_from_channel(aChannel *);
@@ -190,7 +200,100 @@ static char *make_nick_user_host(char *nick, char *name, char *host)
     *ptr1 = '\0';
     return (namebuf);
 }
+#ifdef AZZURRA
+/* Restrict functions to work with mode +z */
+/* add_restrictid - add an id to be restricted to the channel  (belongs to cptr) */
 
+static int add_restrictid(aClient *cptr, aChannel *chptr, char *resid)
+{
+    aBan   	*res;
+    int     	 cnt = 0;
+    
+    for (res = chptr->restrictlist; res; res = res->next)
+    {
+	if (MyClient(cptr) && (++cnt >= MAXBANS))
+	{
+	    sendto_one(cptr, getreply(ERR_RESTRICTLISTFULL), me.name, cptr->name,
+		       chptr->chname, resid);
+	    return -1;
+	}
+	/* yikes, we were doing all sorts of weird crap here before, now
+	 * we ONLY want to know if current restrinctions cover this restriction, not if this
+	 * restriction covers current ones, since it may cover other things too -wd */
+	else if (!match(res->banstr, resid))
+	    return -1;
+    }
+
+    res = (aBan *) MyMalloc(sizeof(aBan));
+    res->banstr = (char *) MyMalloc(strlen(resid) + 1);
+    (void) strcpy(res->banstr, resid);
+    res->next = chptr->restrictlist;
+    
+    if (IsPerson(cptr))
+    {
+	res->who = (char *) MyMalloc(strlen(cptr->name) +
+				     strlen(cptr->user->username) +
+				     (IsUmodex(cptr) ?
+				      strlen(cptr->user->virthost) :
+				      strlen(cptr->user->host))
+				     + 3);
+
+	(void) ircsprintf(res->who, "%s!%s@%s",
+			  cptr->name, cptr->user->username,
+			  IsUmodex(cptr) ? cptr->user->virthost :
+			  cptr->user->host);
+    }
+    else
+    {
+	res->who = (char *) MyMalloc(strlen(cptr->name) + 1);
+	(void) strcpy(res->who, cptr->name);
+    }
+    
+    /* determine what 'type' of mask this is, for less matching later */
+    
+    if(resid[0] == '*' && resid[1] == '!')
+    {
+	if(resid[2] == '*' && resid[3] == '@')
+	    res->type = MTYP_HOST;
+	else
+	    res->type = MTYP_USERHOST;
+    }
+    else
+	res->type = MTYP_FULL;
+
+    res->when = timeofday;
+    chptr->restrictlist = res;
+    
+    return 0;
+}
+
+/*
+ * del_restrictid - delete an id belonging to cptr if resid is null,
+ * deleteall resids belonging to cptr.
+ */
+static int del_restrictid(aChannel *chptr, char *resid)
+{
+   aBan        **res;
+   aBan   	*tmp;
+
+
+   if (!resid)
+       return -1;
+   for (res = &(chptr->restrictlist); *res; res = &((*res)->next))
+       if (mycmp(resid, (*res)->banstr) == 0)
+       {
+	   tmp = *res;
+	   *res = tmp->next;
+	   
+	   MyFree(tmp->banstr);
+	   MyFree(tmp->who);
+	   MyFree(tmp);
+	   
+	   break;
+       }
+   return 0;
+}
+#endif
 /* Ban functions to work with mode +b */
 /* add_banid - add an id to be banned to the channel  (belongs to cptr) */
 
@@ -339,6 +442,40 @@ static int del_banid(aChannel *chptr, char *banid)
        }
    return 0;
 }
+#ifdef AZZURRA
+/*
+ * is_restrictd - returns a pointer to the restrict structure if restricted else
+ * NULL
+ * 
+ * IP_BAN_ALL from comstud always on...
+ */
+
+static aBan *is_restricted(aClient *cptr, aChannel *chptr)
+{
+    aBan       *tmp;
+    char        s[NICKLEN + USERLEN + HOSTLEN + 6];
+    char       *s2;
+    char	sv[NICKLEN + USERLEN + HOSTLEN + 6];
+    
+    if (!IsPerson(cptr))
+	return NULL;
+    strcpy(sv, make_nick_user_host(cptr->name, cptr->user->username,
+		    cptr->user->virthost));
+    
+    strcpy(s, make_nick_user_host(cptr->name, cptr->user->username,
+				  cptr->user->host));
+    s2 = make_nick_user_host(cptr->name, cptr->user->username,
+			     cptr->hostip);
+    
+    for (tmp = chptr->restrictlist; tmp; tmp = tmp->next)
+	if ((match(tmp->banstr, s) == 0) ||
+	    (match(tmp->banstr, s2) == 0)
+	    || (match(tmp->banstr, sv) == 0)
+	    )
+	    break;
+    return (tmp);
+}
+#endif
 
 /*
  * is_banned - returns a pointer to the ban structure if banned else
@@ -759,7 +896,58 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     *mbuf++ = '\0';
     return;
 }
+#ifdef AZZURRA
+static void send_restrict_list(aClient *cptr, aChannel *chptr)
+{
+    aBan   *bp;
+    char   *cp;
+    int         count = 0, send = 0;
 
+    cp = modebuf + strlen(modebuf);
+
+    if (*parabuf) /* mode +l or +k xx */
+	count = 1;
+
+    for (bp = chptr->restrictlist; bp; bp = bp->next) 
+    {
+	if (strlen(parabuf) + strlen(bp->banstr) + 20 < (size_t) MODEBUFLEN) 
+	{
+	    if(*parabuf)
+		strcat(parabuf, " ");
+	    strcat(parabuf, bp->banstr);
+	    count++;
+	    *cp++ = 'z';
+	    *cp = '\0';
+	}
+	else if (*parabuf)
+	    send = 1;
+
+	if (count == MAXTSMODEPARAMS)
+	    send = 1;
+
+	if (send) {
+	    if(IsTSMODE(cptr))
+		sendto_one(cptr, ":%s MODE %s %ld %s %s", me.name, chptr->chname,
+			   chptr->channelts, modebuf, parabuf);
+	    else
+		sendto_one(cptr, ":%s MODE %s %s %s", me.name, chptr->chname,
+			   modebuf, parabuf);
+	    send = 0;
+	    *parabuf = '\0';
+	    cp = modebuf;
+	    *cp++ = '+';
+	    if (count != MAXTSMODEPARAMS) {
+		strcpy(parabuf, bp->banstr);
+		*cp++ = 'z';
+		count = 1;
+	    }
+	    else
+		count = 0;
+	    *cp = '\0';
+	}
+    }
+}
+#endif
 static void send_ban_list(aClient *cptr, aChannel *chptr)
 {
     aBan   *bp;
@@ -903,6 +1091,9 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
     *modebuf = '+';
     modebuf[1] = '\0';
     send_ban_list(cptr, chptr);
+#ifdef AZZURRA
+    send_restrict_list(cptr, chptr);
+#endif
     if (modebuf[1] || *parabuf)
     {
 	if(IsTSMODE(cptr))
@@ -1229,7 +1420,69 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 			   sptr->name, chptr->chname);
 	    }
 	    break;
+#ifdef AZZURRA
+	case 'z':
+	    /* if the user has no more arguments, then they just want
+             * to see the bans, okay, cool. */
+            if(level < 1 && parv[args] != NULL)
+            {
+		errors |= SM_ERR_NOPRIVS;
+		break;
+            }
+            /* show them the bans, woowoo */
+            if(parv[args]==NULL)
+            {
+		if (banlsent || IsServer(sptr))
+		    break; /* Send only once -- and not to servers */
+		if (level >= 1 || IsAnOper(sptr) || IsUmodeh(sptr) || is_half_op(sptr, chptr)) {
+		    for(bp=chptr->restrictlist;bp;bp=bp->next)
+		        sendto_one(sptr, rpl_str(RPL_RESTRICTLIST), me.name, cptr->name,
+			          chptr->chname, bp->banstr, bp->who, bp->when);
+		}
+		sendto_one(cptr, rpl_str(RPL_ENDOFRESTRICTLIST), me.name,
+			   cptr->name, chptr->chname);
+		banlsent = 1;
+		break; /* we don't pass this along, either.. */
+            }
+            /* do not allow : in restrict mask, or a null restrict */
+            if(*parv[args]==':' || *parv[args] == '\0') 
+            {
+		args++;
+		break;
+            }
+            /* make a 'pretty' ban mask here, then try and set it */
+            /* okay kids, let's do this again.
+             * the buffer returned by pretty_mask is from 
+             * make_nick_user_host. This buffer is eaten by add/del banid.
+             * Thus, some poor schmuck gets himself on the banlist.
+	     * Fixed. - lucas */
+            strcpy(nuhbuf, collapse(pretty_mask(parv[args])));
+            parv[args] = nuhbuf;
+            /* if we're going to overflow our mode buffer,
+             * drop the change instead */
+            if((prelen + (mbuf - morig) + pidx + strlen(nuhbuf) + 1) > 
+	       REALMODEBUFLEN) 
+            {
+		args++;
+		break;
+            }
+
+            /* if we can't add or delete (depending) the ban, change is
+             * worthless anyhow */
 	    
+            if(!(change=='+' && !add_restrictid(sptr, chptr, parv[args])) && 
+               !(change=='-' && !del_restrictid(chptr, parv[args])))
+            {
+		args++;
+		break;
+            }
+	    
+            *mbuf++ = 'z';
+            ADD_PARA(parv[args])
+		args++;
+            nmodes++;
+            break;
+#endif
 	case 'b':
             /* if the user has no more arguments, then they just want
              * to see the bans, okay, cool. */
@@ -1243,9 +1496,17 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             {
 		if (banlsent || IsServer(sptr))
 		    break; /* Send only once -- and not to servers */
-		for(bp=chptr->banlist;bp;bp=bp->next)
-		    sendto_one(sptr, rpl_str(RPL_BANLIST), me.name, cptr->name,
-			       chptr->chname, bp->banstr, bp->who, bp->when);
+
+		if (level >= 1 || IsAnOper(sptr) || IsUmodeh(sptr) 
+#ifdef AZZURRA
+		|| is_half_op(sptr, chptr)
+#endif
+		) {
+		    for(bp=chptr->banlist;bp;bp=bp->next)
+		        sendto_one(sptr, rpl_str(RPL_BANLIST), me.name, cptr->name,
+				   chptr->chname, bp->banstr, bp->who, bp->when);
+		}
+
 		sendto_one(cptr, rpl_str(RPL_ENDOFBANLIST), me.name,
 			   cptr->name, chptr->chname);
 		banlsent = 1;
@@ -1563,8 +1824,10 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 	return 0;
 
 
-	
-	
+#ifdef AZZURRA	
+    if (is_restricted(sptr, chptr) && !IsRegNick(sptr))
+    	return (ERR_NEEDREGGEDNICK);
+#endif
     if (is_banned(sptr, chptr))
 	return (ERR_BANNEDFROMCHAN);
     if (chptr->mode.mode & MODE_INVITEONLY)
@@ -1763,6 +2026,16 @@ static void sub1_from_channel(aChannel *chptr)
 	    MyFree(bprem->who);
 	    MyFree(bprem);
 	}
+#ifdef AZZURRA
+	bp = chptr->restrictlist;
+	while (bp) {
+		bprem = bp;
+		bp = bp->next;
+		MyFree(bprem->banstr);
+		MyFree(bprem->who);
+		MyFree(bprem);
+	}
+#endif
 	if (chptr->prevch)
 	    chptr->prevch->nextch = chptr->nextch;
 	else
@@ -3265,7 +3538,77 @@ void send_user_joins(aClient *cptr, aClient *user)
 
     return;
 }
+#ifdef AZZURRA
+void kill_restrict_list(aClient *cptr, aChannel *chptr)
+{  
+    aBan   *bp, *bpn;
+    char   *cp;
+    int         count = 0, send = 0;
+      
+    cp = modebuf;  
+    *cp++ = '-';
+    *cp = '\0';      
+    
+    *parabuf = '\0';
+         
+    for (bp = chptr->restrictlist; bp; bp = bp->next)
+    {  
+	if (strlen(parabuf) + strlen(bp->banstr) + 10 < (size_t) MODEBUFLEN)
+	{  
+	    if(*parabuf)
+		strcat(parabuf, " ");
+	    strcat(parabuf, bp->banstr);
+	    count++;   
+	    *cp++ = 'z';
+	    *cp = '\0';
+	}
+	else if (*parabuf)
+	    send = 1;
+   
+	if (count == MAXMODEPARAMS)
+	    send = 1;
+    
+	if (send) {
+	    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
+				   chptr->chname, modebuf, parabuf);
+	    send = 0;
+	    *parabuf = '\0';
+	    cp = modebuf;
+	    *cp++ = '-';
+	    if (count != MAXMODEPARAMS)
+	    {
+		strcpy(parabuf, bp->banstr);
+		*cp++ = 'z';
+		count = 1;
+	    }
+	    else
+		count = 0; 
+	    *cp = '\0';
+	}
+    }  
 
+    if(*parabuf)
+    {
+	sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
+			       chptr->chname, modebuf, parabuf);
+    }
+
+    /* physically destroy channel restrict list */   
+
+    bp = chptr->restrictlist;
+    while(bp)
+    {
+	bpn = bp->next;
+	MyFree(bp->banstr);
+	MyFree(bp->who);
+	MyFree(bp);
+	bp = bpn;
+    }
+
+    chptr->restrictlist = NULL;
+   }
+
+#endif
 void kill_ban_list(aClient *cptr, aChannel *chptr)
 {  
     chanMember *cm;
@@ -3588,6 +3931,9 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     { 
        /* if remote ts is older, don't keep our modes. */ 
        kill_ban_list(sptr, chptr);
+#ifdef AZZURRA
+       kill_restrict_list(sptr, chptr);
+#endif
        keepourmodes = 0; 
        chptr->channelts = tstosend = newts; 
     } 
