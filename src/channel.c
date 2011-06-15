@@ -55,8 +55,13 @@ static aBan *is_banned(aClient *, aChannel *);
 static aBan *is_restricted(aClient *, aChannel *);
 #endif
 
+#ifdef AZZURRA
+static int  set_mode(aClient *, aClient *, aChannel *, int,
+		     int, char **, char *, char *, char *, char *, int *);
+#else
 static int  set_mode(aClient *, aClient *, aChannel *, int, 
 		     int, char **, char *, char *);
+#endif
 static void sub1_from_channel(aChannel *);
 
 int         check_channelname(aClient *, unsigned char *);
@@ -109,6 +114,9 @@ static char *newCliSJOINFmt = ":%s SJOIN %ld %s";
 /* some buffers for rebuilding channel/nick lists with ,'s */
 static char nickbuf[BUFSIZE], buf[BUFSIZE];
 static char modebuf[REALMODEBUFLEN], parabuf[REALMODEBUFLEN];
+#ifdef AZZURRA
+static char stripped_modebuf[REALMODEBUFLEN], stripped_parabuf[REALMODEBUFLEN];
+#endif
 
 /* htm ... */
 extern int lifesux;
@@ -868,6 +876,8 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
 	*mbuf++ = 'j';
     if (chptr->mode.mode & MODE_UNRESTRICT)
 	*mbuf++ = 'U';
+	if (chptr->mode.mode & MODE_HIDEBANS)
+		*mbuf++ = 'B';
 #endif
     if (chptr->mode.limit) {
 	*mbuf++ = 'l';
@@ -1110,9 +1120,12 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int         mcount = 0, chanop=0;
+#ifdef AZZURRA
+	int			stripped_mcount = 0;
+	chanMember	*cm;
+#endif
     aChannel   *chptr;
     int subparc = 2;
-    
     /* Now, try to find the channel in question */
     if (parc > 1)
     {
@@ -1164,9 +1177,14 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
        subparc++;
     }
-
+#ifndef AZZURRA
     mcount = set_mode(cptr, sptr, chptr, chanop, parc - subparc, parv + subparc,
 		      modebuf, parabuf);
+#else
+    mcount = set_mode(cptr, sptr, chptr, chanop, parc - subparc, parv + subparc,
+		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount);
+
+#endif
 
     if (strlen(modebuf) > (size_t) 1)
 	switch (mcount)
@@ -1184,10 +1202,26 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	    break;
 	default:
-	    sendto_channel_butserv(chptr, sptr,
-				   ":%s MODE %s %s %s", parv[0],
-				   chptr->chname, modebuf,
-				   parabuf);
+#ifdef AZZURRA
+		if (stripped_mcount == mcount) {
+#endif
+		    sendto_channel_butserv(chptr, sptr,
+					   ":%s MODE %s %s %s", parv[0],
+					   chptr->chname, modebuf,
+					   parabuf);
+#ifdef AZZURRA
+		} else {
+			for (cm = chptr->members; cm; cm = cm->next) {
+				if (MyConnect(cm->cptr)) {
+					if (cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(cm->cptr) || IsUmodeh(cm->cptr))
+						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, modebuf, parabuf);
+					else if (stripped_mcount > 0)
+						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s",  sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, stripped_modebuf, stripped_parabuf);
+				}
+			}
+		}
+#endif
+
 	    sendto_tsmode_servs(0, chptr, cptr,
 			       ":%s MODE %s %s %s",
 			       parv[0], chptr->chname,
@@ -1203,8 +1237,13 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /* the old set_mode was pissing me off with it's disgusting
  * hackery, so I rewrote it.  Hope this works. }:> --wd
  */
+#ifdef AZZURRA
 static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
-		    int level, int parc, char *parv[], char *mbuf, char *pbuf) 
+		    int level, int parc, char *parv[], char *mbuf, char *pbuf, char *stripped_mbuf, char *stripped_pbuf, int *stripped_mcount)
+#else
+static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
+		    int level, int parc, char *parv[], char *mbuf, char *pbuf);
+#endif
 {
 #define SM_ERR_NOPRIVS 0x0001 /* is not an op */
 #define SM_ERR_MOREPARMS 0x0002 /* needs more parameters */	
@@ -1215,6 +1254,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 /* this macro appends to pbuf */
 #define ADD_PARA(p) pptr = p; if(pidx) pbuf[pidx++] = ' '; while(*pptr) \
                     pbuf[pidx++] = *pptr++;
+#ifdef AZZURRA
+	#define ADD_STRIPPED_PARA(p) pptr = p; if(stripped_pidx) stripped_pbuf[stripped_pidx++] = ' '; while (*pptr) \
+					stripped_pbuf[stripped_pidx++] = *pptr++;
+#endif
     
     static int flags[] = 
     {
@@ -1226,7 +1269,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 #ifdef AZZURRA
 	MODE_NONICKCHG, 'd', MODE_NOSPAM, 'u',
 	MODE_NOCTCP, 'C', MODE_SSLONLY, 'S',
-	MODE_NOUNKNOWN, 'j', MODE_UNRESTRICT, 'U',
+	MODE_NOUNKNOWN, 'j', MODE_UNRESTRICT, 'U', MODE_HIDEBANS, 'B',
 #endif
 	0x0, 0x0
     };
@@ -1255,6 +1298,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
     int pidx = 0; /* index into pbuf */
     char *pptr; /* temporary paramater pointer */
     char *morig = mbuf; /* beginning of mbuf */
+#ifdef AZZURRA
+	int  stripped_pidx = 0; /*index into stripped_pbuf*/
+	int	 stripped_nmodes = 0; /*How many stripped modes we've set so far*/
+#endif
+
     /* :cptr-name MODE chptr->chname [MBUF] [PBUF] (buflen - 3 max and NULL) */
     int prelen = strlen(cptr->name) + strlen(chptr->chname) + 16;
 #ifdef AZZURRA
@@ -1268,6 +1316,9 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	return 0;
 
     *mbuf++='+'; /* add the plus, even if they don't */
+#ifdef AZZURRA
+	*stripped_mbuf++='+';
+#endif
     /* go through once to clean the user's mode string so we can
      * have a simple parser run through it...*/
 
@@ -1281,27 +1332,39 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	switch(*modes) 
 	{
 	case '+':
+#ifdef AZZURRA
+			if(*(stripped_mbuf-1) == '-')
+				*(stripped_mbuf-1) = '+';
+			else if (change != '+')
+				*stripped_mbuf++ = '+';
+#endif
             if(*(mbuf-1)=='-') 
             {
-		*(mbuf-1)='+'; /* change it around now */
-		change='+';
-		break;
+				*(mbuf-1)='+'; /* change it around now */
+				change='+';
+				break;
             }
             else if(change=='+') /* we're still doing a +, we don't care */
-		break;
+				break;
             change=*modes;
             *mbuf++='+';
             break;
-
 	case '-':
+#ifdef AZZURRA
+			if(*(stripped_mbuf-1) == '+')
+				*(stripped_mbuf-1) = '-';
+			else if (change != '-')
+				*stripped_mbuf++ = '-';
+#endif
+
             if(*(mbuf-1)=='+') 
             {
-		*(mbuf-1)='-'; /* change it around now */
-		change='-';
-		break;
+				*(mbuf-1)='-'; /* change it around now */
+				change='-';
+				break;
             }
             else if(change=='-')
-		break; /* we're still doing a -, we don't care */
+				break; /* we're still doing a -, we don't care */
             change=*modes;
             *mbuf++='-';
             break;
@@ -1318,12 +1381,20 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		{
 		    chptr->mode.mode |= MODE_OPERONLY;
 		    *mbuf++ = *modes;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
 		    nmodes++;
 		}
 		else if(change=='-' && chptr->mode.mode & MODE_OPERONLY)
 		{
 		    chptr->mode.mode &= ~MODE_OPERONLY;
 		    *mbuf++ = *modes;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
 		    nmodes++;
 		}
 		else
@@ -1395,6 +1466,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        /* we've decided their mode was okay, cool */
 	        *mbuf++ = *modes;
 	        nmodes++;
+#ifdef AZZURRA
+		*stripped_mbuf++ = *modes;
+		stripped_nmodes++;
+#endif
+
 	    }
 	    else if(change=='-' && cm->flags & (*modes=='o' ? CHFL_CHANOP :
 						*modes=='h' ? CHFL_HALFOP :
@@ -1406,11 +1482,18 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        /* we've decided their mode was okay, cool */
 	        *mbuf++ = *modes;
 	        nmodes++;
+#ifdef AZZURRA
+		*stripped_mbuf++ = *modes;
+		stripped_nmodes++;
+#endif
 	    }
 	    else
 		break;
 
 	    ADD_PARA(cm->cptr->name);
+#ifdef AZZURRA
+		ADD_STRIPPED_PARA(cm->cptr->name);
+#endif
 		args++;
 
 	    if (IsServer(sptr) && *modes == 'o' && change=='+') 
@@ -1479,6 +1562,13 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    
             *mbuf++ = 'z';
             ADD_PARA(parv[args])
+#ifdef AZZURRA
+			if (!(chptr->mode.mode & MODE_HIDEBANS)) {
+				*stripped_mbuf++ = *modes;
+				stripped_nmodes++;
+			}
+#endif
+
 		args++;
             nmodes++;
             break;
@@ -1549,6 +1639,13 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    
             *mbuf++ = 'b';
             ADD_PARA(parv[args])
+#ifdef AZZURRA
+			if (!(chptr->mode.mode & MODE_HIDEBANS)) {
+				*stripped_mbuf++ = *modes;
+				stripped_nmodes++;
+			}
+#endif
+
 		args++;
             nmodes++;
             break;
@@ -1569,6 +1666,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		chptr->mode.mode &= ~MODE_LIMIT;
 		chptr->mode.limit = 0;
 		nmodes++;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
+
 		break;
             }
             else 
@@ -1599,6 +1701,12 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		chptr->mode.limit = i;
 		chptr->mode.mode |= MODE_LIMIT;
 		*mbuf++ = 'l';
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+			ADD_STRIPPED_PARA(tmp);
+#endif
+
 		ADD_PARA(tmp);
 		args++;
 		nmodes++;
@@ -1647,6 +1755,9 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             {
 		strncpy(chptr->mode.key,parv[args],KEYLEN);
 		ADD_PARA(chptr->mode.key)
+#ifdef AZZURRA
+		ADD_STRIPPED_PARA(chptr->mode.key);
+#endif
 	    }
             else 
             {
@@ -1668,6 +1779,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             *mbuf++='k';
             args++;
             nmodes++;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
             break;
 
 	case 'r':
@@ -1689,6 +1804,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             }
             *mbuf++='r';
             nmodes++;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
+
             break;
 	    
 	case 'i':
@@ -1747,12 +1867,22 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 			chptr->mode.mode |= flags[i-1];
 		        *mbuf++=*modes;
 		        nmodes++;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
+
 		    }
 		    else if(change=='-' && chptr->mode.mode & flags[i-1])
 		    {		
 			chptr->mode.mode &= ~flags[i-1];
 		        *mbuf++=*modes;
 		        nmodes++;
+#ifdef AZZURRA
+			*stripped_mbuf++ = *modes;
+			stripped_nmodes++;
+#endif
+
 		    }
 
 		    break;
@@ -1779,9 +1909,16 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 
     /* clean up the end of the string... */
     if(*(mbuf-1) == '+' || *(mbuf-1) == '-')
-	*(mbuf-1) = '\0';
+		*(mbuf-1) = '\0';
     else
-	*mbuf = '\0';
+		*mbuf = '\0';
+#ifdef AZZURRA
+	if (*(stripped_mbuf-1) == '+' || *(stripped_mbuf-1) == '-')
+		*(stripped_mbuf-1) = '\0';
+	else
+		*(stripped_mbuf) = '\0';
+	stripped_pbuf[stripped_pidx] = '\0';
+#endif
     pbuf[pidx] = '\0';
     if(MyClient(sptr)) 
     {
@@ -1796,6 +1933,9 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		       me.name, sptr->name);
     }
     /* all done! */
+#ifdef AZZURRA
+	*stripped_mcount = stripped_nmodes;
+#endif
     return nmodes;
 #undef ADD_PARA
 }
@@ -4440,6 +4580,10 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int sendts;
+#ifdef AZZURRA
+	int stripped_mcount = 0;
+	chanMember	*cm;
+#endif
     aChannel *chptr;
 
     if (check_registered(cptr))
@@ -4475,14 +4619,37 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if(!check_channelname(sptr, (unsigned char *)parv[1]))
 	return 0;
-
+#ifndef AZZURRA
     sendts = set_mode(cptr, sptr, chptr, 2, parc - 2, parv + 2, modebuf, 
 		      parabuf);
+#else
+    sendts = set_mode(cptr, sptr, chptr, 2, parc - 2, parv + 2,
+		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount);
+#endif
 	
     if (strlen(modebuf) > (size_t)1)
     {
-	sendto_channel_butserv(chptr, sptr, ":%s MODE %s %s %s",
-			       parv[0], chptr->chname, modebuf, parabuf);
+
+#ifdef AZZURRA
+		if (stripped_mcount == sendts) {
+#endif
+		    sendto_channel_butserv(chptr, sptr,
+					   ":%s MODE %s %s %s", parv[0],
+					   chptr->chname, modebuf,
+					   parabuf);
+#ifdef AZZURRA
+		} else {
+			for (cm = chptr->members; cm; cm = cm->next) {
+				if (MyConnect(cm->cptr)) {
+					if (cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(cm->cptr) || IsUmodeh(cm->cptr))
+						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, modebuf, parabuf);
+					else if (stripped_mcount > 0)
+						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, stripped_modebuf, stripped_parabuf);
+				}
+			}
+		}
+#endif
+
 	sendto_tsmode_servs(0, chptr, cptr, ":%s MODE %s %s %s",
 		 	    parv[0], chptr->chname, modebuf, parabuf);
 	sendto_tsmode_servs(1, chptr, cptr, ":%s MODE %s 0 %s %s",

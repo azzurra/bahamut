@@ -1251,6 +1251,7 @@ struct Channel
 #define MODE_NOUNKNOWN	0x400000 /* cmode +j, allow only registered users to join */
 #define MODE_UNRESTRICT	0x800000 /* cmode +U, allow restricted users to join */
 #define MODE_RESTRICT	0x1000000 /*cmode +z, disallow a matching client to join without a registered nick*/
+#define MODE_HIDEBANS	0x2000000 /*Comde +M, hide bans to normal users*/
 #endif
 
 /* mode flags which take another parameter (With PARAmeterS) */

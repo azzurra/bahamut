@@ -36,7 +36,7 @@ static char *replies[] =
                                 "biklLmMnoOprRstvc",
 #else
     /* 004 RPL_MYINFO */	":%s 004 %s %s %s oOiwscrknfydaAbghexzSjFI "
-                                "bzhijklmMnoOprRstvcdSuU bzklohv",
+                                "bBhijklmMnoOprRstvcdSuUz bklohvz",
 #endif
     /* 005 RPL_PROTOCTL*/       ":%s 005 %s NOQUIT WATCH=%i SAFELIST MODES=%i "
                                 "MAXCHANNELS=%i MAXBANS=%i NICKLEN=%i "
@@ -50,7 +50,7 @@ static char *replies[] =
 #ifndef AZZURRA
                                 "CHANMODES=b,k,l,ciLmMnOprRst "
 #else
-                                "CHANMODES=bz,k,l,cdijmMnOprRsStuU "
+                                "CHANMODES=bz,k,l,BcdijmMnOprRsStuU "
 #endif
                                 ":are available on this server",
     /* 006 */	                NULL,
