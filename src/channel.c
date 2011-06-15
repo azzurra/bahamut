@@ -1517,7 +1517,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             {
 		if (banlsent || IsServer(sptr))
 		    break; /* Send only once -- and not to servers */
-		if (level >= 1 || IsAnOper(sptr) || IsUmodeh(sptr) || is_half_op(sptr, chptr)) {
+		if (!(chptr->mode.mode & MODE_HIDEBANS) || level >= 1 || IsAnOper(sptr) || IsUmodeh(sptr) || is_half_op(sptr, chptr)) {
 		    for(bp=chptr->restrictlist;bp;bp=bp->next)
 		        sendto_one(sptr, rpl_str(RPL_RESTRICTLIST), me.name, cptr->name,
 			          chptr->chname, bp->banstr, bp->who, bp->when);
@@ -1589,7 +1589,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 
 		if (level >= 1 || IsAnOper(sptr) || IsUmodeh(sptr) 
 #ifdef AZZURRA
-		|| is_half_op(sptr, chptr)
+		|| is_half_op(sptr, chptr) || !(chptr->mode.mode & MODE_HIDEBANS)
 #endif
 		) {
 		    for(bp=chptr->banlist;bp;bp=bp->next)
