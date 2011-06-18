@@ -246,6 +246,7 @@ typedef struct MotdItem aMotd;
 #define CAPAB_DODKEY  0x0000100 /* do I do dkey with this link? */
 #define CAPAB_NICKIP  0x0000200 /* IP in the NICK line? */
 #define CAPAB_TSMODE  0x0000400 /* MODE's parv[2] is chptr->channelts for channel mode */
+#define CAPAB_EBMODE  0x0000800 /* server supports extended ban modes (+z) and banlist hiding (+B) */
 
 #define SetTS3(x)   	((x)->capabilities |= CAPAB_TS3)
 #define IsTS3(x)       	((x)->capabilities & CAPAB_TS3)
@@ -276,6 +277,9 @@ typedef struct MotdItem aMotd;
 
 #define SetTSMODE(x)	((x)->capabilities |= CAPAB_TSMODE)
 #define IsTSMODE(x)	((x)->capabilities & CAPAB_TSMODE)
+
+#define SetEBMODE(x)	((x)->capabilities |= CAPAB_EBMODE)
+#define IsEBMODE(x)	((x)->capabilities & CAPAB_EBMODE)
 
 /* flag macros. */
 #define IsULine(x) ((x)->flags & FLAGS_ULINE)

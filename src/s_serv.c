@@ -1117,11 +1117,11 @@ int m_server_estab(aClient *cptr)
 	
 #ifdef HAVE_ENCRYPTION_ON
 	if(!WantDKEY(cptr))
-	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
+	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE EBMODE");
 	else
-	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE");
+	    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE EBMODE");
 #else /* ENCRYPTION_ON */
-	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
+	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE EBMODE");
 #endif /* ENCRYPTION_ON */
 
 	sendto_one(cptr, "SERVER %s 1 :%s",
@@ -5716,6 +5716,8 @@ int m_capab(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    SetNICKIP(cptr);
 	else if (strcmp(parv[i], "TSMODE") == 0)
 	    SetTSMODE(cptr);
+	else if (strcmp(parv[i], "EBMODE") == 0)
+	    SetEBMODE(cptr);
     }
 
     return 0;
