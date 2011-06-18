@@ -94,6 +94,7 @@ int  show_restricted_joins = NO;
 #endif
 int  restricted_joins_num = RESTRICTED_JOINS_NUM;
 int  restricted_joins_time = RESTRICTED_JOINS_TIME;
+extern int restriction_enabled;
 #endif /* RESTRICT_USERS */
 
 /* number of seconds to add to all readings of time() when making TS's */
@@ -216,6 +217,9 @@ static int add_restrictid(aClient *cptr, aChannel *chptr, char *resid)
 {
     aBan   	*res;
     int     	 cnt = 0;
+    chanMember 	*cm;
+    char 	*s, nickuhost[NICKLEN+USERLEN+HOSTLEN+6];
+    char	nickuvirthost[NICKLEN+USERLEN+HOSTLEN+6];
 
     for (res = chptr->restrictlist; res; res = res->next)
     {
@@ -272,6 +276,22 @@ static int add_restrictid(aClient *cptr, aChannel *chptr, char *resid)
     res->when = timeofday;
     chptr->restrictlist = res;
 
+    /* Update bquiet for restricts */
+    for (cm = chptr->members; cm; cm = cm->next)
+    {
+	if(!MyConnect(cm->cptr))
+	    continue;
+	strcpy(nickuvirthost, make_nick_user_host(cm->cptr->name,
+		    cm->cptr->user->username, cm->cptr->user->virthost));
+	strcpy(nickuhost, make_nick_user_host(cm->cptr->name,
+					      cm->cptr->user->username,
+					      cm->cptr->hostip));
+	s = make_nick_user_host(cm->cptr->name, cm->cptr->user->username,
+				cm->cptr->user->host);
+	if (match(resid, nickuhost) == 0 || match(resid, s) == 0 || (match(resid, nickuvirthost) == 0))
+	    cm->restricts++;
+    }
+
     return 0;
 }
 
@@ -283,7 +303,9 @@ static int del_restrictid(aChannel *chptr, char *resid)
 {
    aBan        **res;
    aBan   	*tmp;
-
+   chanMember 	*cm;
+   char 	*s, nickuhost[NICKLEN+USERLEN+HOSTLEN+6];
+   char 	 nickuvirthost[NICKLEN+USERLEN+HOSTLEN+6];
 
    if (!resid)
        return -1;
@@ -292,6 +314,23 @@ static int del_restrictid(aChannel *chptr, char *resid)
        {
 	   tmp = *res;
 	   *res = tmp->next;
+
+	   for (cm = chptr->members; cm; cm = cm->next)
+	   {
+	       if(!MyConnect(cm->cptr) || cm->restricts == 0)
+		   continue;
+
+	       strcpy(nickuvirthost, make_nick_user_host(cm->cptr->name,
+			       cm->cptr->user->username, cm->cptr->user->virthost));
+
+	       strcpy(nickuhost, make_nick_user_host(cm->cptr->name,
+			   cm->cptr->user->username, cm->cptr->hostip));
+	       s = make_nick_user_host(cm->cptr->name,
+				       cm->cptr->user->username,
+				       cm->cptr->user->host);
+	       if (match(resid, nickuhost) == 0 || match(resid, s) == 0 || (match(resid, nickuvirthost) == 0))
+		   cm->restricts--;
+	   }
 
 	   MyFree(tmp->banstr);
 	   MyFree(tmp->who);
@@ -782,6 +821,10 @@ int can_send(aClient *cptr, aChannel *chptr, char *msg)
 				* channel is -n and user is not there;
 				* we need to bquiet them if we can
 				*/
+#ifdef AZZURRA
+	if (MyClient(cptr) && restriction_enabled && !IsRegNick(cptr) && is_restricted(cptr, chptr))
+	    return (ERR_NEEDREGGEDNICK);
+#endif
     }
     else
     {
@@ -805,6 +848,11 @@ int can_send(aClient *cptr, aChannel *chptr, char *msg)
 #endif
 			   )))
 	    return (ERR_NEEDREGGEDNICK);
+#ifdef AZZURRA
+	if (restriction_enabled && !IsRegNick(cptr) && cm->restricts &&
+	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE | CHFL_HALFOP)))
+	    return (ERR_NEEDREGGEDNICK);
+#endif
 	if ((chptr->mode.mode & MODE_NOCOLOR) && msg_has_colors(msg))
 	    return (ERR_NOCOLORSONCHAN);
     }
@@ -823,11 +871,7 @@ __inline int can_change_nick (aChannel *chptr, aClient *cptr)
 	return 0; /* should not happen . . */
     
     if (chptr->mode.mode & MODE_NONICKCHG &&
-	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE
-#ifdef AZZURRA
-			   | CHFL_HALFOP
-#endif
-			   )))
+	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE | CHFL_HALFOP)))
 	    return (MODE_NONICKCHG);
     return 0;
 }
@@ -876,8 +920,8 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
 	*mbuf++ = 'j';
     if (chptr->mode.mode & MODE_UNRESTRICT)
 	*mbuf++ = 'U';
-	if (chptr->mode.mode & MODE_HIDEBANS)
-		*mbuf++ = 'B';
+    if (chptr->mode.mode & MODE_HIDEBANS)
+	*mbuf++ = 'B';
 #endif
     if (chptr->mode.limit) {
 	*mbuf++ = 'l';
@@ -1983,8 +2027,11 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 	return 0;
 
 
-#ifdef AZZURRA	
-    if (is_restricted(sptr, chptr) && !IsRegNick(sptr))
+#ifdef AZZURRA
+    /* Don't traverse the restricted list if we are not linked to services
+     * or the user has a registered nick
+     */
+    if (restriction_enabled && !IsRegNick(sptr) && is_restricted(sptr, chptr))
     	return (ERR_NEEDREGGEDNICK);
 #endif
     if (is_banned(sptr, chptr))
@@ -3700,6 +3747,7 @@ void send_user_joins(aClient *cptr, aClient *user)
 #ifdef AZZURRA
 void kill_restrict_list(aClient *cptr, aChannel *chptr)
 {
+    chanMember 	*cm;
     aBan   *bp, *bpn;
     char   *cp;
     int         count = 0, send = 0;
@@ -3765,7 +3813,14 @@ void kill_restrict_list(aClient *cptr, aChannel *chptr)
     }
 
     chptr->restrictlist = NULL;
-   }
+
+    /* reset bquiet on all channel members */
+    for (cm = chptr->members; cm; cm = cm->next)
+    {
+	if(MyConnect(cm->cptr))
+	    cm->restricts = 0;
+    }
+}
 
 #endif
 void kill_ban_list(aClient *cptr, aChannel *chptr)
