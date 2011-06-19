@@ -123,7 +123,7 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
      * parc == 11 on a normal TS style server-to-server NICK introduction
      */
     if ((IsServer(sptr) || (parc > 4)) &&
-	((IsNICKIP(sptr) && (parc < 11)) || (!IsNICKIP(sptr) && (parc < 10))))
+	((IsCapable(sptr, CAP_NICKIP) && (parc < 11)) || (NotCapable(sptr, CAP_NICKIP) && (parc < 10))))
     {
 	/*
 	 * We got the wrong number of params. Someone is trying to trick
@@ -429,7 +429,7 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    char *m;
        
 	    /* If we get 11 and aren't NICKIP, whine */
-	    if (parc==11&&(!IsNICKIP(cptr))) 
+	    if (parc==11&&(NotCapable(cptr, CAP_NICKIP)))
 		sendto_ops_lev(DEBUG_LEV, "Extra Param without NICKIP from %s",
 			       cptr->name);
 	    

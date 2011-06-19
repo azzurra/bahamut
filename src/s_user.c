@@ -1325,26 +1325,26 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 
 #ifndef INET6
     if (sptr->ip.s_addr > 0)
-	sendto_nickip_servs_butone(1, cptr, 
-			       "NICK %s %d %ld %s %s %s %s %lu %lu :%s",
-			       nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
-			       user->username, user->host, user->server, 
-			       sptr->user->servicestamp, ntohl(sptr->ip.s_addr),
-			       sptr->info);
+	sendto_server(cptr, NULL, CAP_NICKIP, NOCAPS,
+		      "NICK %s %d %ld %s %s %s %s %lu %lu :%s",
+		       nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
+		       user->username, user->host, user->server,
+		       sptr->user->servicestamp, ntohl(sptr->ip.s_addr),
+		       sptr->info);
     else   
 #endif
-    sendto_nickip_servs_butone(1, cptr, 
-			       "NICK %s %d %ld %s %s %s %s %lu %s :%s",
-			       nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
-			       user->username, user->host, user->server, 
-			       sptr->user->servicestamp,
-			       sptr->hostip ? sptr->hostip : "0.0.0.0",
-			       sptr->info);
-    sendto_nickip_servs_butone(0, cptr, 
-			       "NICK %s %d %ld %s %s %s %s %lu :%s",
-			       nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
-			       user->username, user->host, user->server, 
-			       sptr->user->servicestamp, sptr->info);
+    sendto_server(cptr, NULL, CAP_NICKIP, NOCAPS,
+		  "NICK %s %d %ld %s %s %s %s %lu %s :%s",
+		  nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
+		  user->username, user->host, user->server,
+		  sptr->user->servicestamp,
+		  sptr->hostip ? sptr->hostip : "0.0.0.0",
+		  sptr->info);
+    sendto_server(cptr, NULL, NOCAPS, CAP_NICKIP,
+		  "NICK %s %d %ld %s %s %s %s %lu :%s",
+		  nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
+		  user->username, user->host, user->server,
+		  sptr->user->servicestamp, sptr->info);
    
     if(MyClient(sptr))
     {

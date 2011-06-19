@@ -654,9 +654,9 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
 	      sendto_channel_butserv(chptr, from, ":%s MODE %s %s %s", 
 				     from->name, chptr->chname, modebuf,
 				     parabuf);
-	      sendto_tsmode_servs(0, chptr, from, ":%s MODE %s %s %s", 
+	      sendto_server(from, chptr, NOCAPS, CAP_TSMODE, ":%s MODE %s %s %s",
 				  from->name, chptr->chname, modebuf, parabuf);
-	      sendto_tsmode_servs(1, chptr, from, ":%s MODE %s %ld %s %s", 
+	      sendto_server(from, chptr, CAP_TSMODE, NOCAPS, ":%s MODE %s %ld %s %s",
 				  from->name, chptr->chname, chptr->channelts, modebuf, parabuf);
 	      send = 0;
 	      *parabuf = '\0';
@@ -682,10 +682,10 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
   {
       sendto_channel_butserv(chptr, from, ":%s MODE %s %s %s", from->name,
 			     chptr->chname, modebuf, parabuf);
-      sendto_tsmode_servs(0, chptr, from, ":%s MODE %s %s %s", 
-			  from->name, chptr->chname, modebuf, parabuf);
-      sendto_tsmode_servs(1, chptr, from, ":%s MODE %s %ld %s %s", 
-			  from->name, chptr->chname, chptr->channelts, modebuf, parabuf);
+      sendto_server(from, chptr, NOCAPS, CAP_TSMODE, ":%s MODE %s %s %s",
+		    from->name, chptr->chname, modebuf, parabuf);
+      sendto_server(from, chptr, CAP_TSMODE, NOCAPS, ":%s MODE %s %ld %s %s",
+		    from->name, chptr->chname, chptr->channelts, modebuf, parabuf);
   }
   
   return;
@@ -980,7 +980,7 @@ static void send_restrict_list(aClient *cptr, aChannel *chptr)
 	    send = 1;
 
 	if (send) {
-	    if(IsTSMODE(cptr))
+	    if(IsCapable(cptr, CAP_TSMODE))
 		sendto_one(cptr, ":%s MODE %s %ld %s %s", me.name, chptr->chname,
 			   chptr->channelts, modebuf, parabuf);
 	    else
@@ -1031,7 +1031,7 @@ static void send_ban_list(aClient *cptr, aChannel *chptr)
 	    send = 1;
 
 	if (send) {
-	    if(IsTSMODE(cptr))
+	    if(IsCapable(cptr, CAP_TSMODE))
 		sendto_one(cptr, ":%s MODE %s %ld %s %s", me.name, chptr->chname,
 			   chptr->channelts, modebuf, parabuf);
 	    else
@@ -1066,7 +1066,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
     *modebuf = *parabuf = '\0';
     channel_modes(cptr, modebuf, parabuf, chptr);
 
-    if(IsSSJoin(cptr))
+    if(IsCapable(cptr, CAP_NSJOIN))
 	ircsprintf(buf, ":%s SJOIN %ld %s %s %s :", me.name,
 		   chptr->channelts, chptr->chname, modebuf, parabuf);
     else
@@ -1122,7 +1122,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 	    if (t[-1] == ' ')
 		t[-1] = '\0';
 	    sendto_one(cptr, "%s", buf);
-	    if(IsSSJoin(cptr))
+	    if(IsCapable(cptr, CAP_NSJOIN))
 		sprintf(buf, ":%s SJOIN %ld %s 0 :", me.name,
 			chptr->channelts, chptr->chname);
 	    else
@@ -1150,7 +1150,7 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 #endif
     if (modebuf[1] || *parabuf)
     {
-	if(IsTSMODE(cptr))
+	if(IsCapable(cptr, CAP_TSMODE))
 	    sendto_one(cptr, ":%s MODE %s %ld %s %s",
 	 	       me.name, chptr->chname, chptr->channelts, modebuf, parabuf);
         else
@@ -1209,7 +1209,7 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
     }
 
-    if(IsServer(cptr) && IsTSMODE(cptr) && isdigit(parv[2][0]))
+    if(IsServer(cptr) && IsCapable(cptr, CAP_TSMODE) && isdigit(parv[2][0]))
     {
        ts_val modets = atol(parv[2]);
 
@@ -1266,14 +1266,14 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 #endif
 
-	    sendto_tsmode_servs(0, chptr, cptr,
-			       ":%s MODE %s %s %s",
-			       parv[0], chptr->chname,
-			       modebuf, parabuf);
-	    sendto_tsmode_servs(1, chptr, cptr,
-			       ":%s MODE %s %ld %s %s",
-			       parv[0], chptr->chname, chptr->channelts,
-			       modebuf, parabuf);
+	    sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
+			   ":%s MODE %s %s %s",
+			   parv[0], chptr->chname,
+			   modebuf, parabuf);
+	    sendto_server(cptr, chptr, CAP_TSMODE, NOCAPS,
+			   ":%s MODE %s %ld %s %s",
+			   parv[0], chptr->chname, chptr->channelts,
+			   modebuf, parabuf);
 	}
     return 0;
 }
@@ -2562,30 +2562,34 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    
 	    if (allow_op)
 	    {
-		sendto_ssjoin_servs(0, chptr, cptr, 
-				    ":%s SJOIN %ld %ld %s + :@%s",
-				    me.name, chptr->channelts,
-				    chptr->channelts, name, parv[0]);
-		sendto_ssjoin_servs(1, chptr, cptr, ":%s SJOIN %ld %s + :@%s",
-				    me.name, chptr->channelts, name, parv[0]);
+		sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN,
+			      ":%s SJOIN %ld %ld %s + :@%s",
+			      me.name, chptr->channelts,
+			      chptr->channelts, name, parv[0]);
+		sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS,
+			      ":%s SJOIN %ld %s + :@%s",
+			      me.name, chptr->channelts, name, parv[0]);
 	    }
 	    else
 	    {
-		sendto_ssjoin_servs(0, chptr, cptr, 
-				    ":%s SJOIN %ld %ld %s + :%s",
-				    me.name, chptr->channelts,
-				    chptr->channelts, name, parv[0]);
-		sendto_ssjoin_servs(1, chptr, cptr, ":%s SJOIN %ld %s + :%s",
-				    me.name, chptr->channelts, name, parv[0]);
+		sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN,
+			      ":%s SJOIN %ld %ld %s + :%s",
+			      me.name, chptr->channelts,
+			      chptr->channelts, name, parv[0]);
+		sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS,
+			      ":%s SJOIN %ld %s + :%s",
+			      me.name, chptr->channelts, name, parv[0]);
 	    }
 	}
 	else if (MyClient(sptr)) 
 	{
-            sendto_ssjoin_servs(0, chptr, cptr, oldCliSJOINFmt,
-				me.name, chptr->channelts,
-				chptr->channelts, name, parv[0]);
-            sendto_ssjoin_servs(1, chptr, cptr, newCliSJOINFmt,
-				parv[0], chptr->channelts, name);
+            sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN,
+			  oldCliSJOINFmt,
+			  me.name, chptr->channelts,
+			  chptr->channelts, name, parv[0]);
+            sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS,
+			  newCliSJOINFmt,
+			  parv[0], chptr->channelts, name);
 	}
 	else 
 	{
@@ -4044,11 +4048,13 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				   parv[2]);
 	}
 
-	sendto_ssjoin_servs(0, chptr, cptr, oldCliSJOINFmt, me.name,
-			    tstosend, tstosend, parv[2], parv[0]);
+	sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN,
+		      oldCliSJOINFmt, me.name,
+		      tstosend, tstosend, parv[2], parv[0]);
 
-	sendto_ssjoin_servs(1, chptr, cptr, newCliSJOINFmt, parv[0],
-			    tstosend, parv[2]);
+	sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS,
+		      newCliSJOINFmt, parv[0],
+		      tstosend, parv[2]);
 
 	return 0;
     }
@@ -4637,19 +4643,19 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	if(keep_parabuf[0] != '\0')
 	{
-	    sendto_ssjoin_servs(1, chptr, cptr, newSJOINFmt, parv[0], tstosend,
-				parv[2], keep_modebuf, keep_parabuf, sjbuf);
-	    sendto_ssjoin_servs(0, chptr, cptr, oldSJOINFmt, parv[0], 
-				tstosend, tstosend, parv[2], keep_modebuf,
-				keep_parabuf, sjbuf);
+	    sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS, newSJOINFmt, parv[0], tstosend,
+			  parv[2], keep_modebuf, keep_parabuf, sjbuf);
+	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN, oldSJOINFmt, parv[0],
+			  tstosend, tstosend, parv[2], keep_modebuf,
+			  keep_parabuf, sjbuf);
 	} 
 	else
 	{
-	    sendto_ssjoin_servs(1, chptr, cptr, newSJOINFmtNP, parv[0],
-				tstosend, parv[2], keep_modebuf, sjbuf);
-	    sendto_ssjoin_servs(0, chptr, cptr, oldSJOINFmtNP, parv[0],
-				tstosend, tstosend, parv[2], keep_modebuf,
-				sjbuf);
+	    sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS, newSJOINFmtNP, parv[0],
+			  tstosend, parv[2], keep_modebuf, sjbuf);
+	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN, oldSJOINFmtNP, parv[0],
+			  tstosend, tstosend, parv[2], keep_modebuf,
+			  sjbuf);
 	}
     }
     return 0;
@@ -4737,10 +4743,12 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 #endif
 
-	sendto_tsmode_servs(0, chptr, cptr, ":%s MODE %s %s %s",
-		 	    parv[0], chptr->chname, modebuf, parabuf);
-	sendto_tsmode_servs(1, chptr, cptr, ":%s MODE %s 0 %s %s",
-		 	    parv[0], chptr->chname, modebuf, parabuf);
+	sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
+		      ":%s MODE %s %s %s",
+		      parv[0], chptr->chname, modebuf, parabuf);
+	sendto_server(cptr, chptr, CAP_TSMODE, NOCAPS,
+		      ":%s MODE %s 0 %s %s",
+		      parv[0], chptr->chname, modebuf, parabuf);
 	if(MyClient(sptr))
 	{
 	    sendto_serv_butone(NULL, ":%s GLOBOPS :%s used SAMODE (%s %s%s%s)",

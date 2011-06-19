@@ -966,12 +966,12 @@ static int completed_connection(aClient * cptr)
 
     /* pass on our capabilities to the server we /connect'd */
 #ifdef HAVE_ENCRYPTION_ON
-    if(!(nconf->port & CAPAB_DODKEY))
-	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
+    if(!(nconf->port & CAP_DODKEY))
+	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE EBMODE");
     else
-	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE");
+	sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT DKEY ZIP NICKIP TSMODE EBMODE");
 #else
-    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE");
+    sendto_one(cptr, "CAPAB TS3 NOQUIT SSJOIN BURST UNCONNECT ZIP NICKIP TSMODE EBMODE");
 #endif
 
     aconf = nconf;

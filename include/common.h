@@ -133,4 +133,9 @@ extern unsigned char char_atribs[];
 #define isgraph(c) ((char_atribs[(u_char)(c)]&PRINT) && ((u_char)(c) != 0x32))
 #define ispunct(c) (!(char_atribs[(u_char)(c)]&(CNTRL|ALPHA|DIGIT)))
 extern struct SLink *find_user_link();
+#ifdef __GNUC__
+#define DEPRECATED __attribute__ ((deprecated))
+#else
+#define DEPRECATED
+#endif /* __GNUC__ */
 #endif /* common_include */

@@ -76,14 +76,8 @@ extern void sendto_security(char *chname, char *pattern, ...);
 
 extern void ts_warn(char *pattern, ...);
 
-extern void sendto_ssjoin_servs(int ssjoin, aChannel *chptr, aClient *from,
-				char *pattern, ...);
-extern void sendto_tsmode_servs(int tsmode, aChannel *chptr, aClient *from,
-				char *pattern, ...);
-extern void sendto_noquit_servs_butone(int noquit, aClient *one,
-				       char *pattern, ...);
-extern void sendto_nickip_servs_butone(int nonickip, aClient *one,
-				       char *pattern, ...);
+extern void sendto_server(aClient *from, aChannel *chptr, int caps, int nocaps,
+			  char *pattern, ...);
 
 extern void vsendto_fdlist(fdlist *listp, char *pattern, va_list vl);
 extern void vsendto_one(aClient *to, char *pattern, va_list vl);

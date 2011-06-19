@@ -401,7 +401,7 @@ void exit_one_client_in_split(aClient *cptr, aClient *dead, char *reason)
      * will never be called. - lucas
      */
 
-    sendto_noquit_servs_butone(0, dead, ":%s QUIT :%s", cptr->name, reason);
+    sendto_server(dead, NULL, NOCAPS, CAP_NOQUIT, ":%s QUIT :%s", cptr->name, reason);
 
     sendto_common_channels(cptr, ":%s QUIT :%s", cptr->name, reason);
     
@@ -505,7 +505,7 @@ void exit_one_server(aClient *cptr, aClient *dead, aClient *from,
 	 * dead servers.
 	 */
 
-	if(IsNoQuit(acptr) && cptr != dead)
+	if(IsCapable(acptr, CAP_NOQUIT) && cptr != dead)
 	    continue;
 
 	if (cptr->from == acptr) /* "upstream" squit */

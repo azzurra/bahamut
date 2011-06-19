@@ -361,7 +361,7 @@ int send_queued(aClient *to)
 	}
     }
     
-    if ((to->flags & FLAGS_SOBSENT) && IsBurst(to) &&
+    if ((to->flags & FLAGS_SOBSENT) && IsCapable(to, CAP_BURST) &&
 	DBufLength(&to->sendQ) < 20480) 
     {
 	if (!(to->flags & FLAGS_BURST))
@@ -736,63 +736,50 @@ void sendto_serv_butone(aClient *one, char *pattern, ...)
 }
 
 /*
- * sendto_noquit_servs_butone
- * 
- * Send a message to all noquit servs if noquit = 1,
- * or all non-noquit servs if noquit = 0
- * we omit "one", too.
+ * sendto_server
+ *
+ * inputs       - pointer to client to NOT send to
+ *              - target channel
+ *              - capability set which must be present (ALL of them)
+ *              - capability set which must NOT be present
+ *              - printf-style format string
+ *              - args to format string
+ * outputs      - NONE
+ * side effects - Send a message to all connected servers, except
+ *                the client 'one' (if non-NULL), as long as the servers
+ *                support ALL capabilities in 'caps' and NO capabs in 'nocaps'.
+ *
+ * This function is roughly based on the one with the same name in bluebox.
  */
-void sendto_noquit_servs_butone(int noquit, aClient *one, char *pattern, ...) 
+void sendto_server(aClient *from, aChannel *chptr,
+		   int caps, int nocaps, char *pattern, ...)
 {
-    int i;
-    aClient *cptr;
     int j, k = 0;
     fdlist send_fdlist;
+    int i;
+    aClient *cptr;
     va_list vl;
-	
+
+    if (chptr != NULL && *chptr->chname != '#')
+	return;
+
     va_start(vl, pattern);
-    for (i = serv_fdlist.entry[j = 1];
-	 j <= serv_fdlist.last_entry; i = serv_fdlist.entry[++j]) 
+
+    for (i = serv_fdlist.entry[j = 1]; j <= serv_fdlist.last_entry;
+	 i = serv_fdlist.entry[++j])
     {
-	if (!(cptr = local[i]) || 
-	    (noquit && !IsNoQuit(cptr)) || 
-	    (!noquit && IsNoQuit(cptr)) || 
-            one == cptr)
+	cptr = local[i];
+
+	/* Skip NULL fdlist entries and message source */
+	if (cptr == NULL || cptr == from)
 	    continue;
 
-	send_fdlist.entry[++k] = i;
-    }
-    send_fdlist.last_entry = k;
-    if (k)
-	vsendto_fdlist(&send_fdlist, pattern, vl);
-    va_end(vl);
-    return;
-}
+	/* Skip servers without required capabilities */
+	if (!IsCapable(cptr, caps))
+	    continue;
 
-/*
- * sendto_nickip_servs_butone
- * 
- * Send a message to all nickip servs if nickip = 1,
- * or all non-nickip servs if nickip = 0
- * we omit "one", too.
- * Lame reuse of code because the current system blows.
- */
-void sendto_nickip_servs_butone(int nickip, aClient *one, char *pattern, ...) 
-{
-    int i;
-    aClient *cptr;
-    int j, k = 0;
-    fdlist send_fdlist;
-    va_list vl;
-	
-    va_start(vl, pattern);
-    for (i = serv_fdlist.entry[j = 1];
-	 j <= serv_fdlist.last_entry; i = serv_fdlist.entry[++j]) 
-    {
-	if (!(cptr = local[i]) || 
-	    (nickip && !IsNICKIP(cptr)) || 
-	    (!nickip && IsNICKIP(cptr)) || 
-            one == cptr)
+	/* Skip servers with forbidden capabilities */
+	if (!NotCapable(cptr, nocaps))
 	    continue;
 
 	send_fdlist.entry[++k] = i;
@@ -1043,85 +1030,6 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 	    /* vsendto_prefix_one(acptr, from, pattern, vl); */
 	}
     }
-    va_end(vl);
-    return;
-}
-
-/*
- * sendto_ssjoin_servs
- * 
- * send to all servers with ssjoin capability (or not)
- * 
- */
-void sendto_ssjoin_servs(int ssjoin, aChannel *chptr, aClient *from, 
-			 char *pattern, ...)
-{
-    int j, k = 0;
-    fdlist      send_fdlist;
-    int     i;
-    aClient *cptr;
-    va_list vl;
-	
-    if (chptr) 
-    {
-	if (*chptr->chname == '&')
-	    return;
-    }
-    va_start(vl, pattern);
-    for (i = serv_fdlist.entry[j = 1]; j <= serv_fdlist.last_entry;
-	 i = serv_fdlist.entry[++j]) 
-    {
-	if (!(cptr = local[i]) || 
-	    (cptr == from) ||
-	    (ssjoin && !IsSSJoin(cptr)) ||
-	    (!ssjoin && IsSSJoin(cptr)))
-	    continue;
-	
-	send_fdlist.entry[++k] = i;
-    }
-    send_fdlist.last_entry = k;
-    if (k)
-	vsendto_fdlist(&send_fdlist, pattern, vl);
-    va_end(vl);
-    return;
-}
-
-
-/*
- * sendto_tsmode_servs
- * 
- * send to all servers with tsmode capability (or not)
- * 
- */
-void sendto_tsmode_servs(int tsmode, aChannel *chptr, aClient *from, 
-			 char *pattern, ...)
-{
-    int j, k = 0;
-    fdlist      send_fdlist;
-    int     i;
-    aClient *cptr;
-    va_list vl;
-	
-    if (chptr) 
-    {
-	if (*chptr->chname == '&')
-	    return;
-    }
-    va_start(vl, pattern);
-    for (i = serv_fdlist.entry[j = 1]; j <= serv_fdlist.last_entry;
-	 i = serv_fdlist.entry[++j]) 
-    {
-	if (!(cptr = local[i]) || 
-	    (cptr == from) ||
-	    (tsmode && !IsTSMODE(cptr)) ||
-	    (!tsmode && IsTSMODE(cptr)))
-	    continue;
-	
-	send_fdlist.entry[++k] = i;
-    }
-    send_fdlist.last_entry = k;
-    if (k)
-	vsendto_fdlist(&send_fdlist, pattern, vl);
     va_end(vl);
     return;
 }

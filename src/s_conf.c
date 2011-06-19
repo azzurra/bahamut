@@ -1212,8 +1212,8 @@ extern char *getfield();
 
 static int server_info[] =
 {
-    CAPAB_DOZIP, 'Z',
-    CAPAB_DODKEY, 'E', 
+    CAP_DOZIP, 'Z',
+    CAP_DODKEY, 'E',
     0, 0
 };
 

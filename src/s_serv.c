@@ -328,7 +328,7 @@ int m_squit(aClient *cptr, aClient *sptr, int parc, char *parv[])
     
     /* fallthrough: downstream */
     
-    if(!(IsUnconnect(acptr->from))) /* downstream not unconnect capable */
+    if(NotCapable(acptr->from, CAP_UNCONN)) /* downstream not unconnect capable */
     {
 	sendto_ops_lev(DEBUG_LEV,
 		       "Exiting server %s due to non-unconnect server %s [%s]",
@@ -772,7 +772,7 @@ static void sendnick_TS(aClient *cptr, aClient *acptr)
 	    ubuf[1] = '\0';
 	}
 
-	if (IsNICKIP(cptr)) 
+	if (IsCapable(cptr, CAP_NICKIP))
 	{
 #ifndef INET6
 	    if (acptr->ip.s_addr)
@@ -982,7 +982,7 @@ int do_server_estab(aClient *cptr)
     send_szlines(cptr);
     
     /* Bursts are about to start.. send a BURST */
-    if (IsBurst(cptr))
+    if (IsCapable(cptr, CAP_BURST))
 	sendto_one(cptr, "BURST"); 
     
 	
@@ -1050,7 +1050,7 @@ int do_server_estab(aClient *cptr)
     /* stuff a PING at the end of this burst so we can figure out when
        the other side has finished processing it. */
     cptr->flags |= FLAGS_BURST|FLAGS_PINGSENT;
-    if (IsBurst(cptr)) cptr->flags |= FLAGS_SOBSENT;
+    if (IsCapable(cptr, CAP_BURST)) cptr->flags |= FLAGS_SOBSENT;
     sendto_one(cptr, "PING :%s", me.name);
 
     return 0;
@@ -1217,14 +1217,14 @@ int m_server_estab(aClient *cptr)
 int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
   
-    if (!IsServer(sptr) || sptr != cptr || parc > 2 || !IsBurst(sptr))
+    if (!IsServer(sptr) || sptr != cptr || parc > 2 || NotCapable(sptr, CAP_BURST))
 	return 0;
     if (parc == 2) { /* This is an EOB */
 	sptr->flags &= ~(FLAGS_EOBRECV);
 	if (sptr->flags & (FLAGS_SOBSENT|FLAGS_BURST)) return 0;
 	
 	/* we've already sent our EOB.. we synched first
-	 * no need to check IsBurst because we shouldn't receive a BURST if 
+	 * no need to check CAP_BURST because we shouldn't receive a BURST if
 	 * they're not BURST capab
 	 */
 	

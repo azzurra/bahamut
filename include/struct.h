@@ -234,52 +234,50 @@ typedef struct MotdItem aMotd;
 
 /* Capabilities of the ircd or clients */
 
-#define CAPAB_TS3     0x0000001	/* Supports the TS3 Protocal */
-#define CAPAB_NOQUIT  0x0000002 /* Supports NOQUIT */
-#define CAPAB_NSJOIN  0x0000004 /* server supports new smart sjoin */
-#define CAPAB_BURST   0x0000008 /* server supports BURST command */
-#define CAPAB_UNCONN  0x0000010 /* server supports UNCONNECT */
-#define CAPAB_DKEY    0x0000020 /* server supports dh-key exchange 
+#define CAP_TS3     0x0000001	/* Supports the TS3 Protocol */
+#define CAP_NOQUIT  0x0000002	/* Supports NOQUIT */
+#define CAP_NSJOIN  0x0000004	/* server supports new smart sjoin */
+#define CAP_BURST   0x0000008	/* server supports BURST command */
+#define CAP_UNCONN  0x0000010	/* server supports UNCONNECT */
+#define CAP_DKEY    0x0000020	/* server supports dh-key exchange
 				 * using "DKEY" */
-#define CAPAB_ZIP     0x0000040 /* server supports gz'd links */
-#define CAPAB_DOZIP   0x0000080 /* output to this link shall be gzipped */
-#define CAPAB_DODKEY  0x0000100 /* do I do dkey with this link? */
-#define CAPAB_NICKIP  0x0000200 /* IP in the NICK line? */
-#define CAPAB_TSMODE  0x0000400 /* MODE's parv[2] is chptr->channelts for channel mode */
-#define CAPAB_EBMODE  0x0000800 /* server supports extended ban modes (+z) and banlist hiding (+B) */
+#define CAP_ZIP     0x0000040	/* server supports gz'd links */
+#define CAP_DOZIP   0x0000080	/* output to this link shall be gzipped */
+#define CAP_DODKEY  0x0000100	/* do I do dkey with this link? */
+#define CAP_NICKIP  0x0000200	/* IP in the NICK line? */
+#define CAP_TSMODE  0x0000400	/* MODE's parv[2] is chptr->channelts for channel mode */
+#define CAP_EBMODE  0x0000800	/* server supports extended ban modes (+z) and banlist hiding (+B) */
 
-#define SetTS3(x)   	((x)->capabilities |= CAPAB_TS3)
-#define IsTS3(x)       	((x)->capabilities & CAPAB_TS3)
+#define NOCAPS        0		/* Empty capability set */
 
-#define SetNoQuit(x) 	((x)->capabilities |= CAPAB_NOQUIT)
-#define IsNoQuit(x) 	((x)->capabilities & CAPAB_NOQUIT)
+#define SetTS3(x)   	((x)->capabilities |= CAP_TS3)
 
-#define SetSSJoin(x)	((x)->capabilities |= CAPAB_NSJOIN)
-#define IsSSJoin(x)	((x)->capabilities & CAPAB_NSJOIN)
+#define SetNoQuit(x) 	((x)->capabilities |= CAP_NOQUIT)
 
-#define SetBurst(x)	((x)->capabilities |= CAPAB_BURST)
-#define IsBurst(x)	((x)->capabilities & CAPAB_BURST)
+#define SetSSJoin(x)	((x)->capabilities |= CAP_NSJOIN)
 
-#define SetUnconnect(x)	((x)->capabilities |= CAPAB_UNCONN)
-#define IsUnconnect(x)	((x)->capabilities & CAPAB_UNCONN)
+#define SetBurst(x)	((x)->capabilities |= CAP_BURST)
 
-#define SetDKEY(x)	((x)->capabilities |= CAPAB_DKEY)
-#define CanDoDKEY(x)    ((x)->capabilities & CAPAB_DKEY)
+#define SetUnconnect(x)	((x)->capabilities |= CAP_UNCONN)
+
+#define SetDKEY(x)	((x)->capabilities |= CAP_DKEY)
+#define CanDoDKEY(x)    ((x)->capabilities & CAP_DKEY)
 /* N: line, flag E */
-#define WantDKEY(x)	((x)->capabilities & CAPAB_DODKEY) 
+#define WantDKEY(x)	((x)->capabilities & CAP_DODKEY)
 
-#define SetZipCapable(x) ((x)->capabilities |= CAPAB_ZIP)
-#define IsZipCapable(x)	((x)->capabilities & CAPAB_ZIP)
+#define SetZipCapable(x) ((x)->capabilities |= CAP_ZIP)
+#define IsZipCapable(x)	((x)->capabilities & CAP_ZIP)
 /* this is set in N: line, flag Z */
-#define DoZipThis(x) 	((x)->capabilities & CAPAB_DOZIP) 
-#define SetNICKIP(x)    ((x)->capabilities |= CAPAB_NICKIP)
-#define IsNICKIP(x)     ((x)->capabilities & CAPAB_NICKIP)
+#define DoZipThis(x) 	((x)->capabilities & CAP_DOZIP)
+#define SetNICKIP(x)    ((x)->capabilities |= CAP_NICKIP)
 
-#define SetTSMODE(x)	((x)->capabilities |= CAPAB_TSMODE)
-#define IsTSMODE(x)	((x)->capabilities & CAPAB_TSMODE)
+#define SetTSMODE(x)	((x)->capabilities |= CAP_TSMODE)
 
-#define SetEBMODE(x)	((x)->capabilities |= CAPAB_EBMODE)
-#define IsEBMODE(x)	((x)->capabilities & CAPAB_EBMODE)
+#define SetEBMODE(x)	((x)->capabilities |= CAP_EBMODE)
+
+/* Generic capabilities matching macros */
+#define IsCapable(x, cap)	(((x)->capabilities & (cap)) == cap)
+#define NotCapable(x, cap)	(((x)->capabilities & (cap)) == 0)
 
 /* flag macros. */
 #define IsULine(x) ((x)->flags & FLAGS_ULINE)
