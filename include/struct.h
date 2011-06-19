@@ -1157,8 +1157,7 @@ struct ChanLink
     struct ChanLink *next;
     aClient *cptr;
     int flags;
-    int bans;		/* for bquiet: number of bans against this user */
-    int restricts;	/* for bquiet: number of restrict masks matching this user */
+    int bans;	/* for bquiet: number of bans against this user */
 };
 
 /* general link structure used for chains */
