@@ -1471,16 +1471,6 @@ struct hostent *get_res(char *lp)
 			       rptr->he.h_name, rptr->he_rev.h_name,
 			       ntoatmp_f, ntoatmp_r);
 #endif
-#ifndef AZZURRA	/* Do not show reverse DNS complains anymore -INT */
-		if(rptr->cinfo.flags == ASYNC_CLIENT && rptr->cinfo.value.cptr)
-		{
-		    sendto_one(rptr->cinfo.value.cptr,
-			       ":%s NOTICE AUTH :*** Your forward and "
-			       "reverse DNS do not match, "
-			       "ignoring hostname. [%s != %s]",
-			       me.name, ntoatmp_f, ntoatmp_r);
-		}
-#endif	       
 		
 		if (lp)
 		    memcpy(lp, (char *) &rptr->cinfo, sizeof(Link));
@@ -2104,13 +2094,11 @@ int m_dns(aClient *cptr, aClient *sptr, int parc, char *parv[])
     aCache *cp;
     int     i;
 
-#ifdef AZZURRA
     if(!IsAnOper(cptr))
     {
 	sendto_one(cptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
 	return 0;
     }
-#endif
 
     if (parv[1] && *parv[1] == 'l')
     {

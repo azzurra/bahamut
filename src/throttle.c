@@ -51,9 +51,7 @@
 #include "queue.h"
 #include "throttle.h"
 
-#ifdef AZZURRA
 extern int find_eline_host(char *);
-#endif
 
 BlockHeap *hashent_freelist;
 BlockHeap *throttle_freelist;
@@ -354,11 +352,10 @@ int throttle_check(char *host, int fd, time_t sotime) {
     if (!throttle_enable)
 	return 1; /* always successful */
    
-#ifdef AZZURRA
     /* We don't want to throttle ELINED hosts -INT */ 
     if (find_eline_host(host))
         return 1;
-#endif   
+
 #ifdef WEBIRC
     /* Don't throttle WLINED hosts --morph */
     if (find_webirc_host(host))

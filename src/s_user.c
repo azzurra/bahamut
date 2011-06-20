@@ -62,10 +62,8 @@ extern void outofmemory(void);	/*
 extern void activity_log(char *, ...);
 #endif 
 
-#ifdef AZZURRA
 int check_helper_can_mask(aClient *, char *, char *, char **);
 __inline__ int check_for_spam(aClient *, char *, char *, char *);
-#endif
 
 #ifdef MAXBUFFERS
 extern void reset_sock_opts();
@@ -115,18 +113,14 @@ int  user_modes[] =
     UMODE_F, 'F',
 #endif
     UMODE_K, 'K',
-#ifdef AZZURRA
     UMODE_x, 'x',
     UMODE_z, 'z',
     UMODE_I, 'I',
-#endif
     0, 0
 };
 
-#ifdef AZZURRA
 extern Spam *spam_list;
 extern int CONF_SERVER_LANGUAGE;	/* In s_serv.c */
-#endif
 
 /* internally defined functions */
 unsigned long my_rand(void);	/* provided by orabidoo */
@@ -153,9 +147,7 @@ int      check_for_ctcp(char *, char **);
 int      allow_dcc(aClient *, aClient *);
 static int      is_silenced(aClient *, aClient *);
 
-#ifdef AZZURRA
 int         spam_detect = YES;
-#endif
 
 #ifdef ANTI_SPAMBOT
 int         spam_time = MIN_JOIN_LEAVE_TIME;
@@ -166,12 +158,8 @@ int         spam_num = MAX_JOIN_LEAVE_COUNT;
 #define CTCP_NONE 	0
 #define CTCP_YES	1
 #define CTCP_DCC	2
-#define CTCP_DCCSEND 	3
-
-/* defines for the CTCP_BOGUS code */
-#ifdef AZZURRA
-#define CTCP_BOGUS        4
-#endif
+#define CTCP_DCCSEND	3
+#define CTCP_BOGUS	4
 
 /*
  * cptr:
@@ -525,14 +513,12 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 				   "connection class (the server is full)" :
 				   "You are not authorized to use this "
 				   "server"
-#ifdef AZZURRA
 #ifndef FASTWEB
 				   ", visit www.azzurra.org/access.html "
 #else
 				   ", visit www.azzurra.org/fastweb.html "
 #endif
 				   "for more info"
-#endif				   
 				   );
 	    }
 	    else
@@ -708,9 +694,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	    cc = (user->username[0] == '~' ? user->username[1] :
 		  user->username[0]);
 	    if ((!isalnum(cc) && !strchr(" -_.", cc)) || (cc > 127))
-#ifndef AZZURRA	     
-		special++;
-#else
 	    {	
 	       /* We do not want to disconnect users if they provide
 		* bad usernames. Let's replace bad characters with "_" 
@@ -721,7 +704,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	        else
 	             user->username[0] = '_';
 	    }	   
-#endif /* AZZURRA */	   
 #else
 	    tmpstr = (user->username[0] == '~' ? &user->username[1] :
 		      user->username);
@@ -741,17 +723,11 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		    continue;
 		}
 		if ((!isalnum(c) && !strchr(" -_.", c)) || (c > 127) || (c<32))
-#ifndef AZZURRA		 
-		    special++;
-#else
 		{
-		    
-	            /* tmpstr points to user->username[0 or 1] */
+		    /* tmpstr points to user->username[0 or 1] */
 	            *(tmpstr - 1) = '_';
 		    special++;
 		}
-	       
-#endif
 	    }
 #ifdef NO_MIXED_CASE
 	    if (lower && upper) 
@@ -765,22 +741,11 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	    }
 #endif /* NO_MIXED_CASE */
 	    if (special) 
-	    {
-		sendto_realops_lev(REJ_LEV, "Invalid username: %s (%s@%s)",
-				   nick, user->username, user->host);
-		ircstp->is_ref++;
-#ifndef AZZURRA 	       
-		(void) ircsprintf(tmpstr2, "Invalid username [%s]",
-				  user->username);
-		return exit_client(cptr, sptr, &me, tmpstr2);
-#else
 	        sendto_one(sptr,
 		           ":%s NOTICE %s :*** Your username contains bad "
 			   "characters. They will be replaced.",
 			   me.name, sptr->name);
-		       
-#endif
-	    }
+
 	    /* Ok, now check the username they provided, if different */
 	    lower = upper = special = cc = 0;
 			  
@@ -797,9 +762,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		cc = (username[0] == '~' ? username[1] : username[0]);
 				  
 		if ((!isalnum(cc) && !strchr(" -_.", cc)) || (cc > 127))
-#ifndef AZZURRA		 
-		    special++;
-#else
 		{
 		    
 		   if (user->username[0] == '~')
@@ -807,7 +769,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		   else
 	               user->username[0] = '_';
 		}	   
-#endif
 #else
 		tmpstr = (username[0] == '~' ? &username[1] : username);
 #endif /* IGNORE_FIRST_CHAR */
@@ -825,12 +786,8 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 			continue;
 		    }
 		    if ((!isalnum(c) && !strchr(" -_.", c)) || (c > 127))
-#ifndef AZZURRA		     
-			special++;
-#else
 		        /* tmpstr points to user->username[0 or 1] */
 		        *(tmpstr - 1) = '_';
-#endif
 		}
 #ifdef NO_MIXED_CASE
 		if (lower && upper) 
@@ -844,22 +801,10 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		}
 #endif /* NO_MIXED_CASE */
 		if (special) 
-		{
-		    sendto_realops_lev(REJ_LEV, "Invalid username: %s (%s@%s)",
-				       nick, username, user->host);
-		    ircstp->is_ref++;
-#ifndef AZZURRA
-		    (void) ircsprintf(tmpstr2, "Invalid username [%s]",
-				      username);
-		    return exit_client(cptr, sptr, &me, tmpstr2);
-#else
 		    sendto_one(sptr,
 		           ":%s NOTICE %s :*** Your username contains bad "
 			   "characters. They will be replaced.",
 			   me.name, sptr->name);
-		       
-#endif		   
-		}
 	    }			/* usernames different  */
 	}
 
@@ -872,20 +817,11 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		
 	if ((user->username[1] == '\0') && !isalpha(user->username[0])) 
 	{
-	    sendto_realops_lev(REJ_LEV, "Invalid username: %s (%s@%s)",
-			       nick, user->username, user->host);
-	    ircstp->is_ref++;
-#ifndef AZZURRA	   
-	    (void) ircsprintf(tmpstr2, "Invalid username [%s]",
-			      user->username);
-	    return exit_client(cptr, sptr, &me, tmpstr2);
-#else
 	    user->username[0] = '_';
 	    sendto_one(sptr,
 		       ":%s NOTICE %s :*** Your username contains bad "
 		       "characters. They will be replaced.",
 		       me.name, sptr->name);	   
-#endif	   
 	}
 
 #ifdef FASTWEB
@@ -994,12 +930,11 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     }
     else
 	strncpyzt(user->username, username, USERLEN + 1);
-#ifdef AZZURRA
+
     if(IsIPv6(sptr))
 	strncpyzt(user->virthost, user->host, HOSTLEN);
     else if(!cloakhost(user->host, user->virthost))
 	strncpyzt(user->virthost, user->host, HOSTLEN);
-#endif
  
     SetClient(sptr);
     /* Increment our total user count here */
@@ -1018,7 +953,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	/* End sock_opt hack */
 #endif
 
-#ifdef AZZURRA
         if (IsJava(sptr))
 	{
 	    sendto_one(sptr,
@@ -1038,8 +972,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		    ":ConferenceRoom by WebMaster",
 		    me.name, nick);
 	} else {
-#endif
-
 #ifdef FASTWEB
 		sendto_one(sptr, rpl_str(RPL_WELCOME), me.name, nick, nick, 
 			sptr->user->username, is_fastweb ? sptr->hostip : sptr->user->host);
@@ -1066,9 +998,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	    sendto_one(sptr, rpl_str(RPL_PROTOCTL), me.name, parv[0], MAXWATCH,
 	    	   MAXMODEPARAMSUSER, MAXCHANNELSPERUSER, MAXBANS, NICKLEN,
 	    	   TOPICLEN, TOPICLEN, MAXSILES);
-#ifdef AZZURRA
 	}
-#endif
 
 #if (RIDICULOUS_PARANOIA_LEVEL>=1)
 	if(!BadPtr(sptr->passwd) && (pwaconf->flags & CONF_FLAGS_I_OPERPORT))
@@ -1106,11 +1036,9 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		    strcpy(sptr->user->real_oper_ip, sptr->hostip);
 		    strncpyzt(sptr->user->host, global ? STAFF_ADDRESS :
 			    LOCALOP_ADDRESS, HOSTLEN + 1);
-#ifdef AZZURRA
 		    strncpyzt(sptr->user->virthost, global ? STAFF_ADDRESS :
 			    LOCALOP_ADDRESS, HOSTLEN + 1);
 		    sptr->umode &= ~UMODE_x;
-#endif
 		    strncpyzt(sptr->user->username, onick, USERLEN + 1);
 		    strncpyzt(sptr->username, onick, USERLEN + 1);
 		    sptr->flags |= FLAGS_GOTID; /* fake ident */
@@ -1136,7 +1064,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		else
 		    sptr->passwd[0] = '\0';
 	    } while(0);
-#ifdef AZZURRA
+
 	if(!BadPtr(sptr->passwd) && (pwaconf->flags & CONF_FLAGS_I_HELPERPORT))
 	    do 
 	    {
@@ -1197,7 +1125,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		else
 		    sptr->passwd[0] = '\0';
 	    } while(0);
-#endif /* AZZURRA */
 
 #endif /* RIDICOLOUS_PARANOIA_LEVEL >= 1 */
 
@@ -1439,21 +1366,15 @@ int check_dccsend(aClient *from, aClient *to, char *msg)
     char **farray = NULL;
     int arraysz;
     int len = 0, extlen = 0, i;
-#ifdef AZZURRA
     char *endfile, *s;
     unsigned long port, pasvdccid;
-#endif
 
     /* people can send themselves stuff all the like..
      * opers need to be able to send cleaner files 
      * sanity checks..
      */
 
-#ifndef AZZURRA
-    if (from == to || !IsPerson(from) || IsAnOper(from) || !MyClient(to)) 
-#else
     if (from == to || !IsPerson(from) || IsAnOper(from)) 
-#endif
 		return 0;
 
     while (*filename == ' ')
@@ -1461,16 +1382,6 @@ int check_dccsend(aClient *from, aClient *to, char *msg)
 
 	if (!(*filename))
 		return 0;
-
-#ifndef AZZURRA
-    while (*(filename + len) != ' ')
-    {
-		if (!(*(filename + len)))
-			break;
-
-		len++;
-    }
-#else
 
 	if (*filename == '\"') {
 
@@ -1545,8 +1456,6 @@ int check_dccsend(aClient *from, aClient *to, char *msg)
 	/* if dcc is passive remember the dcc number in client structure */
 	if (port == 0)
 		from->pasvdccid = pasvdccid;
-		
-#endif	/* AZZURRA */
 
 	/* STOP here is destination client is not my client */
 	if (!MyClient(to))
@@ -1630,33 +1539,6 @@ int check_dccsend(aClient *from, aClient *to, char *msg)
 		*   server notices are not ignored by clients.
 		*/ 
 
-#ifndef AZZURRA
-		sendto_one(from, ":%s NOTICE %s :The user %s is not accepting DCC "
-			"sends of filetype *.%s from you.  Your file %s was not "
-			"sent.", me.name, from->name, to->name, tmpext, tmpfn);
-
-		sendto_one(to, ":%s NOTICE %s :%s (%s@%s) has attempted to send you a "
-			"file named %s, which was blocked.", me.name, to->name,
-			from->name, from->user->username,
-			from->user->host, tmpfn);
-
-		if (!SeenDCCNotice(to)) {
-
-			SetDCCNotice(to);
- 
-			sendto_one(to, ":%s NOTICE %s :The majority of files sent of this "
-				"type are malicious virii and trojan horses."
-				" In order to prevent the spread of this problem, we "
-				"are blocking DCC sends of these types of"
-				" files by default.", me.name, to->name);
-
-			sendto_one(to, ":%s NOTICE %s :If you trust %s, and want him/her "
-				"to send you this file, you may obtain"
-				" more information on using the dccallow system by "
-				"typing /dccallow help",
-				me.name, to->name, from->name, to->name);
-		}
-#else
 		if (CONF_SERVER_LANGUAGE == LANG_IT) {
 
 			sendto_one(from, ":%s NOTICE %s :Per l'invio di files *.%s e' richiesta l'autorizzazione del ricevente. "
@@ -1680,7 +1562,6 @@ int check_dccsend(aClient *from, aClient *to, char *msg)
 				me.name, to->name, from->name, from->user->username, IsUmodex(from) ? from->user->virthost : from->user->host,
 				tmpfn, from->name);
 		}
-#endif
 
 		for (tlp = to->user->channel; tlp && !chptr; tlp = tlp->next) {
 
@@ -1740,18 +1621,11 @@ int msg_has_colors(char *msg)
 
 #ifdef MSG_TARGET_LIMIT
 
-#ifdef AZZURRA
 unsigned short int tlim_target_min = MSG_TARGET_MIN,
     tlim_target_max = MSG_TARGET_MAX, 	/* MUST BE >= tlim_target_min !!! */
     tlim_target_mintomaxtime = MSG_TARGET_MINTOMAXTIME,
     tlim_target_time = MSG_TARGET_TIME,
     tlim_enabled = 1;
-#else
-#define tlim_target_min MSG_TARGET_MIN
-#define tlim_target_max MSG_TARGET_MAX
-#define tlim_target_mintomaxtime MSG_TARGET_MINTOMAXTIME
-#define tlim_target_time MSG_TARGET_TIME
-#endif
 
 int check_target_limit(aClient *sptr, aClient *acptr)
 {
@@ -1765,11 +1639,7 @@ int check_target_limit(aClient *sptr, aClient *acptr)
 #endif
 
    /* don't limit opers, people talking to themselves, or people talking to services */
-   if(IsOper(sptr) || sptr == acptr || IsULine(acptr)
-#ifdef AZZURRA
-      || IsUmodez(sptr)
-#endif		   
-     )
+   if(IsOper(sptr) || sptr == acptr || IsULine(acptr) || IsUmodez(sptr))
       return 0;
 
    max_targets = ((NOW - sptr->firsttime) > tlim_target_mintomaxtime) ? tlim_target_max : tlim_target_min;
@@ -1871,11 +1741,7 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	*/
        if (i++ > 10)
 #ifdef NO_OPER_FLOOD
-	 if (!IsAnOper(sptr) && !IsULine(sptr)
-#ifdef AZZURRA
-	     && !IsUmodez(sptr)
-#endif
-	     )
+	 if (!IsAnOper(sptr) && !IsULine(sptr) && !IsUmodez(sptr))
 #endif
 	   sptr->since += 8;
 
@@ -1901,11 +1767,9 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 		case '@' : 	typedest |= TO_OPS; 
 				chan++; 
 				continue;
-#ifdef AZZURRA
 		case '%' : 	typedest |= TO_HALFOP; 
 				chan++; 
 				continue;
-#endif
 		case '+' : 	typedest |= TO_VOICE; 
 				chan++; 
 				continue;
@@ -1936,24 +1800,19 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	     case CTCP_NONE:
 	       break;
 
-#ifdef AZZURRA
 	     case CTCP_BOGUS:
-#endif
-
 	     case CTCP_DCCSEND:
 	     case CTCP_DCC:
 	       sendto_one(sptr, ":%s NOTICE %s :You may not send a DCC "
 			  "command to a channel (%s)", me.name, parv[0], chan);
 	       continue;
 
-#ifdef AZZURRA
 	     case CTCP_YES:
 	       if(chptr->mode.mode & MODE_NOCTCP)
 	       {
 		  sendto_one(sptr, err_str(ERR_NOCTCPSTOCHAN), me.name, parv[0], chan, parv[2]);
 		  continue;
 	       }
-#endif
 
 	     default:
 #ifdef FLUD
@@ -1963,12 +1822,8 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	       break;
 	    }
 
-#ifndef AZZURRA	  
-	  ret = IsULine(sptr) ? 0 : can_send(sptr, chptr, parv[2]);
-#else
 	  ret = (IsULine(sptr) || IsUmodez(sptr)) ? 0 : can_send(sptr, chptr, parv[2]);
-#endif	  
-	  
+
 	  if (MyClient(sptr) && ret == ERR_NOCOLORSONCHAN)
 	  {
 	     sendto_one(sptr, err_str(ERR_NOCOLORSONCHAN), me.name, parv[0], chan, parv[2]);
@@ -1988,36 +1843,22 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	     continue;
 	  }
 
-#ifdef AZZURRA
 	  if (check_for_spam(sptr, parv[2], chan, notice ? "NOTICE" : "PRIVMSG"))
 	    continue;
-#endif
 
-	  if (!((typedest & TO_OPS) || 
-#ifdef AZZURRA
-	        (typedest & TO_HALFOP) || 
-#endif
-                (typedest & TO_VOICE)))
+	  if (!((typedest & TO_OPS) || (typedest & TO_HALFOP) || (typedest & TO_VOICE)))
 	  {
 	      sendto_channel_butone(cptr, sptr, chptr, ":%s %s %s :%s",
 					parv[0], cmd, chan, parv[2]);
 	  } else 
 	  {
 
-#ifdef AZZURRA
 	      sendto_channelflag_butone(cptr, sptr, typedest, chptr, ":%s %s %s%s%s%s :%s",
 				    parv[0], cmd, 
 				    typedest & TO_OPS ? "@" : "",
 				    typedest & TO_HALFOP ? "%" : "",
 				    typedest & TO_VOICE ? "+" : "",
 				    chan, parv[2]);
-#else
-	      sendto_channelflag_butone(cptr, sptr, typedest, chptr, ":%s %s %s%s%s :%s",
-				    parv[0], cmd, 
-				    typedest & TO_OPS ? "@" : "",
-				    typedest & TO_VOICE ? "+" : "",
-				    chan, parv[2]);
-#endif
 	  }
 
 	  continue;
@@ -2078,7 +1919,6 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	      case CTCP_NONE:
 		break;
 
-#ifdef AZZURRA
 	      case CTCP_BOGUS:
 		sendto_snotice("from %s: User %s (%s@%s) is trying to send a bogus DCC to %s (length: %d)",
 			       me.name, parv[0], sptr->user->username, sptr->user->host, nick, strlen(parv[2]));
@@ -2087,7 +1927,6 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 				   me.name, parv[0], sptr->user->username, sptr->user->host, nick, strlen(parv[2]));
 
 		continue;
-#endif
 
 	      case CTCP_DCCSEND:
 #ifdef FLUD
@@ -2120,13 +1959,11 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 				sendto_one(sptr, rpl_str(ERR_MSGSERVICES), me.name, parv[0], ROOTSERV, ROOTSERV, ROOTSERV);
 	  else
 #endif
-	    if (is_silenced(sptr, acptr))
+	  if (is_silenced(sptr, acptr))
 	      continue;
 
-#ifdef AZZURRA
-	    if (!IsULine(acptr) && check_for_spam(sptr, parv[2], nick, notice ? "NOTICE" : "PRIVMSG"))
+	  if (!IsULine(acptr) && check_for_spam(sptr, parv[2], nick, notice ? "NOTICE" : "PRIVMSG"))
 	    continue;
-#endif
 	    
 	  if (!notice && MyClient(acptr) && acptr->user && acptr->user->away)
 	  {
@@ -2137,12 +1974,8 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	  continue;
        }
 		
-#ifndef AZZURRA
-       if(IsAnOper(sptr))
-#else 
        if(IsSAdmin(sptr) || (IsAdmin(sptr) && *nick == '$' &&
 			     !strcasecmp(nick + 1, me.name)))
-#endif	 
        {
 
 	  /*
@@ -2228,10 +2061,8 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	     if (MyClient(sptr) && IsShunned(sptr) && !IsULine(acptr))
 	       continue;
 #endif
-#ifdef AZZURRA
 	     if (!IsULine(acptr) && check_for_spam(sptr, parv[2], nick, notice ? "NOTICE" : "PRIVMSG"))
 	       continue;
-#endif
 	     sendto_one(acptr, ":%s %s %s :%s", parv[0], cmd, nick, parv[2]);
 #endif
 	     continue;
@@ -2243,10 +2074,8 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	  if (MyClient(sptr) && IsShunned(sptr) && !(sptr == acptr))
 	    continue;
 #endif
-#ifdef AZZURRA
 	  if (check_for_spam(sptr, parv[2], nick, notice ? "NOTICE" : "PRIVMSG"))
 	    continue;
-#endif
 
 	  /*
 	   * Look for users which match the destination host 
@@ -2306,7 +2135,6 @@ int m_notice(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return m_message(cptr, sptr, parc, parv, 1);
 }
 
-#ifdef AZZURRA
 static inline char * get_umode_str(aClient *acptr)
 {
     register char *m;
@@ -2320,7 +2148,6 @@ static inline char * get_umode_str(aClient *acptr)
     *m = '\0';
     return buf;
 }
-#endif
 
 /*
  * m_whois 
@@ -2338,9 +2165,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	0,			/* joined */
 	"<Unknown>",		/* user */
 	"<Unknown>",		/* host */
-#ifdef AZZURRA
 	"<Unknown>",		/* virthost */
-#endif
 	"<Unknown>",		/* server */
 	0,  /* servicestamp */
 	NULL /* silenced */
@@ -2382,13 +2207,11 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		       me.name, parv[0], nick);
 	    continue;
 	}
-#ifdef AZZURRA
 	if (IsUmodey(acptr) && acptr != sptr)
 	    sendto_one(acptr,
 		    ":%s NOTICE %s :%s!%s@%s is doing a WHOIS on you",
 		    me.name, acptr->name, parv[0], sptr->user->username,
 		    sptr->user->host);
-#endif
 
 	user = acptr->user ? acptr->user : &UnknownUser;
 	name = (!*acptr->name) ? "?" : acptr->name;
@@ -2399,10 +2222,8 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
 	sendto_one(sptr, rpl_str(RPL_WHOISUSER), me.name,
 		   parv[0], name, user->username, 
-#ifdef AZZURRA
-		   IsUmodex(acptr) ? user->virthost :
-#endif
-		   user->host, acptr->info);
+		   IsUmodex(acptr) ? user->virthost : user->host,
+		   acptr->info);
 #ifdef SHUN
 	if (IsAnOper(sptr) && IsShunned(acptr))
 	    sendto_one(sptr, rpl_str(RPL_SHUNNED),
@@ -2415,13 +2236,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	{
 	    sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),
 		       me.name, sptr->name, name, 
-#ifndef AZZURRA
-		       user->real_oper_username,
-#endif
 		       user->real_oper_host, 
 		       user->real_oper_ip);
 	}
-#ifdef AZZURRA
 	else if(MyConnect(acptr) && user->real_helper_host && (IsAnOper(sptr) || (sptr == acptr)))
 	{
 	    sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),
@@ -2429,7 +2246,6 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		       user->real_helper_host, 
 		       user->real_helper_ip);
 	}
-#endif
 #endif 
 
 #if (RIDICULOUS_PARANOIA_LEVEL==2)
@@ -2438,13 +2254,9 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
         {
             sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),
                        me.name, sptr->name, name,
-#ifndef AZZURRA
-                       user->real_oper_username,
-#endif
 		       user->real_oper_host,
                        user->real_oper_ip);
         }
-#ifdef AZZURRA
 	else if(MyConnect(acptr) && user->real_helper_host && (IsAnOper(sptr) || (sptr == acptr)) &&
 	    MyConnect(sptr))
         {
@@ -2453,12 +2265,10 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		       user->real_helper_host,
                        user->real_helper_ip);
         }
-#endif
 #endif 
 	else
 #endif		
 
-#ifdef AZZURRA
 	if (CanShowIP(sptr, acptr) && IsAnOper(sptr))
 	    sendto_one(sptr, rpl_str(RPL_WHOISACTUALLY),
 		    me.name, parv[0], name,
@@ -2467,17 +2277,15 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	if (IsAnOper(sptr))
 	    sendto_one(sptr, rpl_str(RPL_WHOISMODES),
 		    me.name, parv[0], name, get_umode_str(acptr));
-#endif
 
 	mlen = strlen(me.name) + strlen(parv[0]) + 6 +
 	    strlen(name);
 	for (len = 0, *buf = '\0', lp = user->channel; lp;
 	     lp = lp->next)
 	{
-#ifdef AZZURRA
 	    if(IsUmodez(acptr) && !IsAnOper(sptr))
 		break;
-#endif
+
 	    chptr = lp->value.chptr;
 	    showchan = ShowChannel(sptr,chptr);
 	    if (showchan || IsAdmin(sptr) || IsSAdmin(sptr))
@@ -2495,17 +2303,12 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 		if(!showchan) /* if we're not really supposed to show the chan
 			       * but do it anyways, mark it as such! */
-#ifndef AZZURRA
-		    *(buf + len++) = '%';
-#else
 		    *(buf + len++) = '-';
-#endif
+
 		if (is_chan_op(acptr, chptr))
 		    *(buf + len++) = '@';
-#ifdef AZZURRA
 		else if (is_half_op(acptr, chptr))
 		    *(buf + len++) = '%';
-#endif
 		else if (has_voice(acptr, chptr))
 		    *(buf + len++) = '+';
 		if (len)
@@ -2550,15 +2353,12 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR),
 		       me.name, parv[0], name, buf);
 	}
-#ifdef AZZURRA
 	else if (IsSAdmin(acptr))
 	{
 	    sendto_one(sptr, rpl_str(RPL_WHOISOPERATOR),
 			me.name, parv[0], name, "a Services Administrator");
 	}
-#endif
 
-#ifdef AZZURRA
 	if (IsUmodez(acptr))
 	    sendto_one(sptr, rpl_str(RPL_WHOISAGENT),
 		    me.name, parv[0], name);
@@ -2566,13 +2366,8 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	if (IsUmodeh(acptr))
 	    sendto_one(sptr, rpl_str(RPL_WHOISHELPER),
 		    me.name, parv[0], name);
-#endif
 
-	if (acptr->user && MyConnect(acptr)
-#ifdef AZZURRA
-		&& (IsAnOper(sptr) || !IsHiddenIdle(acptr) || acptr == sptr)
-#endif
-		)
+	if (acptr->user && MyConnect(acptr) && (IsAnOper(sptr) || !IsHiddenIdle(acptr) || acptr == sptr))
 	    sendto_one(sptr, rpl_str(RPL_WHOISIDLE),
 		       me.name, parv[0], name,
 		       timeofday - user->last,
@@ -2666,7 +2461,7 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 #endif
 
 #ifndef INET6
-#if defined(AZZURRA) && !defined(NO_DEFAULT_UMODEX)
+#ifndef NO_DEFAULT_UMODEX
 	if(!(sptr->user->real_oper_host) && !(IsIPv6(sptr)))
 	    SetCloak(sptr);
 #endif
@@ -2732,12 +2527,10 @@ int m_quit(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!IsServer(cptr))
     {
 	strcpy(comment, "Quit: ");
-#if defined( AZZURRA )
+
 	if(!IsShunned(cptr) && !check_for_spam(sptr, reason, "*", "QUIT"))
-#elif defined( SHUN )
-	if(!IsShunned(cptr))
-#endif
 	    strncpy(comment + 6, reason, TOPICLEN - 6);
+
 	comment[TOPICLEN] = 0;
 	return exit_client(cptr, sptr, sptr, comment);
     }
@@ -2805,7 +2598,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		       me.name, parv[0], nick, acptr->name);
 	    chasing = 1;
 	}
-#ifdef AZZURRA
+
 	if (IsUmodez(acptr))
 	{
 	    if(MyConnect(sptr))
@@ -2813,7 +2606,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			parv[0]);
 	    continue;
 	}
-#endif
+
 	if ((!MyConnect(acptr) && MyClient(cptr) && !OPCanGKill(cptr)) ||
 	    (MyConnect(acptr) && MyClient(cptr) && 
 	     !OPCanLKill(cptr)))
@@ -2847,24 +2640,17 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		*s=0;
 	    
 	    /* "<myname>!<sptr->user->host>!<sptr->name> (path)" */
-#ifndef AZZURRA
-	    slen = KILLLEN - (strlen(sptr->name) + strlen(sptr->user->host) + strlen(myname) + 8);
-#else
 	    slen = KILLLEN - (strlen(sptr->name) + strlen((IsUmodex(sptr) ?
 			    sptr->user->virthost : sptr->user->host)) + strlen(myname) + 8);
-#endif
+
 	    if(slen < 0)
 		slen = 0;
 	    
 	    if(strlen(path) > slen) 
 		path[slen] = '\0'; 
 	    
-#ifndef AZZURRA
-	    ircsnprintf(mypath, KILLLEN, "%s!%s!%s (%s)", myname, sptr->user->host, sptr->name, path); 
-#else
 	    ircsnprintf(mypath, KILLLEN, "%s!%s!%s (%s)", myname, IsUmodex(sptr) ?
 		    sptr->user->virthost : sptr->user->host, sptr->name, path);
-#endif
 
 	    mypath[KILLLEN]='\0';  
 	}
@@ -2883,15 +2669,7 @@ int m_kill(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, parv[0]);
 	    return 0;
 	}
-#ifndef AZZURRA
-	if (IsAnOper(sptr))
-	    sendto_ops_lev(0, "Received KILL message for %s!%s@%s. From %s "
-			   "Path: %s", acptr->name, 
-			   acptr->user ? acptr->user->username : unknownfmt,
-			   acptr->user ? acptr->user->host : unknownfmt,
-			   parv[0], mypath);
-	else
-#endif
+
 	if(IsULine(sptr))
 	{
 	    sendto_ops_lev(USKILL_LEV, "Received KILL message for %s!%s@%s. "
@@ -3231,7 +3009,7 @@ int check_oper_can_mask(aClient *sptr, char *name, char *password,
 
     return 0;
 }
-#ifdef AZZURRA
+
 int check_helper_can_mask(aClient *sptr, char *name, char *password,
 			char **onick)
 {
@@ -3281,7 +3059,6 @@ int check_helper_can_mask(aClient *sptr, char *name, char *password,
 
     return 0;
 }
-#endif
 #endif
 
 /*
@@ -3346,14 +3123,13 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			sendto_one(sptr, err_str(ERR_NOOPERHOST), me.name, parv[0]);
 			sendto_realops("Failed OPER attempt by %s (%s@%s)", parv[0],
 				sptr->user->username, sptr->user->host);
-#ifdef AZZURRA
+
 			sendto_security(NULL, "Failed OPER attempt by %s (%s@%s) [%s %s]",
 				parv[0], sptr->user->username, sptr->user->host, name,
 #ifdef FAILEDOPER_SHOWPASS			    
-			    password);
+				password);
 #else
 				"HIDDEN");
-#endif
 #endif
 
 
@@ -3372,14 +3148,12 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				sendto_realops("Failed OPER attempt by %s (%s@%s)", parv[0],
 					sptr->user->username, sptr->user->host);
 
-#ifdef AZZURRA	  
 				sendto_security(NULL, "Failed OPER attempt by %s (%s@%s) [%s %s]",
 					parv[0], sptr->user->username, sptr->user->host, name,
 #ifdef FAILEDOPER_SHOWPASS			    
 					password);
 #else
 					"HIDDEN");
-#endif
 #endif
 
 			return 0;
@@ -3434,10 +3208,8 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		sendto_ops("%s (%s@%s) is now operator (%c)", parv[0],
 			sptr->user->username, sptr->sockhost, IsOper(sptr) ? 'O' : 'o');
 
-#ifdef AZZURRA
 		sendto_security(NULL, "%s (%s@%s) is now operator (%c)",
 			parv[0], sptr->user->username, sptr->user->host, IsOper(sptr) ? 'O' : 'o');
-#endif
 
 		send_umode_out(cptr, sptr, old);
 		sendto_one(sptr, rpl_str(RPL_YOUREOPER), me.name, parv[0]);
@@ -3488,11 +3260,9 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		sendto_realops("Failed OPER attempt by %s (%s@%s)",
 			parv[0], sptr->user->username, sptr->sockhost);
 #endif
-#ifdef AZZURRA
 		sendto_security(NULL, "Failed OPER attempt by %s (%s@%s) (Password mismatch)",
 			parv[0], sptr->user->username, sptr->user->host);
-#endif
-	}
+    }
 
     return 0;
 }
@@ -3516,14 +3286,6 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		   me.name, parv[0], "PASS");
 	return 0;
     }
-#ifndef AZZURRA
-    if (!MyConnect(sptr) || (!IsUnknown(cptr) && !IsHandshake(cptr)))
-    {
-	sendto_one(cptr, err_str(ERR_ALREADYREGISTRED),
-		   me.name, parv[0]);
-	return 0;
-    }
-#else
     if (!MyConnect(sptr))
     {
 	sendto_one(cptr, err_str(ERR_ALREADYREGISTRED),
@@ -3555,7 +3317,6 @@ int m_pass(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	
 	return m_identify(cptr, sptr, 2, myparv);
     }
-#endif
     
     strncpyzt(cptr->passwd, password, sizeof(cptr->passwd));
     if (parc > 2)
@@ -3598,16 +3359,11 @@ int m_userhost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			      IsAnOper(acptr) ? "*" : "",
 			      (acptr->user->away) ? '-' : '+',
 			      acptr->user->username,
-#if defined( AZZURRA )
 			      (acptr == sptr) ?
 				  ((acptr->confs->value.aconf->flags & CONF_FLAGS_I_FASTWEBPORT) ? // thanks 2: G
 				  acptr->hostip : acptr->user->host) :
 			      (IsUmodex(acptr) ? acptr->user->virthost :
-			      acptr->user->host)
-#else
-			      acptr->user->host
-#endif
-			      );
+			      acptr->user->host));
 	    
 	}
     sendto_one(sptr, "%s", buf);
@@ -3765,14 +3521,12 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				case '\t':
 					break;
 
-#ifdef AZZURRA /* UMODE_H_SERVICES_RESTRICTED */
 				case 'h':
 
 					if (IsUmodeh(sptr) && what == MODE_DEL)
 						sptr->umode &= ~UMODE_h;
 
 					break;
-#endif
 
 #ifdef INET6
 
@@ -3787,22 +3541,14 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 					}
 					break;
 #endif
-#ifdef AZZURRA
 				case 'z': /* users can`t set themselves +z ! */
 				case 'j': /* users can`t set themselves +j ! */
 				case 'a': /* users can`t set themselves +a ! */
-#endif
 				case 'S': /* users can`t set themselves +S ! */
 				case 'r': /* users can't set themselves +r! */
 					break;
 
 				case 'A':
-
-#ifndef AZZURRA
-					/* set auto +a if user is setting +A */
-					if (MyClient(sptr) && (what == MODE_ADD))
-						sptr->umode |= UMODE_a;
-#endif
 					// fall...
 				case 'g': /* users shouldn`t set themselves +g ! */
 					if (!IsPrivileged(cptr))
@@ -3881,9 +3627,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	if (!IsAnOper(sptr) && !IsServer(sptr)) {
 
 		if (IsAdmin(sptr)) ClearAdmin(sptr);
-#ifndef AZZURRA
-		if (IsSAdmin(sptr)) ClearSAdmin(sptr);
-#endif
 		if (IsUmodef(sptr)) ClearUmodef(sptr);
 		if (IsUmodec(sptr)) ClearUmodec(sptr);
 		if (IsUmodey(sptr)) ClearUmodey(sptr);
@@ -3894,38 +3637,26 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		if (IsUmodee(sptr)) ClearUmodee(sptr);
 		if (IsUmodeK(sptr)) ClearUmodeK(sptr);
 
-#ifdef AZZURRA
 		if (SendSkillNotice(sptr)) ClearSkillNotice(sptr);
 		if (IsHiddenIdle(sptr)) ClearHiddenIdle(sptr);
 		if (SendGlobops(sptr)) ClearGlobops(sptr);
-#endif
 		if (NoMsgThrottle(sptr)) ClearNoMsgThrottle(sptr);
 	}
 
 	if (MyClient(sptr)) {
 
 		if (IsAdmin(sptr) && !OPIsAdmin(sptr)) ClearAdmin(sptr);
-
-#ifndef AZZURRA
-		if (IsSAdmin(sptr) && !OPIsSAdmin(sptr)) ClearSAdmin(sptr);
-
-		/* Allow +F for any opers. */
-		if (NoMsgThrottle(sptr) && !OPCanUModeF(sptr)) ClearNoMsgThrottle(sptr);
-#endif
-
 		if (IsUmodef(sptr) && !OPCanUModef(sptr)) ClearUmodef(sptr);
 		if (IsUmodec(sptr) && !OPCanUModec(sptr)) ClearUmodec(sptr);
 		if (IsUmodey(sptr) && !OPCanUModey(sptr)) ClearUmodey(sptr);
 		if (IsUmoded(sptr) && !OPCanUModed(sptr)) ClearUmoded(sptr);
 		if (IsUmodeb(sptr) && !OPCanUModeb(sptr)) ClearUmodeb(sptr);
 
-#ifdef AZZURRA
 		/* Don't allow local opers to set themselves +m */
 		if (IsUmodem(sptr) && !OPCanSpam(sptr)) ClearUmodem(sptr);
 
 		/* Don't allow local opers to set themselves +I */
 		if (IsHiddenIdle(sptr) && !IsOper(sptr)) ClearHiddenIdle(sptr);
-#endif
 	}
 
 	send_umode_out(cptr, sptr, setflags);
@@ -4030,24 +3761,17 @@ int check_for_ctcp(char *str, char **dccptr)
 
 		if (myncmp(p, "DCC", 3) == 0) {
 
-#ifdef AZZURRA
 			char *s, *t;
 			int ret = CTCP_DCC;
 			int checkbogus = NO;
 			int spaces = 0;
 			size_t len = 0;
-#endif
 			if (dccptr)
 				*dccptr = p;
 
 			if (myncmp(p + 3, " SEND", 5) == 0) {       
 
 				ret = CTCP_DCCSEND;
-#ifndef AZZURRA
-
-			}	  
-#else
-
 				p += 8;
 				checkbogus = YES;	     
 			}	  
@@ -4108,7 +3832,6 @@ int check_for_ctcp(char *str, char **dccptr)
 				if (len >= MAXDCCFILELEN)
 					return CTCP_BOGUS;
 			}
-#endif       
 			return ret;
 		}
 
@@ -4212,11 +3935,9 @@ int check_for_fludblock(aClient *fluder, aClient *cptr, aChannel *chptr,
     if (flud_block == 0)
 	return 0;
 
-#ifdef AZZURRA
     /* !@*#$%!!!!! */
     if (IsOper(fluder) || IsULine(fluder) || IsUmodez(fluder))
         return 0;
-#endif
 
     /* It's either got to be a client or a channel being fluded */
     if ((cptr == NULL) && (chptr == NULL))
@@ -4249,11 +3970,9 @@ int check_for_flud(aClient *fluder, aClient *cptr, aChannel *chptr, int type)
     if (flud_block == 0)
 	return 0;
 	
-#ifdef AZZURRA
     /* !@*#$%!!!!! */
     if (IsOper(fluder) || IsULine(fluder) || IsUmodez(fluder))
         return 0;
-#endif
 	
     /* It's either got to be a client or a channel being fluded */
     if ((cptr == NULL) && (chptr == NULL))
@@ -4495,25 +4214,17 @@ static int is_silenced(aClient *sptr, aClient *acptr)
     Link *lp;
     anUser *user;
     char sender[HOSTLEN+NICKLEN+USERLEN+5];
-#ifdef AZZURRA
     char vsender[HOSTLEN+NICKLEN+USERLEN+5];
-#endif
 
     if (!(acptr->user) || !(lp=acptr->user->silence) || !(user=sptr->user))
 	return 0;
 
     ircsprintf(sender,"%s!%s@%s",sptr->name,user->username,user->host);
-#ifdef AZZURRA
     ircsprintf(vsender,"%s!%s@%s",sptr->name,user->username,user->virthost);
-#endif
 
     for (;lp;lp=lp->next) 
     {
-	if (!match(lp->value.cp, sender)
-#ifdef AZZURRA
-		|| !match(lp->value.cp, vsender)
-#endif
-		) 
+	if (!match(lp->value.cp, sender) || !match(lp->value.cp, vsender))
 	{
 	    if (!MyConnect(sptr)) 
 	    {
@@ -4867,11 +4578,7 @@ int m_dccallow(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    sendto_one(sptr, ":%s %d %s :%s (%s@%s)", me.name,
 			       RPL_DCCLIST, sptr->name, lp->value.cptr->name,
 			       lp->value.cptr->user->username,
-#ifdef AZZURRA
-			       IsUmodex(lp->value.cptr) ? 
-			       lp->value.cptr->user->virthost :
-#endif
-			       lp->value.cptr->user->host);
+			       IsUmodex(lp->value.cptr) ? lp->value.cptr->user->virthost : lp->value.cptr->user->host);
 		}
 		sendto_one(sptr, rpl_str(RPL_ENDOFDCCLIST), me.name,
 			   sptr->name, s);
@@ -4950,7 +4657,6 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
 }
 #endif
 
-#ifdef AZZURRA
 /* CR, i 0wn j00 */
 int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)
 {
@@ -4998,7 +4704,6 @@ int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)
 
     return 0;
 }
-#endif
 
 #ifdef SHUN /*AZZURRA*/
 int m_shun(aClient *cptr, aClient *sptr, int parc, char *parv[])
@@ -5060,14 +4765,12 @@ int m_shun(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    me.name, parv[0], nick, acptr->name);
 	    chasing = 1;
 	}
-#ifdef AZZURRA
 	if(IsUmodez(acptr))
 	{
 	    sendto_one(sptr, ":%s NOTICE %s :Cannot SHUN Services agent",
 		    me.name, parv[0]);
 	    continue;
 	}
-#endif
 	if(IsAnOper(acptr))
 	{
 	    sendto_one(sptr, ":%s NOTICE %s :Cannot SHUN Oper",
@@ -5243,7 +4946,6 @@ int m_unshun(aClient *cptr, aClient *sptr, int parc, char *parv[])
 }
 #endif
 
-#ifdef AZZURRA
 __inline__ int check_for_spam(aClient *sender, char *input, char *dest, char *messagetype)
 {
     register Spam *sp;
@@ -5432,4 +5134,3 @@ __inline__ int check_for_spam(aClient *sender, char *input, char *dest, char *me
 
     return 0;
 }
-#endif

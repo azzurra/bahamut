@@ -69,10 +69,8 @@ extern void sendto_serv_butone_services(aClient *one, char *pattern, ...);
 extern void sendto_wallops_butone(aClient *one, aClient *from,
 				  char *pattern, ...);
 extern void sendto_gnotice(char *pattern, ...);
-#ifdef AZZURRA
 extern void sendto_snotice(char *pattern, ...);
 extern void sendto_security(char *chname, char *pattern, ...);
-#endif
 
 extern void ts_warn(char *pattern, ...);
 

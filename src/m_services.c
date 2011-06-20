@@ -39,15 +39,9 @@ extern unsigned long my_rand();
 
 /* internally defined stuffs */
 
-#ifndef AZZURRA
-#define OPERSERV_SERVER STATS_NAME
-#define HELPSERV_SERVER STATS_NAME
-#define SS_SERVICE STATSERV
-#else
 #define OPERSERV_SERVER SERVICES_NAME
 #define HELPSERV_SERVER SERVICES_NAME
 #define SS_SERVICE SEENSERV
-#endif
 
 /*
  * the services aliases. *
@@ -213,7 +207,6 @@ int m_ss(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
 }
 
-#ifdef AZZURRA
 /* m_st */
 int m_st(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
@@ -239,7 +232,6 @@ int m_st(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		   parv[0], STATSERV);
     return 0;
 }
-#endif
 
 /* m_hs */
 int m_hs(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
@@ -389,10 +381,8 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     acptr->umode &= ~UMODE_r;
     acptr->tsinfo = atoi(parv[3]);
-#ifdef AZZURRA
     SetSVSnicked(acptr);
     acptr->user->svsnick_time = NOW;
-#endif
 
 #ifdef ANTI_NICK_FLOOD
     acptr->last_nick_change = atoi(parv[3]);
@@ -539,7 +529,7 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    if (optarg && isdigit(*optarg))
 		acptr->user->servicestamp = strtoul(optarg, NULL, 0);
 	    break;
-#ifdef AZZURRA
+
 	case 'o':
 	    if (MyClient(acptr))
 	    {
@@ -608,17 +598,16 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	case 'r':
 	    SetKnownNick(acptr);
 	    /* fallthrough */
-#endif
+
 	default:
 	    for (s = user_modes; (flag = *s); s += 2)
 	    {
 		if (*m == (char)(*(s+1)))
 		{
-#ifdef AZZURRA
 		    /* ignore local umode changes for non-local clients */
 		    if (!MyClient(acptr) && !(SEND_UMODES & flag))
 			break;
-#endif
+
 		    if (what == MODE_ADD)
 			acptr->umode |= flag;
 		    else
@@ -635,13 +624,13 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     else
 	sendto_serv_butone(cptr, ":%s SVSMODE %s %ld %s",
 			   parv[0], parv[1], acptr->tsinfo, modes);
-#ifdef AZZURRA
-    if (MyConnect(acptr) && (oldumode != acptr->umode)) {
+
+    if (MyConnect(acptr) && (oldumode != acptr->umode))
+    {
 	char buf[BUFSIZE];
 	/* Don't mess around with SVSMODE +d */
 	send_umode(acptr, acptr, oldumode, ALL_UMODES, buf);
     }
-#endif
 
     return 0;
 }

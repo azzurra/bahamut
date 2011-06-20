@@ -476,13 +476,9 @@ int hash_check_watch(aClient *cptr, int reply)
 	sendto_one(lp->value.cptr, rpl_str(reply), me.name,
 		   lp->value.cptr->name, cptr->name,
 		   (IsPerson(cptr)?cptr->user->username:"<N/A>"),
-#ifndef AZZURRA
-		   (IsPerson(cptr)?cptr->user->host:"<N/A>"),
-#else
 		   (IsPerson(cptr)?((!CanShowIP(lp->value.cptr, cptr))?
 				    cptr->user->virthost:
 				    cptr->user->host):"<N/A>"),
-#endif
 		   anptr->lasttime, cptr->info);
     
     return 0;

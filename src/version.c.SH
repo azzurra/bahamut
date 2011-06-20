@@ -132,7 +132,6 @@ char *infotext[] =
 	 "SSL code is available on: http://devel.azzurra.org",
 	 "",
 #endif
-#if defined(AZZURRA)
 	 "Azzurra code:",
 	 "void/vjt             Marcello Barnaba      void@azzurra.org",
 	 "tsk                  Fabrizio Lanotte       tsk@azzurra.org",
@@ -142,8 +141,6 @@ char *infotext[] =
 	 "        #sniffo    :: WuhrerHouse, nextime, kazam, tsk, jx, *",
 	 "Azzurra code is available on: http://devel.azzurra.org",
 	 "",
-#endif
-#if defined(INET6) || defined(USE_SSL) || defined(AZZURRA)
 	 " _____________________________________ ",
 	 "< This bahamut has Super Cow Powers ! >",
 	 " ------------------------------------- ",
@@ -153,7 +150,6 @@ char *infotext[] =
 	 "                ||----w |",
 	 "                ||     ||",
 	 "",
-#endif
 	 0,
 };
 !SUB!THIS!

@@ -159,7 +159,6 @@ time_t      nextping = 1;	   /* same as above for check_pings() */
 time_t      nextdnscheck = 0;	   /* next time to poll dns to force timeout */
 time_t      nextexpire = 1;	   /* next expire run on the dns cache */
 
-#ifdef AZZURRA
 char *cloak_key;
 char *cloak_host;
 unsigned short cloak_key_len;
@@ -167,7 +166,6 @@ unsigned short cloak_key_len;
 extern int cloak_init(void);
 
 time_t NEXT_MIDNIGHT, NEXT_WEEKEND, NEXT_MONTH;
-#endif
 
 #if defined PROFILING && defined __GLIBC__ && (__GLIBC__ >= 2)
 extern void _start, etext;
@@ -319,25 +317,25 @@ static time_t try_connections(time_t currenttime)
     int			connecting = FALSE, confrq, con_class = 0;
     time_t		next = 0;
 
-#if defined(AZZURRA) && !defined(HUB)
-	int idx;
+#ifndef HUB
+    int idx;
 #endif
 
 
     Debug((DEBUG_NOTICE, "Connection check at: %s", myctime(currenttime)));
 
-#if defined(AZZURRA) && !defined(HUB)
-	/* Stop leaf servers from autoconnecting to other hubs if they're
-	* already connected to one.
-	*/
-	for (idx = 0; idx <= highest_fd; ++idx) {
-
-		if (local[idx] && IsServer(local[idx])) {
-
-			/* We're connected to a hub, skip autoconnects for 5 minutes. */
-			return (currenttime + 300);
-		}
+#ifndef HUB
+    /* Stop leaf servers from autoconnecting to other hubs if they're
+     * already connected to one.
+     */
+    for (idx = 0; idx <= highest_fd; ++idx)
+    {
+	if (local[idx] && IsServer(local[idx]))
+	{
+	    /* We're connected to a hub, skip autoconnects for 5 minutes. */
+	    return (currenttime + 300);
 	}
+    }
 #endif
 
 	for (aconf = conf; aconf; aconf = aconf->next) {
@@ -924,7 +922,6 @@ int main(int argc, char *argv[])
     strncpyzt(ProxyMonHost, MONITOR_HOST, (HOSTLEN + 1));
 #endif
 
-#ifdef AZZURRA
     if(!cloak_init())
     {
 	fprintf(stderr, "Failed to initialize cloak subsystem. I`m exiting now.\n");
@@ -978,7 +975,6 @@ int main(int argc, char *argv[])
         t.tm_mday = 1;
         NEXT_MONTH = mktime(&t);
     }
-#endif
 	
     if (portnum < 0)
 	portnum = PORTNUM;
@@ -1394,7 +1390,7 @@ void io_loop()
 				 >= (CHECK_PENDING_KLINES * 60)))
 	    do_pending_klines();
 #endif
-#ifdef AZZURRA
+
 	if(NOW >= NEXT_MIDNIGHT)
 	{
 	    Spam *s;
@@ -1428,7 +1424,6 @@ void io_loop()
 	    }
             NEXT_MONTH += 2592000;
 	}
-#endif
     }
 }
 

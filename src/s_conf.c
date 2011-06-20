@@ -106,9 +106,7 @@ int         find_conf_match(aClient *, aConfList *, aConfList *, aConfList *);
 int         find_fline(aClient *);
 extern void delist_conf(aConfItem *);
 
-#ifdef AZZURRA
 int find_conf_match_host(char *, char *, aConfList *, aConfList *, aConfList *);
-#endif
 
 #ifdef WINGATE_NOTICE
 extern char ProxyMonURL[TOPICLEN+1];
@@ -1030,11 +1028,9 @@ int rehash(aClient *cptr, aClient *sptr, int sig)
 
     if (sig == SIGHUP) 
     {
-#ifdef AZZURRA
 	sendto_security(NULL, 
 			"Server %s got signal SIGHUP, reloading config file.",
 			me.name, me.name);
-#endif
 	sendto_ops("Got signal SIGHUP, reloading ircd conf. file");
 #ifdef	ULTRIX
 	if (fork() > 0)
@@ -1416,12 +1412,12 @@ initconf(int opt, int fd)
 	case 'o':		
 	    aconf->status = CONF_OPERATOR;
 	    break;
-#ifdef AZZURRA
+
 	case 'J':		/* Helper line; hostmasking only --tsk */
 	case 'j':
 	    aconf->status = CONF_HELPER;
 	    break;
-#endif
+
 	case 'P':		/* listen port line */
 	case 'p':
 	    aconf->status = CONF_LISTEN_PORT;
@@ -1590,7 +1586,6 @@ initconf(int opt, int fd)
 		    MyFree(tmpd);
 		}
 	    }
-#ifdef AZZURRA
 	    if(myncmp(aconf->passwd, "helper", 6) == 0)
 	    {
 		if((aconf->passwd[6] == '.') || (aconf->passwd[6] == '\0'))
@@ -1605,7 +1600,6 @@ initconf(int opt, int fd)
 		    MyFree(tmpd);
 		}
 	    }
-#endif 
 #endif
 #ifdef FASTWEB
 	    if(myncmp(aconf->passwd, "fastweb", 7) == 0)
@@ -1952,13 +1946,11 @@ int find_eline(aClient *cptr)
     return find_conf_match(cptr, &EList1, &EList2, &EList3);
 }
 
-#ifdef AZZURRA
 /* This is used to check THROTTLE exceptions -INT */ 
 int find_eline_host(char *host)
 {
    return find_conf_match_host("*", host, &EList1, &EList2, &EList3);
 }
-#endif
 
 int find_fline(aClient *cptr)
 {
@@ -2373,7 +2365,6 @@ aConfItem *find_is_zlined_perm(char *host)
 int find_conf_match(aClient *cptr, aConfList *List1, aConfList *List2,
 		    aConfList *List3)
 {
-#ifdef AZZURRA
     if (!cptr->user)
         return 0;
 	
@@ -2388,24 +2379,10 @@ int find_conf_match(aClient *cptr, aConfList *List1, aConfList *List2,
 int find_conf_match_host(char *name, char *host, aConfList *List1,
 			 aConfList *List2, aConfList *List3)
 {
-      
-#else   
-    char       *host, *name;
-#endif   
     aConfItem  *tmp;
     char        rev[HOSTLEN + 1];	
     aConfList  *list;
 
-#ifndef AZZURRA
-    /* We don't want this in AZZURRA patch because we have
-     * already checked it. */
-    if (!cptr->user)
-	return 0;
-
-    host = cptr->sockhost;
-    name = cptr->user->username;
-#endif
-   
     if (strlen(host) > (size_t) HOSTLEN ||
 	(name ? strlen(name) : 0) > (size_t) HOSTLEN)
 	return (0);

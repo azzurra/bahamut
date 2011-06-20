@@ -18,7 +18,6 @@
 
 #include "struct.h"
 
-#ifdef AZZURRA
 #include "common.h"
 #include "sys.h"
 #include "numeric.h"
@@ -257,5 +256,3 @@ cloakhost(char *host, char *dest)
    memcpy(dest, virt, HOSTLEN);
    return 1;
 }
-
-#endif

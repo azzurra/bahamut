@@ -77,9 +77,7 @@ typedef struct SMode Mode;
 typedef struct Watch aWatch;
 typedef struct Ban aBan;
 typedef struct ListOptions LOpts;
-#ifdef AZZURRA
 typedef struct spam_ Spam;
-#endif
 typedef long ts_val;
 
 typedef struct MotdItem aMotd;
@@ -125,10 +123,8 @@ typedef struct MotdItem aMotd;
 #define DCC_LINK_REMOTE 0x02    /* I need to remove these dcc allows from
 				 * these clients when I die
 				 */
-#ifdef AZZURRA
 #define MAXDCCFILELEN   225     /* Max file length for dcc send */
 #define MAXDCCFILESPACES 15     /* Max file spaces for dcc send */
-#endif
 
 
 #define	USERHOST_REPLYLEN	(NICKLEN+HOSTLEN+USERLEN+5)
@@ -332,26 +328,12 @@ typedef struct MotdItem aMotd;
  *  that mode will be 'silent.'
  */
 
-#ifdef AZZURRA
-/* AZZURRA usermodes */
-
 #define	SEND_UMODES (UMODE_i|UMODE_o|UMODE_r|UMODE_a|UMODE_A|\
                      UMODE_h|UMODE_R|UMODE_x|UMODE_y|UMODE_z|\
 		     UMODE_S|UMODE_I|UMODE_m)
 #define ALL_UMODES (SEND_UMODES|UMODE_w|UMODE_s|UMODE_c|UMODE_r|\
 		    UMODE_k|UMODE_f|UMODE_d|UMODE_g|UMODE_b|UMODE_n|\
 		    UMODE_h|UMODE_O|UMODE_R|UMODE_e|UMODE_F|UMODE_K)
-
-#else
-/* original DALNET usermodes */
-
-#define	SEND_UMODES (UMODE_i|UMODE_o|UMODE_w|UMODE_r|UMODE_a|UMODE_A|\
-                     UMODE_R)
-#define ALL_UMODES (SEND_UMODES|UMODE_w|UMODE_h|\
-	            UMODE_s|UMODE_c|UMODE_r|UMODE_k|UMODE_f|\
-	            UMODE_y|UMODE_d|UMODE_g|UMODE_b|UMODE_n|UMODE_m|\
-	            UMODE_O|UMODE_R|UMODE_e|UMODE_F|UMODE_K)
-#endif
 
 #ifdef DEFAULT_HELP_MODE
 #define OPER_UMODES (UMODE_o|UMODE_w|UMODE_s|UMODE_y|UMODE_d|UMODE_g|\
@@ -702,9 +684,7 @@ typedef struct Whowas
     char        name[NICKLEN + 1];
     char        username[USERLEN + 1];
     char        hostname[HOSTLEN + 1];
-#ifdef AZZURRA
     char	virthost[HOSTLEN + 1];
-#endif
     char       *servername;
     char        realname[REALLEN + 1];
     time_t      logoff;
@@ -733,8 +713,6 @@ struct ConfItem
     struct ConfItem *next;
 };
 
-#ifdef AZZURRA
-
 #define SPAM_BLOCK_NOMESSAGE	0 /* Block spam without messages */
 #define SPAM_BLOCK_NOTICE	1 /* Block spam with spam notice */
 #define SPAM_BLOCK_SECURITY	2 /* Block spam and notify security channel */
@@ -756,8 +734,6 @@ struct spam_
 		int daycount, weekcount, monthcount;
 		time_t creationtime;
 };
-
-#endif
 
 #define	CONF_ILLEGAL	        0x80000000
 #define	CONF_MATCH	        0x40000000
@@ -790,10 +766,8 @@ struct spam_
 #define CONF_SGLINE             0x2000000
 #define CONF_SZLINE             0x4000000   /* Services placed zlines */
 #define CONF_QUARANTINED_CHAN	0x8000000
-#ifdef AZZURRA 
 #define CONF_HELPER		0x10000000
 #define CONF_SPAM		0x20000000
-#endif
 #define CONF_QUARANTINE         (CONF_QUARANTINED_NICK|CONF_QUARANTINED_CHAN)
 #define	CONF_OPS		(CONF_OPERATOR | CONF_LOCOP)
 #define	CONF_SERVER_MASK	(CONF_CONNECT_SERVER | CONF_NOCONNECT_SERVER)
@@ -807,12 +781,10 @@ struct spam_
 #define CONF_FLAGS_I_NAME_HAS_AT   0x0004 
 /* does HOST in I:HOST::NAME have an @? */ 
 #define CONF_FLAGS_I_HOST_HAS_AT   0x0008 
-#ifdef AZZURRA
 /* did the password field specify HELPER? */
 #define CONF_FLAGS_I_HELPERPORT	   0x0010
 /* did the password field specify FASTWEB? */
 #define CONF_FLAGS_I_FASTWEBPORT   0x0020
-#endif
 #ifdef RESTRICT_USERS
 /* did the i-line specify a restricted connection? */
 #define CONF_FLAGS_I_RESTRICTED    0x0040
@@ -828,9 +800,7 @@ struct User
     int         joined;        /* number of channels joined */
     char        username[USERLEN + 1];
     char        host[HOSTLEN + 1];
-#ifdef AZZURRA
     char	virthost[HOSTLEN + 1];
-#endif
     char       *server;        /* pointer to scached server name */
 #ifdef OS_SOLARIS
     uint_t    servicestamp;    /* solaris is gay -epi */
@@ -850,15 +820,11 @@ struct User
     char       *real_oper_host;
     char       *real_oper_username;
     char       *real_oper_ip;
-#ifdef AZZURRA
     char       *real_helper_host;
     char       *real_helper_username;
     char       *real_helper_ip;
 #endif
-#endif
-#ifdef AZZURRA
     time_t       svsnick_time;
-#endif
 };
 
 struct Server
@@ -890,9 +856,7 @@ struct Client
     time_t      since;      /* last time we parsed something */
     ts_val      tsinfo;     /* TS on the nick, SVINFO on servers */
     long        flags;      /* client flags */
-#ifdef AZZURRA
     long	flags2;     /* sorry, 32bit are simply not enough. */
-#endif
     long        umode;      /* We can illeviate overflow this way */
     aClient    *from;       /* == self, if Local Client, *NEVER* NULL! */
     aClient    *uplink;     /* this client's uplink to the network */
@@ -915,9 +879,7 @@ struct Client
     Link *watch; /* user's watch list */
     int watches; /* how many watches this user has set */
 
-#ifdef AZZURRA
     unsigned long pasvdccid;	/* ID used to remember passive dcc sends -INT */
-#endif
         
 /*
 ####### #     # ### #     #  #####   #####
@@ -1005,9 +967,7 @@ struct Client
     int         authfd;	         /* fd for rfc931 authentication */
     char        username[USERLEN + 1]; /* username here now for auth stuff */
     unsigned short port;	 /* and the remote port# too :-) */
-#ifdef AZZURRA
     unsigned short lport;        /* add local port as well (saves us quite a few lookups) */
-#endif
     struct hostent *hostp;
 #ifdef ANTI_NICK_FLOOD
     time_t      last_nick_change;
@@ -1212,9 +1172,7 @@ struct Channel
 #define	CHFL_VOICE      0x0002	/* the power to speak */
 #define	CHFL_DEOPPED 	0x0004	/* deopped by us, modes need to be bounced */
 #define	CHFL_BAN	0x0008	/* ban channel flag */
-#ifdef AZZURRA
 #define CHFL_HALFOP	0x0010	/* Channel half operator */
-#endif
 
 /* ban mask types */
 
@@ -1225,9 +1183,7 @@ struct Channel
 /* Channel Visibility macros */
 
 #define	MODE_CHANOP	CHFL_CHANOP
-#ifdef AZZURRA
 #define MODE_HALFOP	CHFL_HALFOP
-#endif
 #define	MODE_VOICE	CHFL_VOICE
 #define	MODE_DEOPPED  	CHFL_DEOPPED
 #define	MODE_PRIVATE  	0x00008
@@ -1245,7 +1201,6 @@ struct Channel
 #define MODE_OPERONLY   0x08000
 #define MODE_MODREG     0x10000
 #define MODE_LISTED	0x20000
-#ifdef AZZURRA
 #define MODE_NONICKCHG	0x40000
 #define MODE_NOSPAM	0x80000
 #define MODE_NOCTCP	0x100000
@@ -1253,16 +1208,11 @@ struct Channel
 #define MODE_NOUNKNOWN	0x400000 /* cmode +j, allow only registered users to join */
 #define MODE_UNRESTRICT	0x800000 /* cmode +U, allow restricted users to join */
 #define MODE_RESTRICT	0x1000000 /*cmode +z, disallow a matching client to join without a registered nick*/
-#define MODE_HIDEBANS	0x2000000 /*Comde +M, hide bans to normal users*/
-#endif
+#define MODE_HIDEBANS	0x2000000 /*Comde +B, hide bans to normal users*/
 
 /* mode flags which take another parameter (With PARAmeterS) */
 
-#ifndef AZZURRA
-#define	MODE_WPARAS	(MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT)
-#else
 #define	MODE_WPARAS	(MODE_CHANOP|MODE_HALFOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_RESTRICT)
-#endif
 
 /*
  * Undefined here, these are used in conjunction with the above modes
@@ -1326,9 +1276,7 @@ struct Channel
 #define TO_CHAN           0x0002
 #define TO_OPS            0x0004
 #define TO_VOICE          0x0008
-#ifdef AZZURRA
 #define TO_HALFOP	  0x0010
-#endif
 
 /* return values for hunt_server() */
 
@@ -1452,12 +1400,10 @@ typedef struct SearchOptions
     char show_chan:1;
     char search_chan:1;
     char spare:3; /* spare space for more stuff(?) */
-#ifdef AZZURRA
     char* away_msg;
     char away_msg_plus:1;
     char check_nochan:1;
-	int maxhits;
-#endif
+    int maxhits;
 } SOpts;
 
 #define IsSendable(x)      (DBufLength(&x->sendQ) < 16384)
@@ -1468,9 +1414,7 @@ typedef struct SearchOptions
 #define IRCERR_ZIP	   -12
 #define IRCERR_SSL         -13
 
-#ifdef AZZURRA
 #define LANG_IT		1
 #define LANG_EN		0
-#endif
 
 #endif /* __struct_include__ */

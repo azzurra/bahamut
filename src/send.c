@@ -464,11 +464,8 @@ static inline int prefix_buffer(int remote, aClient *from, char *prefix,
     {
 	int flag = 0;
 	anUser *user = from->user;
-#ifndef AZZURRA
-	char *host = user->host;
-#else
 	char *host = IsUmodex(from) ? user->virthost : user->host;
-#endif
+
 	for(p = from->name; *p; p++)
 	    buffer[sidx++] = *p;
 
@@ -492,11 +489,7 @@ static inline int prefix_buffer(int remote, aClient *from, char *prefix,
 	if (!flag && MyConnect(from) && *host) /*AZZURRA*/
 	{
 	    buffer[sidx++] = '@';
-#ifndef AZZURRA
-	    for(p = from->sockhost; *p; p++)
-#else
 	    for(p = host; *p; p++)
-#endif
 		buffer[sidx++] = *p;
 	}
     }
@@ -529,10 +522,8 @@ static inline int check_fake_direction(aClient *from, aClient *to)
 	sendto_serv_butone(NULL, ":%s KILL %s :%s (%s[%s@%s] Ghosted %s)",
 			   me.name, to->name, me.name, to->name,
 			   to->user->username, 
-#ifdef AZZURRA
-			   IsUmodex(to) ? to->user->virthost :
-#endif
-			   to->user->host, to->from->name);
+			   IsUmodex(to) ? to->user->virthost : to->user->host,
+			   to->from->name);
 	
 	to->flags |= FLAGS_KILLED;
 	exit_client(NULL, to, &me, "Ghosted client");
@@ -540,17 +531,14 @@ static inline int check_fake_direction(aClient *from, aClient *to)
 	if (IsPerson(from))
 	    sendto_one(from, err_str(ERR_GHOSTEDCLIENT), me.name, from->name,
 		       to->name, to->user->username,
-#ifdef AZZURRA
-		       IsUmodex(to) ? to->user->virthost :
-#endif
-		       to->user->host, to->from);
+		       IsUmodex(to) ? to->user->virthost : to->user->host,
+		       to->from);
 	return -1;
     }
 
     return 0;
 }
 
-#ifdef AZZURRA
 /* Send a privmsg to the security channel named chname. 
  * if chname == null, default SECURITY_CHANNEL is used
  * (it is defined in config.h). -INT
@@ -608,7 +596,6 @@ void sendto_security(char *chname, char *pattern, ...)
     va_end(vl);
     return;
 }
-#endif   
    
 void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
 			   char *pattern, ...) 
@@ -873,10 +860,8 @@ void send_quit_to_common_channels(aClient *from, char *reason)
 
 	msglen = sprintf(sendbuf,":%s!%s@%s QUIT :%s", from->name,
 			 from->user->username, 
-#ifdef AZZURRA
-			 IsUmodex(from) ? from->user->virthost :
-#endif		  			 
-			 from->user->host, reason);
+			 IsUmodex(from) ? from->user->virthost : from->user->host,
+			 reason);
 
 	for (users = channels->value.chptr->members; users; users = users->next)
 	{
@@ -926,10 +911,8 @@ void send_part_to_common_channels(aClient *from, char *reason)
 	     (!(from->flags & FLAGS_KILLED)) && (!(reason[0] == 'L')))
 	{
 	    msglen=sprintf(sendbuf,":%s!%s@%s PART %s", from->name,from->user->username,
-#ifdef AZZURRA
-		    IsUmodex(from) ? from->user->virthost :
-#endif
-		    from->user->host, channels->value.chptr->chname);
+		    IsUmodex(from) ? from->user->virthost : from->user->host,
+		    channels->value.chptr->chname);
 
 	    INC_SERIAL
 
@@ -1044,11 +1027,7 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
 static int match_it(aClient *one, char *mask, int what)
 {
     if (what == MATCH_HOST)
-	return (match(mask, 
-#if 0 // AZZURRA --tsk
-		    IsUmodex(one) ? one->user->virthost :
-#endif
-		    one->user->host) == 0);
+	return (match(mask, one->user->host) == 0);
     else
 	return (match(mask, one->user->server) == 0);
 }
@@ -1409,20 +1388,16 @@ void sendto_prefix_one(aClient *to, aClient *from, char *pattern, ...)
 	    sendto_serv_butone(NULL, ":%s KILL %s :%s (%s[%s@%s] Ghosted %s)",
 			       me.name, to->name, me.name, to->name,
 			       to->user->username, 
-#ifdef AZZURRA
-			       IsUmodex(to) ? to->user->virthost :
-#endif
-			       to->user->host, to->from->name);
+			       IsUmodex(to) ? to->user->virthost : to->user->host,
+			       to->from->name);
 
 	    to->flags |= FLAGS_KILLED;
 	    exit_client(NULL, to, &me, "Ghosted client");
 	    if (IsPerson(from))
 		sendto_one(from, err_str(ERR_GHOSTEDCLIENT), me.name,
 			   from->name, to->name, to->user->username,
-#ifdef AZZURRA
-			   IsUmodex(to) ? to->user->virthost :
-#endif
-			   to->user->host, to->from);
+			   IsUmodex(to) ? to->user->virthost : to->user->host,
+			   to->from);
 	    va_end(vl);
 	    return;
 	}
@@ -1431,11 +1406,7 @@ void sendto_prefix_one(aClient *to, aClient *from, char *pattern, ...)
 	{
 	    char *host; 
 	    user = from->user;
-	    host = 
-#ifdef AZZURRA
-		IsUmodex(from) ? user->virthost :
-#endif
-		user->host;
+	    host = IsUmodex(from) ? user->virthost : user->host;
 
 	    for(idx = from->name; *idx; idx++)
 		sender[sidx++] = *idx;
@@ -1466,11 +1437,7 @@ void sendto_prefix_one(aClient *to, aClient *from, char *pattern, ...)
 	    if (!flag && MyConnect(from) && *host) /*AZZURRA*/
 	    {
 		sender[sidx++] = '@';
-#ifndef AZZURRA
-		for(idx = from->sockhost; *idx; idx++)
-#else
 		for(idx = host; *idx; idx++)
-#endif
 		    sender[sidx++] = *idx;
 	    }
 
@@ -1533,38 +1500,28 @@ void vsendto_prefix_one(aClient *to, aClient *from, char *pattern, va_list vl)
 
 	    sendto_ops("Ghosted: %s[%s@%s] from %s[%s@%s] (%s)", to->name,
 		       to->user->username,
-#ifdef AZZURRA
-		       IsUmodex(to) ? to->user->virthost :
-#endif
-		       to->user->host, from->name, from->user->username,
+		       IsUmodex(to) ? to->user->virthost : to->user->host,
+		       from->name, from->user->username,
 		       from->user->host, to->from->name);
 	    sendto_serv_butone(NULL, ":%s KILL %s :%s (%s[%s@%s] Ghosted %s)",
 			       me.name, to->name, me.name, to->name,
 			       to->user->username,
-#ifdef AZZURRA
-			       IsUmodex(to) ? to->user->virthost :
-#endif
-			       to->user->host, to->from->name);
+			       IsUmodex(to) ? to->user->virthost : to->user->host,
+			       to->from->name);
 
 	    to->flags |= FLAGS_KILLED;
 	    exit_client(NULL, to, &me, "Ghosted client");
 	    if (IsPerson(from))
 		sendto_one(from, err_str(ERR_GHOSTEDCLIENT), me.name,
 			   from->name, to->name, to->user->username,
-#ifdef AZZURRA
-			   IsUmodex(to) ? to->user->virthost :
-#endif
-			   to->user->host, to->from);
+			   IsUmodex(to) ? to->user->virthost : to->user->host,
+			   to->from);
 	    return;
 	}
 
 	if (MyClient(to) && IsPerson(from) && !mycmp(par, from->name)) 
 	{
-	    char *host = 
-#ifdef AZZURRA
-		IsUmodex(from) ? from->user->virthost :
-#endif
-		from->user->host;
+	    char *host = IsUmodex(from) ? from->user->virthost : from->user->host;
 	    user = from->user;
 
 	    for(idx = from->name; *idx; idx++)
@@ -1867,7 +1824,6 @@ void sendto_gnotice(char *pattern, ...)
     return;
 }
 
-#ifdef AZZURRA
 /* sendto_snotice - send a spam notice to all local +n users. */
 void sendto_snotice(char *pattern, ...)
 {
@@ -1893,7 +1849,6 @@ void sendto_snotice(char *pattern, ...)
     va_end(vl);
     return;
 }
-#endif
 
 /*
  * sendto_channelflag_butone
@@ -1925,10 +1880,7 @@ void sendto_channelflag_butone(aClient *one, aClient *from, int typedest,
 	if (acptr->from == one ||
 		!(((cm->flags & CHFL_CHANOP) && (typedest & TO_OPS)) ||
 		   ((cm->flags & CHFL_VOICE) && (typedest & TO_VOICE)) ||
-#ifdef AZZURRA
-		   ((cm->flags & CHFL_HALFOP) && (typedest & TO_HALFOP))
-#endif
-		 ))
+		   ((cm->flags & CHFL_HALFOP) && (typedest & TO_HALFOP))))
 	    continue;
 #ifdef SERVICESHUB
        if(acptr && acptr->user && acptr->user->server && 

@@ -140,9 +140,7 @@ void debug(int level, char *pattern, ...)
 					  exploit patch.*/
 #endif
 
-#ifdef AZZURRA
     sendto_ops_lev(DEBUG_LEV, debugbuf);
-#endif
 
     if ((debuglevel >= 0) && (level <= debuglevel)) {
 

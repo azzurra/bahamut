@@ -41,27 +41,17 @@ aChannel   *channel = NullChn;
 
 static void add_invite(aClient *, aChannel *);
 static int  add_banid(aClient *, aChannel *, char *);
-#ifdef AZZURRA
 static int  add_restrictid(aClient *, aChannel *, char *);
-#endif
 static int  can_join(aClient *, aChannel *, char *);
 static void channel_modes(aClient *, char *, char *, aChannel *);
 static int  del_banid(aChannel *, char *);
-#ifdef AZZURRA
 static int  del_restrictid(aChannel*, char *);
-#endif
 static aBan *is_banned(aClient *, aChannel *);
-#ifdef AZZURRA
 static aBan *is_restricted(aClient *, aChannel *);
-#endif
 
-#ifdef AZZURRA
 static int  set_mode(aClient *, aClient *, aChannel *, int,
 		     int, char **, char *, char *, char *, char *, int *);
-#else
-static int  set_mode(aClient *, aClient *, aChannel *, int, 
-		     int, char **, char *, char *);
-#endif
+
 static void sub1_from_channel(aChannel *);
 
 int         check_channelname(aClient *, unsigned char *);
@@ -73,12 +63,10 @@ struct timeval tsdnow, tsdthen;
 unsigned long tsdms;
 #endif
 
-#ifdef AZZURRA
 extern __inline__ int check_for_spam(aClient *, char *, char *, char *);
 int hide_tunix = YES;
 int unknown_list_allowed = UNKNOWN_LISTS; /* Defined in ./config -> options.h */
 int halfop = YES;
-#endif
                 
 #ifdef ANTI_INVITE_FLOOD
 int  invite_num = MAX_INVITES;
@@ -115,9 +103,7 @@ static char *newCliSJOINFmt = ":%s SJOIN %ld %s";
 /* some buffers for rebuilding channel/nick lists with ,'s */
 static char nickbuf[BUFSIZE], buf[BUFSIZE];
 static char modebuf[REALMODEBUFLEN], parabuf[REALMODEBUFLEN];
-#ifdef AZZURRA
 static char stripped_modebuf[REALMODEBUFLEN], stripped_parabuf[REALMODEBUFLEN];
-#endif
 
 /* htm ... */
 extern int lifesux;
@@ -209,7 +195,7 @@ static char *make_nick_user_host(char *nick, char *name, char *host)
     *ptr1 = '\0';
     return (namebuf);
 }
-#ifdef AZZURRA
+
 /* Restrict functions to work with mode +z */
 /* add_restrictid - add an id to be restricted to the channel  (belongs to cptr) */
 
@@ -301,7 +287,7 @@ static int del_restrictid(aChannel *chptr, char *resid)
        }
    return 0;
 }
-#endif
+
 /* Ban functions to work with mode +b */
 /* add_banid - add an id to be banned to the channel  (belongs to cptr) */
 
@@ -311,9 +297,7 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid)
     int     	 cnt = 0;
     chanMember 	*cm;
     char 	*s, nickuhost[NICKLEN+USERLEN+HOSTLEN+6];
-#ifdef AZZURRA
     char	nickuvirthost[NICKLEN+USERLEN+HOSTLEN+6];
-#endif
     
     for (ban = chptr->banlist; ban; ban = ban->next)
     {
@@ -339,19 +323,13 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid)
     {
 	ban->who = (char *) MyMalloc(strlen(cptr->name) +
 				     strlen(cptr->user->username) +
-#ifndef AZZURRA
-				     strlen(cptr->user->host)
-#else
 				     (IsUmodex(cptr) ?
 				      strlen(cptr->user->virthost) :
 				      strlen(cptr->user->host))
-#endif
 				     + 3);
 	(void) ircsprintf(ban->who, "%s!%s@%s",
 			  cptr->name, cptr->user->username,
-#ifdef AZZURRA
 			  IsUmodex(cptr) ? cptr->user->virthost :
-#endif
 			  cptr->user->host);
     }
     else
@@ -379,20 +357,15 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid)
     {
 	if(!MyConnect(cm->cptr))
 	    continue;
-#ifdef AZZURRA
 	strcpy(nickuvirthost, make_nick_user_host(cm->cptr->name,
 		    cm->cptr->user->username, cm->cptr->user->virthost));
-#endif
 	strcpy(nickuhost, make_nick_user_host(cm->cptr->name,
 					      cm->cptr->user->username,
 					      cm->cptr->hostip));
 	s = make_nick_user_host(cm->cptr->name, cm->cptr->user->username,
 				cm->cptr->user->host);
 	if (match(banid, nickuhost) == 0 || match(banid, s) == 0 
-#ifdef AZZURRA
-		|| (match(banid, nickuvirthost) == 0)
-#endif
-		) 
+		|| (match(banid, nickuvirthost) == 0))
 	    cm->bans++;
     }
     return 0;
@@ -408,9 +381,7 @@ static int del_banid(aChannel *chptr, char *banid)
    aBan   	*tmp;
    chanMember 	*cm;
    char 	*s, nickuhost[NICKLEN+USERLEN+HOSTLEN+6];
-#ifdef AZZURRA
    char 	 nickuvirthost[NICKLEN+USERLEN+HOSTLEN+6];
-#endif
 
    if (!banid)
        return -1;
@@ -424,10 +395,9 @@ static int del_banid(aChannel *chptr, char *banid)
 	   {
 	       if(!MyConnect(cm->cptr) || cm->bans == 0) 
 		   continue;
-#ifdef AZZURRA
+
 	       strcpy(nickuvirthost, make_nick_user_host(cm->cptr->name,
 			       cm->cptr->user->username, cm->cptr->user->virthost));
-#endif
 	       
 	       strcpy(nickuhost, make_nick_user_host(cm->cptr->name,
 			   cm->cptr->user->username, cm->cptr->hostip));
@@ -435,10 +405,7 @@ static int del_banid(aChannel *chptr, char *banid)
 				       cm->cptr->user->username,
 				       cm->cptr->user->host);
 	       if (match(banid, nickuhost) == 0 || match(banid, s) == 0
-#ifdef AZZURRA
-		       || (match(banid, nickuvirthost) == 0)
-#endif
-		       ) 
+		       || (match(banid, nickuvirthost) == 0))
 		   cm->bans--;
 	   }
 	   
@@ -450,7 +417,7 @@ static int del_banid(aChannel *chptr, char *banid)
        }
    return 0;
 }
-#ifdef AZZURRA
+
 /*
  * is_restrictd - returns a pointer to the restrict structure if restricted else
  * NULL
@@ -483,7 +450,6 @@ static aBan *is_restricted(aClient *cptr, aChannel *chptr)
 	    break;
     return (tmp);
 }
-#endif
 
 /*
  * is_banned - returns a pointer to the ban structure if banned else
@@ -497,16 +463,13 @@ static aBan *is_banned(aClient *cptr, aChannel *chptr)
     aBan       *tmp;
     char        s[NICKLEN + USERLEN + HOSTLEN + 6];
     char       *s2;
-#ifdef AZZURRA
     char	sv[NICKLEN + USERLEN + HOSTLEN + 6];
-#endif
     
     if (!IsPerson(cptr))
 	return NULL;
-#ifdef AZZURRA
+
     strcpy(sv, make_nick_user_host(cptr->name, cptr->user->username,
 		    cptr->user->virthost));
-#endif
     
     strcpy(s, make_nick_user_host(cptr->name, cptr->user->username,
 				  cptr->user->host));
@@ -514,12 +477,9 @@ static aBan *is_banned(aClient *cptr, aChannel *chptr)
 			     cptr->hostip);
     
     for (tmp = chptr->banlist; tmp; tmp = tmp->next)
-	if ((match(tmp->banstr, s) == 0) ||
-	    (match(tmp->banstr, s2) == 0)
-#ifdef AZZURRA
-	    || (match(tmp->banstr, sv) == 0)
-#endif
-	    )
+	if ((match(tmp->banstr, s) == 0)  ||
+	    (match(tmp->banstr, s2) == 0) ||
+	    (match(tmp->banstr, sv) == 0))
 	    break;
     return (tmp);
 }
@@ -528,28 +488,23 @@ aBan *nick_is_banned(aChannel *chptr, char *nick, aClient *cptr)
 {
     aBan *tmp;
     char *s, s2[NICKLEN+USERLEN+HOSTLEN+6];
-#ifdef AZZURRA
     char sv[NICKLEN+USERLEN+HOSTLEN+6];
-#endif
     
     if (!IsPerson(cptr)) return NULL;
     
     strcpy(s2, make_nick_user_host(nick, cptr->user->username,
 				   cptr->user->host));
-#ifdef AZZURRA
+
     strcpy(sv, make_nick_user_host(nick, cptr->user->username,
 		    		   cptr->user->virthost));
-#endif
+
     s = make_nick_user_host(nick, cptr->user->username, cptr->hostip);
 
     for (tmp = chptr->banlist; tmp; tmp = tmp->next)
 	if (tmp->type == MTYP_FULL &&        /* only check applicable bans */
 	    ((match(tmp->banstr, s2) == 0) ||    /* check host before IP */
-	     (match(tmp->banstr, s) == 0)
-#ifdef AZZURRA
-	    || ((match(tmp->banstr, sv) == 0))
-#endif
-	    ))
+	     (match(tmp->banstr, s) == 0)  ||
+	     (match(tmp->banstr, sv) == 0)))
 	    break;
     return (tmp);
 }
@@ -561,9 +516,7 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
     char targip[NICKLEN+USERLEN+HOSTLEN+6];
     char *m;
     int count = 0, send = 0;
-#ifdef AZZURRA
     char targvirthost[NICKLEN+USERLEN+HOSTLEN+6];
-#endif
     
     if (!IsPerson(cptr)) return;
     
@@ -571,10 +524,8 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
 					 cptr->user->host));
     strcpy(targip, make_nick_user_host(cptr->name, cptr->user->username,
 					 cptr->hostip));
-#ifdef AZZURRA
     strcpy(targvirthost, make_nick_user_host(cptr->name,
 		    cptr->user->username, cptr->user->virthost));
-#endif
   
   m = modebuf;  
   *m++ = '-';
@@ -588,11 +539,8 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
   {
       bnext = ban->next;
       if((match(ban->banstr, targhost) == 0) ||
-	 (match(ban->banstr, targip) == 0)
-#ifdef AZZURRA
-	 || (match(ban->banstr, targvirthost) == 0)
-#endif
-	 )
+	 (match(ban->banstr, targip) == 0)   ||
+	 (match(ban->banstr, targvirthost) == 0))
       {
 	  if (strlen(parabuf) + strlen(ban->banstr) + 10 < (size_t) MODEBUFLEN)
 	  {
@@ -718,7 +666,6 @@ int is_chan_op(aClient *cptr, aChannel *chptr)
     return 0;
 }
 
-#ifdef AZZURRA
 int is_half_op(aClient *cptr, aChannel *chptr)
 {
     chanMember   *cm;
@@ -729,7 +676,6 @@ int is_half_op(aClient *cptr, aChannel *chptr)
     
     return 0;
 }
-#endif
 
 int is_deopped(aClient *cptr, aChannel *chptr)
 {
@@ -758,11 +704,7 @@ int can_send(aClient *cptr, aChannel *chptr, char *msg)
     chanMember   *cm;
     int     member;
     
-    if (IsServer(cptr) || IsULine(cptr)
-#ifdef AZZURRA
-	|| IsUmodez(cptr)
-#endif
-       )
+    if (IsServer(cptr) || IsULine(cptr) || IsUmodez(cptr))
 	return 0;
     
     member = (cm = find_user_member(chptr->members, cptr)) ? 1 : 0;
@@ -786,24 +728,12 @@ int can_send(aClient *cptr, aChannel *chptr, char *msg)
     else
     {
 	if (chptr->mode.mode & MODE_MODERATED &&
-	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE
-#ifdef AZZURRA
-			   | CHFL_HALFOP
-#endif
-			   )))
+	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE | CHFL_HALFOP)))
 	    return (MODE_MODERATED);
-	if(cm->bans && !(cm->flags & (CHFL_CHANOP | CHFL_VOICE
-#ifdef AZZURRA
-				      | CHFL_HALFOP
-#endif
-				      )))
+	if(cm->bans && !(cm->flags & (CHFL_CHANOP | CHFL_VOICE | CHFL_HALFOP)))
 	    return (MODE_BAN);
 	if ((chptr->mode.mode & MODE_MODREG) && !IsRegNick(cptr) &&
-	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE
-#ifdef AZZURRA
-			   | CHFL_HALFOP
-#endif
-			   )))
+	    !(cm->flags & (CHFL_CHANOP | CHFL_VOICE | CHFL_HALFOP)))
 	    return (ERR_NEEDREGGEDNICK);
 	if ((chptr->mode.mode & MODE_NOCOLOR) && msg_has_colors(msg))
 	    return (ERR_NOCOLORSONCHAN);
@@ -811,7 +741,6 @@ int can_send(aClient *cptr, aChannel *chptr, char *msg)
     return 0;
 }
 
-#ifdef AZZURRA
 __inline int can_change_nick (aChannel *chptr, aClient *cptr)
 {
     chanMember *cm;
@@ -827,7 +756,6 @@ __inline int can_change_nick (aChannel *chptr, aClient *cptr)
 	    return (MODE_NONICKCHG);
     return 0;
 }
-#endif
 
 /*
  * write the "simple" list of channel modes for channel chptr onto
@@ -859,7 +787,6 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
 	*mbuf++ = 'O';
     if (chptr->mode.mode & MODE_MODREG)
 	*mbuf++ = 'M';
-#ifdef AZZURRA
     if (chptr->mode.mode & MODE_NONICKCHG)
 	*mbuf++ = 'd';
     if (chptr->mode.mode & MODE_NOSPAM)
@@ -874,14 +801,9 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
 	*mbuf++ = 'U';
     if (chptr->mode.mode & MODE_HIDEBANS)
 	*mbuf++ = 'B';
-#endif
     if (chptr->mode.limit) {
 	*mbuf++ = 'l';
-	if (IsMember(cptr, chptr) || IsServer(cptr) || IsULine(cptr)
-#ifdef AZZURRA
-		|| IsUmodez(cptr) 
-#endif
-		)
+	if (IsMember(cptr, chptr) || IsServer(cptr) || IsULine(cptr) || IsUmodez(cptr))
 	{
 	    if (*chptr->mode.key)
 		ircsprintf(pbuf, "%d ", chptr->mode.limit);
@@ -892,17 +814,13 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     if (*chptr->mode.key)
     {
 	*mbuf++ = 'k';
-	if (IsMember(cptr, chptr) || IsServer(cptr) || IsULine(cptr)
-#ifdef AZZURRA
-		|| IsUmodez(cptr)
-#endif
-		)
+	if (IsMember(cptr, chptr) || IsServer(cptr) || IsULine(cptr) || IsUmodez(cptr))
 	    strcat(pbuf, chptr->mode.key);
     }
     *mbuf++ = '\0';
     return;
 }
-#ifdef AZZURRA
+
 static void send_restrict_list(aClient *cptr, aChannel *chptr)
 {
     aBan   *bp;
@@ -953,7 +871,7 @@ static void send_restrict_list(aClient *cptr, aChannel *chptr)
 	}
     }
 }
-#endif
+
 static void send_ban_list(aClient *cptr, aChannel *chptr)
 {
     aBan   *bp;
@@ -1055,10 +973,10 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 	    if (l == NULL)
 		break;
 	}
-#ifdef AZZURRA
+
 	if (l->flags & MODE_HALFOP)
 	    *t++ = '%';
-#endif
+
 	if (l->flags & MODE_CHANOP)
 	    *t++ = '@';
 
@@ -1097,9 +1015,8 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
     *modebuf = '+';
     modebuf[1] = '\0';
     send_ban_list(cptr, chptr);
-#ifdef AZZURRA
     send_restrict_list(cptr, chptr);
-#endif
+
     if (modebuf[1] || *parabuf)
     {
 	if(IsCapable(cptr, CAP_TSMODE))
@@ -1116,10 +1033,8 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int         mcount = 0, chanop=0;
-#ifdef AZZURRA
     int		stripped_mcount = 0;
     chanMember	*cm;
-#endif
     aChannel   *chptr;
     int subparc = 2;
     /* Now, try to find the channel in question */
@@ -1141,11 +1056,7 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     
     if (is_chan_op(sptr, chptr) || (IsServer(sptr) && chptr->channelts!=0))
 	chanop = 1;
-    else if (IsULine(sptr) || ((IsSAdmin(sptr) || IsAdmin(sptr)) && !MyClient(sptr)) 
-#ifdef AZZURRA
-	    || IsUmodez(sptr)
-#endif
-	    )
+    else if (IsULine(sptr) || ((IsSAdmin(sptr) || IsAdmin(sptr)) && !MyClient(sptr)) || IsUmodez(sptr))
 	chanop = 2; /* extra speshul access */
 	
 	
@@ -1173,14 +1084,8 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
        subparc++;
     }
-#ifndef AZZURRA
-    mcount = set_mode(cptr, sptr, chptr, chanop, parc - subparc, parv + subparc,
-		      modebuf, parabuf);
-#else
     mcount = set_mode(cptr, sptr, chptr, chanop, parc - subparc, parv + subparc,
 		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount);
-
-#endif
 
     if (strlen(modebuf) > (size_t) 1)
 	switch (mcount)
@@ -1198,14 +1103,11 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	    break;
 	default:
-#ifdef AZZURRA
 		if (stripped_mcount == mcount) {
-#endif
 		    sendto_channel_butserv(chptr, sptr,
 					   ":%s MODE %s %s %s", parv[0],
 					   chptr->chname, modebuf,
 					   parabuf);
-#ifdef AZZURRA
 		} else {
 			for (cm = chptr->members; cm; cm = cm->next) {
 				if (MyConnect(cm->cptr)) {
@@ -1216,7 +1118,6 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				}
 			}
 		}
-#endif
 
 	    sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
 			   ":%s MODE %s %s %s",
@@ -1233,13 +1134,8 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 /* the old set_mode was pissing me off with it's disgusting
  * hackery, so I rewrote it.  Hope this works. }:> --wd
  */
-#ifdef AZZURRA
 static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		    int level, int parc, char *parv[], char *mbuf, char *pbuf, char *stripped_mbuf, char *stripped_pbuf, int *stripped_mcount)
-#else
-static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
-		    int level, int parc, char *parv[], char *mbuf, char *pbuf);
-#endif
 {
 #define SM_ERR_NOPRIVS 0x0001 /* is not an op */
 #define SM_ERR_MOREPARMS 0x0002 /* needs more parameters */	
@@ -1257,7 +1153,6 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        pbuf[pidx++] = *pptr++; \
 	} while (0)
 
-#ifdef AZZURRA
 #define ADD_STRIPPED_PARA(p)                              \
 	do {                                              \
 	    pptr = p;                                     \
@@ -1266,7 +1161,6 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    while (*pptr)                                 \
 	        stripped_pbuf[stripped_pidx++] = *pptr++; \
 	} while (0)
-#endif
     
     static int flags[] = 
     {
@@ -1275,11 +1169,9 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	MODE_TOPICLIMIT, 't', MODE_REGONLY, 'R',
 	MODE_INVITEONLY, 'i', MODE_NOCOLOR, 'c', MODE_OPERONLY, 'O',
 	MODE_MODREG, 'M', 
-#ifdef AZZURRA
 	MODE_NONICKCHG, 'd', MODE_NOSPAM, 'u',
 	MODE_NOCTCP, 'C', MODE_SSLONLY, 'S',
 	MODE_NOUNKNOWN, 'j', MODE_UNRESTRICT, 'U', MODE_HIDEBANS, 'B',
-#endif
 	0x0, 0x0
     };
     
@@ -1307,16 +1199,12 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
     int pidx = 0; /* index into pbuf */
     char *pptr; /* temporary paramater pointer */
     char *morig = mbuf; /* beginning of mbuf */
-#ifdef AZZURRA
     int  stripped_pidx = 0; /*index into stripped_pbuf*/
     int	 stripped_nmodes = 0; /*How many stripped modes we've set so far*/
-#endif
 
     /* :cptr-name MODE chptr->chname [MBUF] [PBUF] (buflen - 3 max and NULL) */
     int prelen = strlen(cptr->name) + strlen(chptr->chname) + 16;
-#ifdef AZZURRA
     int ishalfop = 0;
-#endif
 
 
     args=1;
@@ -1325,28 +1213,23 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	return 0;
 
     *mbuf++='+'; /* add the plus, even if they don't */
-#ifdef AZZURRA
     *stripped_mbuf++='+';
-#endif
     /* go through once to clean the user's mode string so we can
      * have a simple parser run through it...*/
 
-#ifdef AZZURRA
     if ((level<1) && is_half_op(sptr, chptr))
 	ishalfop = 1;
-#endif
 
     while(*modes && (nmodes<maxmodes)) 
     {
 	switch(*modes) 
 	{
 	case '+':
-#ifdef AZZURRA
 	    if(*(stripped_mbuf-1) == '-')
 		*(stripped_mbuf-1) = '+';
 	    else if (change != '+')
 		*stripped_mbuf++ = '+';
-#endif
+
             if(*(mbuf-1)=='-') 
             {
 				*(mbuf-1)='+'; /* change it around now */
@@ -1359,12 +1242,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             *mbuf++='+';
             break;
 	case '-':
-#ifdef AZZURRA
 	    if(*(stripped_mbuf-1) == '+')
 		*(stripped_mbuf-1) = '-';
 	    else if (change != '-')
 		*stripped_mbuf++ = '-';
-#endif
 
             if(*(mbuf-1)=='+') 
             {
@@ -1390,48 +1271,39 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		{
 		    chptr->mode.mode |= MODE_OPERONLY;
 		    *mbuf++ = *modes;
-#ifdef AZZURRA
 		    *stripped_mbuf++ = *modes;
 		    stripped_nmodes++;
-#endif
 		    nmodes++;
 		}
 		else if(change=='-' && chptr->mode.mode & MODE_OPERONLY)
 		{
 		    chptr->mode.mode &= ~MODE_OPERONLY;
 		    *mbuf++ = *modes;
-#ifdef AZZURRA
 		    *stripped_mbuf++ = *modes;
 		    stripped_nmodes++;
-#endif
 		    nmodes++;
 		}
 		else
 		    break;
 	    }
 	    break;
-#ifdef AZZURRA
+
 	case 'h':
 	/* check if users can use HALFOP (set via /set halfop  on|off */
 	if (!halfop && level<2 && MyClient(sptr)) 
 	    break;
-#endif
+
 	case 'o':
-#ifdef AZZURRA
 	    /* deny mode -/+o for half operators */
             if(level<1) 
             {
 		errors |= SM_ERR_NOPRIVS;
 		break;
             }
-#endif
+
 	case 'v':
-#ifndef AZZURRA
-            if(level<1) 
-#else
 	    /* allow mode -/+v for half operators */
 	    if(level<1 && !ishalfop)
-#endif
             {
 		errors |= SM_ERR_NOPRIVS;
 		break;
@@ -1475,10 +1347,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        /* we've decided their mode was okay, cool */
 	        *mbuf++ = *modes;
 	        nmodes++;
-#ifdef AZZURRA
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
-#endif
 
 	    }
 	    else if(change=='-' && cm->flags & (*modes=='o' ? CHFL_CHANOP :
@@ -1491,18 +1361,14 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        /* we've decided their mode was okay, cool */
 	        *mbuf++ = *modes;
 	        nmodes++;
-#ifdef AZZURRA
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
-#endif
 	    }
 	    else
 		break;
 
 	    ADD_PARA(cm->cptr->name);
-#ifdef AZZURRA
 	    ADD_STRIPPED_PARA(cm->cptr->name);
-#endif
 	    args++;
 
 	    if (IsServer(sptr) && *modes == 'o' && change=='+') 
@@ -1512,7 +1378,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 			   sptr->name, chptr->chname);
 	    }
 	    break;
-#ifdef AZZURRA
+
 	case 'z':
 	    /* if the user has no more arguments, then they just want
              * to see the bans, okay, cool. */
@@ -1584,7 +1450,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    args++;
             nmodes++;
             break;
-#endif
+
 	case 'b':
             /* if the user has no more arguments, then they just want
              * to see the bans, okay, cool. */
@@ -1600,10 +1466,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		    break; /* Send only once -- and not to servers */
 
 		if (level >= 1 || IsAnOper(sptr) || IsUmodeh(sptr)
-#ifdef AZZURRA
-		|| is_half_op(sptr, chptr) || !(chptr->mode.mode & MODE_HIDEBANS)
-#endif
-		) {
+		|| is_half_op(sptr, chptr) || !(chptr->mode.mode & MODE_HIDEBANS))
+		{
 		    for(bp=chptr->banlist;bp;bp=bp->next)
 		        sendto_one(sptr, rpl_str(RPL_BANLIST), me.name, cptr->name,
 				   chptr->chname, bp->banstr, bp->who, bp->when);
@@ -1651,12 +1515,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    
             *mbuf++ = 'b';
 	    ADD_PARA(parv[args]);
-#ifdef AZZURRA
 	    if (!(chptr->mode.mode & MODE_HIDEBANS)) {
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
 	    }
-#endif
 
 	    args++;
             nmodes++;
@@ -1678,10 +1540,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		chptr->mode.mode &= ~MODE_LIMIT;
 		chptr->mode.limit = 0;
 		nmodes++;
-#ifdef AZZURRA
-			*stripped_mbuf++ = *modes;
-			stripped_nmodes++;
-#endif
+		*stripped_mbuf++ = *modes;
+		stripped_nmodes++;
 
 		break;
             }
@@ -1713,11 +1573,9 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		chptr->mode.limit = i;
 		chptr->mode.mode |= MODE_LIMIT;
 		*mbuf++ = 'l';
-#ifdef AZZURRA
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
 		ADD_STRIPPED_PARA(tmp);
-#endif
 
 		ADD_PARA(tmp);
 		args++;
@@ -1767,9 +1625,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             {
 		strncpy(chptr->mode.key,parv[args],KEYLEN);
 		ADD_PARA(chptr->mode.key);
-#ifdef AZZURRA
 		ADD_STRIPPED_PARA(chptr->mode.key);
-#endif
 	    }
             else 
             {
@@ -1791,10 +1647,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             *mbuf++='k';
             args++;
             nmodes++;
-#ifdef AZZURRA
 	    *stripped_mbuf++ = *modes;
 	    stripped_nmodes++;
-#endif
             break;
 
 	case 'r':
@@ -1816,10 +1670,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             }
             *mbuf++='r';
             nmodes++;
-#ifdef AZZURRA
 	    *stripped_mbuf++ = *modes;
 	    stripped_nmodes++;
-#endif
 
             break;
 	    
@@ -1835,7 +1687,6 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             if(change=='-' && (chptr->mode.mode & MODE_INVITEONLY))
 		while ((lp=chptr->invites))
 		    del_invite(lp->value.cptr, chptr);
-#ifdef AZZURRA
 	    /* Full operator status is needed for this! */
 	case 'p':
 	case 's':
@@ -1848,19 +1699,14 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		errors |= SM_ERR_NOPRIVS;
 		break;
             }
-#endif
             /* fall through to default case */
 
 	default:
             /* phew, no more tough modes. }:>, the rest are all
 	     * covered in one step 
 	     * with the above array */
-#ifndef AZZURRA
-            if(level<1)
-#else
 	    /* other modes can be modified also by half operators */
             if(level<1 && !ishalfop)
-#endif
             {
 		errors |= SM_ERR_NOPRIVS;
 		break;
@@ -1879,22 +1725,16 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 			chptr->mode.mode |= flags[i-1];
 		        *mbuf++=*modes;
 		        nmodes++;
-#ifdef AZZURRA
 			*stripped_mbuf++ = *modes;
 			stripped_nmodes++;
-#endif
-
 		    }
 		    else if(change=='-' && chptr->mode.mode & flags[i-1])
 		    {		
 			chptr->mode.mode &= ~flags[i-1];
 		        *mbuf++=*modes;
 		        nmodes++;
-#ifdef AZZURRA
 			*stripped_mbuf++ = *modes;
 			stripped_nmodes++;
-#endif
-
 		    }
 
 		    break;
@@ -1924,13 +1764,13 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		*(mbuf-1) = '\0';
     else
 		*mbuf = '\0';
-#ifdef AZZURRA
+
     if (*(stripped_mbuf-1) == '+' || *(stripped_mbuf-1) == '-')
 	*(stripped_mbuf-1) = '\0';
     else
 	*(stripped_mbuf) = '\0';
     stripped_pbuf[stripped_pidx] = '\0';
-#endif
+
     pbuf[pidx] = '\0';
     if(MyClient(sptr)) 
     {
@@ -1945,14 +1785,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		       me.name, sptr->name);
     }
     /* all done! */
-#ifdef AZZURRA
     *stripped_mcount = stripped_nmodes;
-#endif
     return nmodes;
 #undef ADD_PARA
-#ifdef ADD_STRIPPED_PARA
 #undef ADD_STRIPPED_PARA
-#endif
 }
 
 /*
@@ -1971,31 +1807,23 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 	    break;
 	}
     }
-    if (invited || IsULine(sptr) 
-#ifdef AZZURRA
-	    || IsUmodez(sptr)
-#endif
-	    )
+    if (invited || IsULine(sptr) || IsUmodez(sptr))
 	return 0;
 
 
-#ifdef AZZURRA
     /* Don't traverse the restricted list if we are not linked to services
      * or the user has a registered nick
      */
     if (restriction_enabled && !IsRegNick(sptr) && is_restricted(sptr, chptr))
     	return (ERR_NEEDREGGEDNICK);
-#endif
     if (is_banned(sptr, chptr))
 	return (ERR_BANNEDFROMCHAN);
     if (chptr->mode.mode & MODE_INVITEONLY)
 	return (ERR_INVITEONLYCHAN);
     if (chptr->mode.mode & MODE_REGONLY && !IsRegNick(sptr))
 	return (ERR_NEEDREGGEDNICK);
-#ifdef AZZURRA
     if (chptr->mode.mode & MODE_NOUNKNOWN && !IsKnownNick(sptr))
 	return (ERR_NEEDREGGEDNICK);
-#endif
 #ifdef RESTRICT_USERS
     if (!(chptr->mode.mode & MODE_UNRESTRICT) && check_restricted_user(sptr)) {
         static unsigned int rjoin_count = 0;
@@ -2184,7 +2012,6 @@ static void sub1_from_channel(aChannel *chptr)
 	    MyFree(bprem->who);
 	    MyFree(bprem);
 	}
-#ifdef AZZURRA
 	bp = chptr->restrictlist;
 	while (bp) {
 		bprem = bp;
@@ -2193,7 +2020,6 @@ static void sub1_from_channel(aChannel *chptr)
 		MyFree(bprem->who);
 		MyFree(bprem);
 	}
-#endif
 	if (chptr->prevch)
 	    chptr->prevch->nextch = chptr->nextch;
 	else
@@ -2365,11 +2191,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	if (MyConnect(sptr))
 	{
 	    /* have we quarantined this channel? */
-	    if(!IsOper(sptr) &&
-#ifdef AZZURRA
-		!IsUmodez(sptr) &&
-#endif
-		(aconf = find_conf_name(name, CONF_QUARANTINED_CHAN)))
+	    if(!IsAnOper(sptr) && !IsUmodez(sptr) && (aconf = find_conf_name(name, CONF_QUARANTINED_CHAN)))
             {
 		sendto_one(sptr, getreply(ERR_CHANBANREASON), me.name, parv[0], name,
 			BadPtr(aconf->passwd) ? "Reserved channel" :	
@@ -2410,10 +2232,7 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 #endif
 	    
-	    if ((sptr->user->joined >= MAXCHANNELSPERUSER) &&
-#ifdef AZZURRA
-		!IsUmodez(sptr) &&
-#endif
+	    if ((sptr->user->joined >= MAXCHANNELSPERUSER) && !IsUmodez(sptr) &&
 		(!IsAnOper(sptr) || (sptr->user->joined >= 
 				     MAXCHANNELSPERUSER * 3)))
 	    {
@@ -2656,18 +2475,6 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	/* Remove user from the old channel (if any) */
 
-#ifndef AZZURRA
-	if (parc < 3 || can_send(sptr,chptr,reason))
-	    sendto_match_servs(chptr, cptr, PartFmt, parv[0], name);
-	else
-	    sendto_match_servs(chptr, cptr, PartFmt2, parv[0], name, reason);
-
-	if (parc < 3 || can_send(sptr,chptr,reason))
-	    sendto_channel_butserv(chptr, sptr, PartFmt, parv[0], name);
-	else
-	    sendto_channel_butserv(chptr, sptr, PartFmt2, parv[0], name,
-				   reason);
-#else
 	if (parc < 3 || can_send(sptr, chptr, reason) ||
 		check_for_spam(sptr, reason, chptr->chname, "PART") || chptr->mode.mode & MODE_NOSPAM)
 	{
@@ -2679,7 +2486,6 @@ int m_part(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    sendto_match_servs(chptr, cptr, PartFmt2, parv[0], name, reason);
 	    sendto_channel_butserv(chptr, sptr, PartFmt2, parv[0], name, reason);
 	}
-#endif
 
 	remove_user_from_channel(sptr, chptr);
 	name = strtoken(&p, (char *) NULL, ",");
@@ -2701,9 +2507,7 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
     int         chasing = 0;
     int         user_count;	/* count nicks being kicked, only allow 4 */
     char       *comment, *name, *p = NULL, *user, *p2 = NULL;
-#ifdef AZZURRA
     int		level; /* access level to kick command */
-#endif
 
     if (parc < 3 || *parv[1] == '\0')
     {
@@ -2732,7 +2536,6 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    continue;
 	}
 
-#ifdef AZZURRA
 	/* define access level: 
 	 * - level==0 normal client
 	 * - level==1 half op
@@ -2744,21 +2547,8 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    level = 1;
 	else
 	    level = 0;
-#endif
 
-	/*
-	 * You either have chan op privs, or you don't -Dianora 
-	 *
-	 * orabidoo and I discussed this one for a while... I hope he
-	 * approves of this code, users can get quite confused...
-	 * -Dianora
-	 */
-
-#ifndef AZZURRA
-	if (!IsServer(sptr) && !is_chan_op(sptr, chptr) && !IsULine(sptr))
-#else
 	if (level==0)
-#endif
 	{
 	    /* was a user, not a server and user isn't seen as a chanop here */
 
@@ -2826,7 +2616,6 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		user = strtoken(&p2, (char *) NULL, ",");
 		continue;		/* No such user left! */
 	    }
-#ifdef AZZURRA
 	    if(IsUmodez(who)) 
 	    {
 		sendto_one(sptr, err_str(ERR_CANNOTKICKMODEZ), me.name,
@@ -2843,9 +2632,6 @@ int m_kick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		continue;
 	    }
 	    else if (IsMember(who, chptr))
-#else
-	    if (IsMember(who, chptr))
-#endif
 	    {
 		sendto_channel_butserv(chptr, sptr,
 				       ":%s KICK %s %s :%s", parv[0],
@@ -2928,37 +2714,6 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
     
     if (parc == 2) /* user is requesting a topic */ 
     {	
-#ifndef AZZURRA
-	char *namep = chptr->chname;
-	char tempchname[CHANNELLEN + 2];
-
-	if(!member && !(ShowChannel(sptr, chptr)))
-	{
-	    if(IsAdmin(sptr) || IsSAdmin(sptr))
-	    {
-		tempchname[0] = '%';
-		strcpy(&tempchname[1], chptr->chname);
-		namep = tempchname;
-	    }
-	    else
-	    {
-		sendto_one(sptr, err_str(ERR_NOTONCHANNEL), me.name, parv[0],
-			   name);
-		return 0;
-	    }
-	}
-
-	if (chptr->topic[0] == '\0')
-	    sendto_one(sptr, rpl_str(RPL_NOTOPIC), me.name, parv[0], namep);
-	else 
-	{
-	    sendto_one(sptr, rpl_str(RPL_TOPIC), me.name, parv[0], namep,
-		       chptr->topic);
-	    sendto_one(sptr, rpl_str(RPL_TOPICWHOTIME), me.name, parv[0],
-		       namep, chptr->topic_nick, chptr->topic_time);
-	}
-#else /* AZZURRA */
-
 	if(!member && (SecretChannel(chptr) && !IsAdmin(sptr) && !IsSAdmin(sptr) && !IsUmodez(sptr)))
 	{
 	    sendto_one(sptr, err_str(ERR_NOTONCHANNEL), me.name, parv[0],
@@ -2982,25 +2737,16 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    sendto_one(sptr, rpl_str(RPL_TOPICWHOTIME), me.name, parv[0],
 		       chptr->chname, chptr->topic_nick, chptr->topic_time);
 	}
-#endif /* AZZURRA */
 	return 0;
     }
     
-    if(!member && !IsServer(sptr) && !IsULine(sptr)
-#ifdef AZZURRA
-	    && !IsUmodez(sptr)
-#endif
-      )
+    if(!member && !IsServer(sptr) && !IsULine(sptr) && !IsUmodez(sptr))
     {
 	sendto_one(sptr, err_str(ERR_NOTONCHANNEL), me.name, parv[0], name);
 	return 0;
     }
     
-    if (parc > 3 && (!MyConnect(sptr) || IsULine(sptr) || IsServer(sptr)
-#ifdef AZZURRA
-		|| IsUmodez(sptr)
-#endif
-        ))
+    if (parc > 3 && (!MyConnect(sptr) || IsULine(sptr) || IsServer(sptr) || IsUmodez(sptr)))
     {
 	topic = (parc > 4 ? parv[4] : "");
 	tnick = parv[2];
@@ -3011,15 +2757,8 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	topic = parv[2];
     }
     
-    if (((!(chptr->mode.mode & MODE_TOPICLIMIT) || is_chan_op(sptr, chptr) 
-#ifdef AZZURRA
-	    || is_half_op(sptr, chptr)
-#endif
-	  ) || IsULine(sptr) || IsServer(sptr))
-#ifdef AZZURRA
-	 || IsUmodez(sptr)
-#endif
-       )
+    if (((!(chptr->mode.mode & MODE_TOPICLIMIT) || is_chan_op(sptr, chptr)
+	|| is_half_op(sptr, chptr)) || IsULine(sptr) || IsServer(sptr)) || IsUmodez(sptr))
     {
 	/* setting a topic */
 	
@@ -3081,18 +2820,10 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (!(chptr = find_channel(parv[2], NullChn)))
     {	
-#ifndef AZZURRA
-        sendto_prefix_one(acptr, sptr, ":%s INVITE %s :%s",
-			  parv[0], parv[1], parv[2]);
-#endif
 	return 0;
     }
     
-    if (chptr && !IsMember(sptr, chptr) && !IsULine(sptr)
-#ifdef AZZURRA
-	    && !IsUmodez(sptr)
-#endif
-       )
+    if (chptr && !IsMember(sptr, chptr) && !IsULine(sptr) && !IsUmodez(sptr))
     {
 	sendto_one(sptr, err_str(ERR_NOTONCHANNEL),
 		   me.name, parv[0], parv[2]);
@@ -3106,11 +2837,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
     }
     
-    if (!is_chan_op(sptr, chptr) && (!IsULine(sptr))
-#ifdef AZZURRA
-	    && (!IsUmodez(sptr))
-#endif
-	    )
+    if (!is_chan_op(sptr, chptr) && (!IsULine(sptr)) && (!IsUmodez(sptr)))
     {
 
 	sendto_one(sptr, err_str(ERR_CHANOPRIVSNEEDED),
@@ -3169,12 +2896,7 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
 	
     if (MyConnect(acptr))
-	if ((chptr && sptr->user && is_chan_op(sptr, chptr)) || 
-		    IsULine(sptr)
-#ifdef AZZURRA
-		    || IsUmodez(sptr)
-#endif
-		    )
+	if ((chptr && sptr->user && is_chan_op(sptr, chptr)) || IsULine(sptr) || IsUmodez(sptr))
 	{
 	    add_invite(acptr, chptr);
 	    sendto_channelflag_butone(NULL, &me, TO_OPS, chptr,
@@ -3182,10 +2904,8 @@ int m_invite(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			sptr->name, acptr->name, chptr->chname);
 	}
 
-#ifdef AZZURRA
-        /* Don't notify invited user if the inviting user is shunned. -INT */
+    /* Don't notify invited user if the inviting user is shunned. -INT */
     if (!IsShunned(sptr))
-#endif
 	sendto_prefix_one(acptr, sptr, ":%s INVITE %s :%s", parv[0],
 			  acptr->name, ((chptr) ? (chptr->chname) : parv[2]));
 
@@ -3213,7 +2933,6 @@ void send_list(aClient *cptr, int numsend)
     LOpts	*lopt = cptr->user->lopt;
     int		hashnum;
    
-#ifdef AZZURRA 
     char        **tmp;
     int          hide;
     /* istunix = true if cptr is the netsplit tunix client */
@@ -3234,7 +2953,6 @@ void send_list(aClient *cptr, int numsend)
 				 "*dvd*rip*",
 	                         NULL
 			       };
-#endif
     
     for (hashnum = lopt->starthash; hashnum < CH_MAX; hashnum++)
     {
@@ -3243,13 +2961,9 @@ void send_list(aClient *cptr, int numsend)
 		 chptr; chptr = chptr->hnextch)
 	    {
 		if (SecretChannel(chptr) && !IsMember(cptr, chptr)
-#ifdef AZZURRA
-			&& !IsAdmin(cptr) && !IsSAdmin(cptr) && !IsUmodez(cptr)
-#endif
-			)
+		    && !IsAdmin(cptr) && !IsSAdmin(cptr) && !IsUmodez(cptr))
 		    continue;
 
-#ifdef AZZURRA
 	        /* Hide some channels and topics to the tunix client */
 	        if ((hide_tunix == YES) && istunix)
 		{
@@ -3272,7 +2986,6 @@ void send_list(aClient *cptr, int numsend)
 		   if (hide)			
 		       continue;
 		}	       
-#endif
 
 		if ((!lopt->showall) &&
 			((chptr->users < lopt->usermin) ||
@@ -3282,17 +2995,10 @@ void send_list(aClient *cptr, int numsend)
 		    continue;
 
 		sendto_one(cptr, rpl_str(RPL_LIST), me.name, cptr->name,
-#ifndef AZZURRA
-			   ShowChannel(cptr, chptr) ? chptr->chname : "*",
-			   chptr->users,
-			   ShowChannel(cptr, chptr) ? chptr->topic : ""
-#else
 			   chptr->chname, chptr->users,
 			   (HiddenChannel(chptr) && !IsMember(cptr, chptr) &&
 			    !IsAdmin(cptr) && !IsSAdmin(cptr) && !IsUmodez(cptr)) ?
-			   	"<private>" : chptr->topic
-#endif /* AZZURRA */
-			);
+			   "<private>" : chptr->topic);
 
 		numsend--;
 	    }
@@ -3362,13 +3068,11 @@ int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (cptr != sptr || !sptr->user)
 	return 0;
 
-#ifdef AZZURRA
     if (!unknown_list_allowed && !IsKnownNick(sptr))
     {
 	sendto_one(sptr, err_str(ERR_NOUNKNOWNLISTS), me.name, parv[0]);
 	return 0;
     }
-#endif
 
 #ifdef RESTRICT_USERS
     if (check_restricted_user(sptr))
@@ -3473,26 +3177,6 @@ int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	    else /* Just a normal channel */
 	    {
-#ifndef AZZURRA
-		int x;
-
-		chptr = find_channel(name, NullChn);
-		if (chptr && ((x = ShowChannel(sptr, chptr)) || IsAdmin(sptr)))
-                {
-		    char *nameptr = name;
-		    char channame[CHANNELLEN + 2];
-
-		    if(!x && IsAdmin(sptr))
-		    {
-			channame[0] = '%';
-			strcpy(&channame[1], chptr->chname);
-			nameptr = channame;
-		    }
-
-		    sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
-			       nameptr, chptr->users, chptr->topic);
-		}
-#else
 		chptr = find_channel(name, NullChn);
 
 		if (chptr && (!SecretChannel(chptr) || IsAdmin(sptr) || IsSAdmin(sptr) || IsUmodez(sptr)))
@@ -3507,7 +3191,6 @@ int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
 			       chptr->chname, chptr->users, topic);
 		}
-#endif /* AZZURRA */
 	    }
 	} /* switch */
     } /* while */
@@ -3588,11 +3271,7 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 
 	/* cache whether this user is a member of this channel or not */
-#ifndef AZZURRA
-	member = IsMember(sptr, chptr);
-#else
 	member = (IsMember(sptr, chptr) || IsAdmin(sptr) || IsSAdmin(sptr) || IsUmodez(sptr));
-#endif
 
 	if (PubChannel(chptr))
 		buf[0] = '=';
@@ -3626,10 +3305,8 @@ int m_names(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 		if (cm->flags & CHFL_CHANOP)
 			buf[idx++] = '@';
-#ifdef AZZURRA
 		else if(cm->flags & CHFL_HALFOP)
 			buf[idx++] = '%';
-#endif
 		else if(cm->flags & CHFL_VOICE)
 			buf[idx++] = '+';
 
@@ -3700,7 +3377,7 @@ void send_user_joins(aClient *cptr, aClient *user)
 
     return;
 }
-#ifdef AZZURRA
+
 void kill_restrict_list(aClient *cptr, aChannel *chptr)
 {
     aBan   *bp, *bpn;
@@ -3770,7 +3447,6 @@ void kill_restrict_list(aClient *cptr, aChannel *chptr)
     chptr->restrictlist = NULL;
 }
 
-#endif
 void kill_ban_list(aClient *cptr, aChannel *chptr)
 {  
     chanMember *cm;
@@ -3855,7 +3531,6 @@ static inline void sjoin_sendit(aClient *cptr, aClient *sptr,
 			   chptr->chname, modebuf, parabuf);
 }
 
-#ifdef AZZURRA
 /*
  * m_resynch
  * parv[0] - sender
@@ -3880,7 +3555,6 @@ int m_resynch(aClient *cptr, aClient *sptr, int parc, char *parv[])
         send_channel_modes(sptr, chptr);
     return 0;
 }
-#endif
 
 /*
  * m_sjoin 
@@ -4042,7 +3716,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	case 'O':
 	    mode.mode |= MODE_OPERONLY;
 	    break;
-#ifdef AZZURRA
 	case 'd':
 	    mode.mode |= MODE_NONICKCHG;
 	    break;
@@ -4064,7 +3737,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	case 'B':
 	    mode.mode |= MODE_HIDEBANS;
 	    break;
-#endif
 	case 'k':
 	    strncpyzt(mode.key, parv[4 + args], KEYLEN + 1);
 	    args++;
@@ -4098,9 +3770,7 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     { 
        /* if remote ts is older, don't keep our modes. */ 
        kill_ban_list(sptr, chptr);
-#ifdef AZZURRA
        kill_restrict_list(sptr, chptr);
-#endif
        keepourmodes = 0; 
        chptr->channelts = tstosend = newts; 
     } 
@@ -4198,7 +3868,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    INSERTSIGN(1,'+')				       
 	    *mbuf++='O';
 	}
-#ifdef AZZURRA
 	if((MODE_NONICKCHG & mode.mode) && !(MODE_NONICKCHG & oldmode->mode))
 	{
 	    INSERTSIGN(1,'+')
@@ -4234,7 +3903,7 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    INSERTSIGN(1,'+')
 	    *mbuf++='B';
 	}
-#endif
+
 	/* minus modes */
 	if((MODE_PRIVATE & oldmode->mode) && !(MODE_PRIVATE & mode.mode))
 	{
@@ -4291,7 +3960,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    INSERTSIGN(-1,'-')
 	    *mbuf++='O';
 	}
-#ifdef AZZURRA
 	if((MODE_NONICKCHG & oldmode->mode) && !(MODE_NONICKCHG & mode.mode))
 	{
 	    INSERTSIGN(-1,'-')
@@ -4327,7 +3995,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    INSERTSIGN(-1,'-')
 	    *mbuf++='B';
 	}
-#endif
     }
 	
     if (oldmode->limit && !mode.limit)
@@ -4388,7 +4055,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		cm->flags &= ~MODE_CHANOP;
 	    }
 
-#ifdef AZZURRA
 	    if (cm->flags & MODE_HALFOP) 
 	    {
 		INSERTSIGN(-1,'-')
@@ -4406,7 +4072,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 		cm->flags &= ~MODE_HALFOP;
 	    }
-#endif
 
 	    if (cm->flags & MODE_VOICE) 
 	    {
@@ -4491,11 +4156,9 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    } else if (*s == '+') {
 	    	fl |= MODE_VOICE;
 		s++;
-#ifdef AZZURRA
 	    } else if (*s == '%') {
 	    	fl |= MODE_HALFOP;
 		s++;
-#endif
 	    } else {
 	    	break;
 	    }
@@ -4542,7 +4205,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		pargs = pbpos = 0;
 	    }
 	}
-#ifdef AZZURRA
 	if (fl & MODE_HALFOP) 
 	{
 	    *mbuf++ = 'h';
@@ -4558,7 +4220,6 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		pargs = pbpos = 0;
 	    }
 	}	
-#endif
 	if (fl & MODE_VOICE) 
 	{
 	    *mbuf++ = 'v';
@@ -4617,10 +4278,8 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int sendts;
-#ifdef AZZURRA
-	int stripped_mcount = 0;
-	chanMember	*cm;
-#endif
+    int stripped_mcount = 0;
+    chanMember	*cm;
     aChannel *chptr;
 
     if (check_registered(cptr))
@@ -4632,16 +4291,8 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
     }
     
-    if (
-#ifndef AZZURRA
-	    !IsSAdmin(cptr)
-#else
-	    !(IsAdmin(cptr) || IsSAdmin(cptr))
-#endif
-       )
-    {
+    if (!(IsAdmin(cptr) || IsSAdmin(cptr)))
 	return 0;
-    }
     
     /* AZZURRA: fixed the damn "/samode #channel" bug, 
      * setting the last mode computed via set_mode ; sux
@@ -4656,36 +4307,29 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if(!check_channelname(sptr, (unsigned char *)parv[1]))
 	return 0;
-#ifndef AZZURRA
-    sendts = set_mode(cptr, sptr, chptr, 2, parc - 2, parv + 2, modebuf, 
-		      parabuf);
-#else
+
     sendts = set_mode(cptr, sptr, chptr, 2, parc - 2, parv + 2,
 		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount);
-#endif
 	
     if (strlen(modebuf) > (size_t)1)
     {
-
-#ifdef AZZURRA
-		if (stripped_mcount == sendts) {
-#endif
-		    sendto_channel_butserv(chptr, sptr,
-					   ":%s MODE %s %s %s", parv[0],
-					   chptr->chname, modebuf,
-					   parabuf);
-#ifdef AZZURRA
-		} else {
-			for (cm = chptr->members; cm; cm = cm->next) {
-				if (MyConnect(cm->cptr)) {
-					if (cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(cm->cptr) || IsUmodeh(cm->cptr))
-						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, modebuf, parabuf);
-					else if (stripped_mcount > 0)
-						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, stripped_modebuf, stripped_parabuf);
-				}
-			}
+	if (stripped_mcount == sendts) {
+	    sendto_channel_butserv(chptr, sptr,
+				   ":%s MODE %s %s %s", parv[0],
+				   chptr->chname, modebuf,
+				   parabuf);
+	} else {
+	    for (cm = chptr->members; cm; cm = cm->next)
+	    {
+		if (MyConnect(cm->cptr))
+		{
+		    if (cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(cm->cptr) || IsUmodeh(cm->cptr))
+			sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, modebuf, parabuf);
+		    else if (stripped_mcount > 0)
+			sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, stripped_modebuf, stripped_parabuf);
 		}
-#endif
+	    }
+	}
 
 	sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
 		      ":%s MODE %s %s %s",

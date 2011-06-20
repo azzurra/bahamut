@@ -36,11 +36,7 @@
 /* Internally defined stuffs */
 SOpts wsopts;
 int build_searchopts(aClient *, int, char **);
-#ifndef AZZURRA
-int chk_who(aClient *, int);
-#else
 int chk_who(aClient *, int, int);
-#endif
 
 /* Externally defined stuffs */
 extern int lifesux;
@@ -75,11 +71,9 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
       "Flag -t <seconds>: show users on for less than <seconds> seconds,",
       "Flag u <user>: user has string <user> in their username,",
       "               wildcards accepted",
-#ifdef AZZURRA
-	  "Flag H <number>: Limit output to <number> entries,",
+      "Flag H <number>: Limit output to <number> entries,",
       "Flag A <away message>: show users with <away message>, wildcards accepted",
       "Flag x: user is not in any channel", 
-#endif
       "Behavior flags:",
       "Flag C: show first visible channel user is in",
       "Flag M: check for user in channels I am a member of",
@@ -198,32 +192,28 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
 	      wsopts.away_plus=0;
 	  wsopts.check_away=1;
 	  break;
-#ifdef AZZURRA
       case 'A':
-      if(parv[args] == NULL)
-      {
-              sendto_one(sptr, getreply(ERR_WHOSYNTAX), me.name, sptr->name);
-              return 0;
-      }
-      wsopts.away_msg_plus = change;
-      wsopts.away_msg = parv[args++];
-      break;
+	  if(parv[args] == NULL)
+	  {
+	      sendto_one(sptr, getreply(ERR_WHOSYNTAX), me.name, sptr->name);
+	      return 0;
+	  }
+	  wsopts.away_msg_plus = change;
+	  wsopts.away_msg = parv[args++];
+	  break;
       case 'x':
-      wsopts.check_nochan = 1;
-      break;
+	  wsopts.check_nochan = 1;
+	  break;
+      case 'H':
+	  if ((parv[args] == NULL) ||
+		((wsopts.maxhits = strtol(parv[args], &err, 10)) <= 0) ||
+		(*err != '\0'))
+	  {
+	      sendto_one(sptr, getreply(ERR_WHOSYNTAX), me.name, sptr->name);
+	      return 0;
+	  }
 
-
-		case 'H':
-			if ((parv[args] == NULL) ||
-				((wsopts.maxhits = strtol(parv[args], &err, 10)) <= 0) ||
-				(*err != '\0')) {
-
-				sendto_one(sptr, getreply(ERR_WHOSYNTAX), me.name, sptr->name);
-				return 0;
-			}
-
-			break;
-#endif
+	break;
       case 'C':
 	  wsopts.show_chan = change;
 	  break;
@@ -248,13 +238,11 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
 		  wsopts.channelflags = CHFL_CHANOP;
 		  cname++;
 	      }
-#ifdef AZZURRA
 	      if (*cname == '%')
 	      {
 		  wsopts.channelflags = CHFL_HALFOP;
 		  cname++;
 	      }
-#endif
 	      if (*cname == '+')
 	      {
 		  wsopts.channelflags = CHFL_VOICE;
@@ -400,7 +388,6 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
 	  wsopts.user_plus=change;
 	  args++;
 	  break;
-#ifdef AZZURRA
       default:
             {
                 char **ptr = NULL;
@@ -412,7 +399,6 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
                 return 0;
                 break; /* unreachable */
             }
-#endif
       }
       flags++;
   }
@@ -424,11 +410,7 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
   
   if(wsopts.search_chan && !(wsopts.check_away || wsopts.gcos || wsopts.host ||
 			     wsopts.check_umode || wsopts.server ||
-			     wsopts.user || wsopts.class
-#ifdef AZZURRA
-                 || wsopts.away_msg
-#endif
-                 ))
+			     wsopts.user || wsopts.class || wsopts.away_msg))
   {
       if(parv[args]==NULL || wsopts.channel || wsopts.nick ||
 	 parv[args][0] == '#' || parv[args][0] == '&')
@@ -452,11 +434,7 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
       if(wsopts.show_chan && !(wsopts.check_away || wsopts.gcos ||
 			       wsopts.host || wsopts.check_umode ||
 			       wsopts.server || wsopts.user || wsopts.nick ||
-			       wsopts.ip || wsopts.channel || wsopts.class
-#ifdef AZZURRA
-                   || wsopts.away_msg
-#endif
-                   ))
+			       wsopts.ip || wsopts.channel || wsopts.class || wsopts.away_msg))
       {
 	  if(parv[args]==NULL)
 	  {
@@ -489,15 +467,9 @@ int (*nchkfn)(char *, char *);
 int (*uchkfn)(char *, char *);
 int (*hchkfn)(char *, char *);
 int (*ichkfn)(char *, char *);
-#ifdef AZZURRA
 int (*achkfn)(char*, char*); /* away check func XXX: maybe unuseful -> match() */
-#endif
 
-#ifndef AZZURRA
-int chk_who(aClient *ac, int showall)
-#else
 int chk_who(aClient *ac, int showall, int canshowip)
-#endif
 {
     if(!IsClient(ac))
 	return 0;
@@ -512,11 +484,9 @@ int chk_who(aClient *ac, int showall, int canshowip)
 	if((wsopts.away_plus && ac->user->away==NULL) ||
 	   (!wsopts.away_plus && ac->user->away!=NULL))
 	    return 0;
-#ifdef AZZURRA
     if(wsopts.check_nochan)
     if(ac->user->channel != NULL)
             return 0;
-#endif
     /* while this is wasteful now, in the future
      * when clients contain pointers to their servers
      * of origin, this'll become a 4 byte check instead of a mycmp
@@ -539,16 +509,8 @@ int chk_who(aClient *ac, int showall, int canshowip)
 	    return 0;
     
     if(wsopts.host!=NULL)
-	if((wsopts.host_plus && hchkfn(wsopts.host, 
-#ifdef AZZURRA
-			(!canshowip) ? ac->user->virthost :
-#endif
-			ac->user->host)) ||
-	   (!wsopts.host_plus && !hchkfn(wsopts.host,
-#ifdef AZZURRA
-			(!canshowip) ? ac->user->virthost :
-#endif
-			ac->user->host)))
+	if((wsopts.host_plus && hchkfn(wsopts.host, (!canshowip) ? ac->user->virthost : ac->user->host)) ||
+	   (!wsopts.host_plus && !hchkfn(wsopts.host, (!canshowip) ? ac->user->virthost : ac->user->host)))
 	    return 0;
     
     if(wsopts.ip!=NULL)
@@ -560,21 +522,18 @@ int chk_who(aClient *ac, int showall, int canshowip)
 	if((wsopts.gcos_plus && gchkfn(wsopts.gcos, ac->info)) ||
 	   (!wsopts.gcos_plus && !gchkfn(wsopts.gcos, ac->info)))
 	    return 0;
-#ifdef AZZURRA
+
     if(wsopts.away_msg != NULL)
     {
      if(!ac->user->away) 
-        {
-             return 0;
-        }
+	return 0;
      else
-        {
-            if((wsopts.away_plus && !achkfn(wsopts.away_msg, ac->user->away)) ||
-            (!wsopts.away_plus && achkfn(wsopts.away_msg, ac->user->away)))
-                return 0;
-        }
+     {
+	if((wsopts.away_plus && !achkfn(wsopts.away_msg, ac->user->away)) ||
+	   (!wsopts.away_plus && achkfn(wsopts.away_msg, ac->user->away)))
+	    return 0;
+     }
     }
-#endif
 
     /*
      * For the below options, a value of two means '+', 
@@ -679,12 +638,10 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	else
 		ichkfn = match;
 
-#ifdef AZZURRA
 	if (wsopts.away_msg != NULL && !strchr(wsopts.away_msg, '?') && !strchr(wsopts.away_msg, '*'))
 		achkfn = mycmp;
-    else
+	else
 		achkfn = match;
-#endif
 
     if (wsopts.channel != NULL) {
 
@@ -706,11 +663,8 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 				ac = cm->cptr;
 				i = 0;
-#ifndef AZZURRA
-				if (!chk_who(ac,showall))
-#else
+
 				if (!chk_who(ac,showall, CanShowIP(sptr, ac)))
-#endif
 					continue;
 
 				/* If we have channel flags set, verify they match */
@@ -727,18 +681,14 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				/* SSL --tsk */
 				status[((status[i]) ? ++i : i)] = (IsUmodeS(ac) ? 'S' : 0);
 				status[((status[i]) ? ++i : i)] = ((cm->flags & CHFL_CHANOP) ? '@' : 
-#ifdef AZZURRA
 								   ((cm->flags & CHFL_HALFOP) ? '%' : 
-#endif
 								   ((cm->flags & CHFL_VOICE) ? '+' : 0)));
 				status[++i] = 0;
 
 				sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name,
 					wsopts.channel->chname, ac->user->username,
-#ifdef AZZURRA
-			   (!CanShowIP(sptr, ac)) ? ac->user->virthost :
-#endif
-			   ac->user->host,ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
+					(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+					ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 			   ++shown;
 
@@ -763,16 +713,13 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 		if (ac != NULL) {
 
-#ifndef AZZURRA
-			if (!chk_who(ac,1)) {
-#else
-			if (!chk_who(ac,1,CanShowIP(sptr, ac))) {
-#endif
-
+			if (!chk_who(ac,1,CanShowIP(sptr, ac)))
+			{
 				sendto_one(sptr, getreply(RPL_ENDOFWHO), me.name, sptr->name, wsopts.host != NULL ? wsopts.host : wsopts.nick);
 				return 0;
 			}
-			else {
+			else
+			{
 
 				i = 0;
 				status[i++] = (ac->user->away == NULL ? 'H' : 'G');
@@ -784,10 +731,8 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 				sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name,
 					wsopts.show_chan ? first_visible_channel(ac, sptr) : "*", ac->user->username, 
-#ifdef AZZURRA
-					(!CanShowIP(sptr, ac)) ? ac->user->virthost :
-#endif
-					ac->user->host, ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
+					(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+					ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 				sendto_one(sptr, getreply(RPL_ENDOFWHO), me.name, sptr->name,
 					wsopts.host != NULL ? wsopts.host : wsopts.nick);
@@ -816,11 +761,8 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			for (cm = lp->value.chptr->members; cm; cm = cm->next) {
 
 				ac = cm->cptr;
-#ifndef AZZURRA
-				if (!chk_who(ac, 1))
-#else
+
 				if (!chk_who(ac, 1, CanShowIP(sptr, ac)))
-#endif
 					continue;
 		
 
@@ -833,27 +775,19 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 				i = 0;
 				status[i++] = (ac->user->away==NULL ? 'H' : 'G');
-#ifndef AZZURRA
-				status[i] = (IsAnOper(ac) ? '*' : ((IsInvisible(ac) && IsOper(sptr)) ? '%' : 0));
-#else
 				status[i] = (IsAnOper(ac) ? '*' : ((IsInvisible(ac) && IsOper(sptr)) ? '-' : 0));
-#endif
 
 				/* SSL --tsk */
 				status[((status[i]) ? ++i : i)] = (IsUmodeS(ac) ? 'S' : 0);
 				status[((status[i]) ? ++i : i)] = ((cm->flags & CHFL_CHANOP) ? '@' : 
-#ifdef AZZURRA
 								   ((cm->flags & CHFL_HALFOP) ? '%' :
-#endif
 								   ((cm->flags & CHFL_VOICE) ? '+' : 0)));
 
 				status[++i] = 0;
 
 				sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name, lp->value.chptr->chname, ac->user->username,
-#ifdef AZZURRA
-					(!CanShowIP(sptr, ac)) ? ac->user->virthost :
-#endif
-					ac->user->host,ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
+					(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+					ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 				shown++;
 			}
@@ -863,11 +797,7 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 		for (ac = client; ac; ac = ac->next) {
 
-#ifndef AZZURRA
-			if (!chk_who(ac,showall))
-#else
 			if (!chk_who(ac,showall,CanShowIP(sptr, ac)))
-#endif
 				continue;
 
 			/* wow, they passed it all, give them the reply...
@@ -889,10 +819,8 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 			sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name,
 				wsopts.show_chan ? first_visible_channel(ac, sptr) : "*", ac->user->username,
-#ifdef AZZURRA
-				(!CanShowIP(sptr, ac)) ? ac->user->virthost :
-#endif
-				ac->user->host, ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
+				(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+				ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 				shown++;
 		}

@@ -279,9 +279,3 @@
 #else
 #define CIDR_NOTATION_VAL 0
 #endif
-
-#ifdef CHECK_AZZURRA_DOMAIN
-#define CHECK_AZZURRA_DOMAIN_VAL 1
-#else
-#define CHECK_AZZURRA_DOMAIN_VAL 0
-#endif

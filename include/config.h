@@ -270,11 +270,7 @@
 
 
 /* Services Definitions */
-#ifndef AZZURRA
-#define STATS_NAME "stats.dal.net"
-#else
 #define STATS_NAME "stats.azzurra.org"
-#endif
 #define CHANSERV "ChanServ"
 #define NICKSERV "NickServ"
 #define MEMOSERV "MemoServ"
@@ -282,19 +278,13 @@
 #define OPERSERV "OperServ"
 #define STATSERV "StatServ"
 #define HELPSERV "HelpServ"
-#ifdef AZZURRA
 #define SEENSERV "SeenServ"
 #define SEENSERVATSSTATS SEENSERV "@" STATS_NAME
-#endif
 #define NICKSERVATSERVICES NICKSERV "@" SERVICES_NAME
 #define CHANSERVATSERVICES CHANSERV "@" SERVICES_NAME
 #define MEMOSERVATSERVICES MEMOSERV "@" SERVICES_NAME
 #define ROOTSERVATSERVICES ROOTSERV "@" SERVICES_NAME
-#ifndef AZZURRA
-#define OPERSERVATSTATS    OPERSERV "@" STATS_NAME
-#else
 #define OPERSERVATSTATS    OPERSERV "@" SERVICES_NAME
-#endif
 #define STATSERVATSTATS    STATSERV "@" STATS_NAME
 #define HELPSERVATSTATS    HELPSERV "@" STATS_NAME
 
@@ -706,11 +696,7 @@
  * Rather self explanitory. If not specified in T: line,
  * we tell clients to go to "http://<this>"
  */
-#ifndef AZZURRA
-#define DEFAULT_PROXY_INFO_URL "kline.dal.net/proxy/wingate.htm"
-#else
 #define DEFAULT_PROXY_INFO_URL "kline.azzurra.org"
-#endif
 
 /*
  * STAFF_ADDRESS

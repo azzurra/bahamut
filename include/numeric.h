@@ -55,9 +55,7 @@
 #define RPL_STATSZLINE	     225
 #define RPL_STATSCOUNT	     226
 #define RPL_STATSGLINE       227
-#ifdef AZZURRA
 #define RPL_STATSSPAM	     228
-#endif
 #ifdef WEBIRC
 #define RPL_STATSWEBIRC      229
 #endif
@@ -221,11 +219,7 @@
 #define RPL_WHOISREGNICK     307
 #define RPL_WHOISADMIN       308
 #define RPL_WHOISSADMIN      309
-#ifndef AZZURRA
-#define RPL_WHOISSVCMSG      310
-#else
 #define RPL_WHOISHELPER      310
-#endif
 #define RPL_WHOISUSER        311
 #define RPL_WHOISSERVER      312
 #define RPL_WHOISOPERATOR    313
@@ -257,10 +251,6 @@
 #define RPL_TOPICWHOTIME     333
 #define RPL_COMMANDSYNTAX    334
 
-#ifndef AZZURRA
-#define RPL_WHOISACTUALLY    338
-#endif
-
 #define RPL_WHOISJAVA        339 /* Azzurra */
 #define RPL_SHUNNED          340 /* SHUN */
 
@@ -282,11 +272,9 @@
 /* rpl_endofnames above (366) */
 #define RPL_BANLIST          367
 #define RPL_ENDOFBANLIST     368
-#ifdef AZZURRA
 #define RPL_RESTRICTLIST     344
 #define RPL_ENDOFRESTRICTLIST 345
 #define ERR_RESTRICTLISTFULL 346
-#endif
 /* rpl_endofwhowas above (369) */
 
 #define	RPL_INFO             371
@@ -296,9 +284,7 @@
 #define	RPL_MOTDSTART        375
 #define	RPL_ENDOFMOTD        376
 
-#ifdef AZZURRA
 #define RPL_WHOISACTUALLY    378 /* Azzurra */
-#endif
 
 #define RPL_YOUREOPER        381
 #define RPL_REHASHING        382
@@ -349,9 +335,7 @@
 #define	ERR_NICKCOLLISION    436
 #define ERR_BANNICKCHANGE    437
 
-#ifdef AZZURRA
 #define ERR_NONICKCHANGE     438
-#endif
 
 #define ERR_TARGETTOFAST     439
 
@@ -384,11 +368,7 @@
 #define ERR_BANNEDFROMCHAN   474
 #define	ERR_BADCHANNELKEY    475
 
-#ifndef AZZURRA
-#define	ERR_BADCHANMASK      476
-#else
 #define ERR_ONLYSSLCLIENTS   476
-#endif
 
 #define ERR_NEEDREGGEDNICK   477
 #define ERR_BANLISTFULL      478
@@ -401,10 +381,8 @@
 #define ERR_CHANBANREASON    485
 #define ERR_NONONREG         486
 #define ERR_MSGSERVICES      487
-#ifdef AZZURRA
 #define ERR_CANNOTKICKMODEZ  488
 #define ERR_CANNOTKILLMODEZ  489
-#endif
 
 #define ERR_NOOPERHOST       491
 

@@ -120,7 +120,6 @@
 #define MSG_OS	     "OS"            	/* OperServ commands */
 #define MSG_SS	     "SS"            	/* StatServ commands */ /* AZZURRA: s#Stat#Seen# */
 #define MSG_HS	     "HS"            	/* HelpServ commands */
-#ifdef AZZURRA
 #define MSG_SEENSERV "SEENSERV"		/* SeenServ commands */
 #define MSG_ST       "ST"		/* StatServ commands */
 #define MSG_AS       "AS"		/* AdminServ commands */
@@ -131,7 +130,6 @@
 #define MSG_CLOAKEY  "CLOAKEY"          /* change cloak key */
 #define MSG_SNOTICE  "SNOTICE"		/* spam notice */
 #define MSG_RESYNCH  "RESYNCH"		/* resynch request */
-#endif
 #ifdef SHUN
 #define MSG_SHUN     "SHUN"		/* Shun command */
 #define MSG_UNSHUN   "UNSHUN"		/* Unshun command */
@@ -231,7 +229,6 @@ extern int  m_unszline(aClient *, aClient *, int, char **);
 extern int  m_sgline(aClient *, aClient *, int, char **);
 extern int  m_unsgline(aClient *, aClient *, int, char **);
 extern int  m_dkey(aClient *, aClient *, int, char **);
-#ifdef AZZURRA
 extern int m_as(aClient *, aClient *, int, char **);
 extern int m_st(aClient *, aClient *, int, char **);
 extern int m_guest(aClient *, aClient *, int, char **);
@@ -241,7 +238,6 @@ extern int m_unspam(aClient *, aClient *, int, char **);
 extern int m_cloakey(aClient *, aClient *, int, char **);
 extern int m_snotice(aClient *, aClient *, int, char **);
 extern int m_resynch(aClient *, aClient *, int, char **);
-#endif
 #ifdef SHUN
 extern int m_shun(aClient *, aClient *, int, char **);
 extern int m_unshun(aClient *, aClient *, int, char **);
@@ -319,12 +315,8 @@ struct Message msgtab[] =
     {MSG_MEMOSERV, m_ms, 0, 1, 1, 0, 0, 0L},
     {MSG_ROOTSERV, m_rs, 0, 1, 1, 0, 0, 0L},
     {MSG_OPERSERV, m_os, 0, 1, 1, 0, 0, 0L},
-#ifndef AZZURRA
-    {MSG_STATSERV, m_ss, 0, 1, 1, 0, 0, 0L},
-#else
     {MSG_STATSERV, m_st, 0, 1, 1, 0, 0, 0L},
     {MSG_SEENSERV, m_ss, 0, 1, 1, 0, 0, 0L},
-#endif
     {MSG_HELPSERV, m_hs, 0, 1, 1, 0, 0, 0L},
     {MSG_SERVICES, m_services, 0, 1, 1, 0, 0, 0L},
     {MSG_IDENTIFY, m_identify, 0, 1, 1, 0, 0, 0L},
@@ -353,7 +345,6 @@ struct Message msgtab[] =
     {MSG_OS, m_os, 0, 1, 1, 1, 0, 0L},
     {MSG_SS, m_ss, 0, 1, 1, 1, 0, 0L},
     {MSG_HS, m_hs, 0, 1, 1, 1, 0, 0L},
-#ifdef AZZURRA
     {MSG_AS, m_as, 0, MAXPARA, 1, 0, 0, 0L},
     {MSG_ST, m_st, 0, 1, 1, 0, 0, 0L},
     {MSG_GUEST, m_guest, 0, MAXPARA, 1, 1, 0, 0L},
@@ -363,7 +354,6 @@ struct Message msgtab[] =
     {MSG_CLOAKEY, m_cloakey, 0, MAXPARA, 1, 0, 0, 0L},
     {MSG_SNOTICE, m_snotice, 0, MAXPARA, 1, 0, 0, 0L},
     {MSG_RESYNCH, m_resynch, 0, MAXPARA, 1, 0, 0, 0L},
-#endif
 #ifdef SHUN
     {MSG_SHUN, m_shun, 0, 3, 1, 0, 0, 0L},
     {MSG_UNSHUN, m_unshun, 0, 2, 1, 0, 0, 0L},

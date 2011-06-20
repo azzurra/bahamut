@@ -126,7 +126,6 @@ time_t      pending_kline_time = 0;
 
 #endif /* LOCKFILE */
 
-#ifdef AZZURRA
 Spam *spam_list = NULL;
 extern unsigned char *cloak_key;
 extern unsigned char *cloak_host;
@@ -134,7 +133,6 @@ extern unsigned short cloak_key_len;
 int CONF_SERVER_LANGUAGE = LANG_IT;
 #ifdef DYNAMIC_CLOAKING
 #define CK_TEMPTPL	DPATH "/.cloak.XXXXXXXX"
-#endif
 #endif
 
 #ifdef RESTRICT_USERS
@@ -1239,7 +1237,7 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			   me.name, sptr->name, (timeofday-sptr->firsttime),
 			   (timeofday-sptr->firsttime)==1?"sec":"secs",
 			   parv[1]);
-#if defined( AZZURRA ) && !defined( HUB )
+#ifndef HUB
 	sendto_security(NULL, "synched to %s in %d %s at %s sendq. Cloak key SHA1: %s",
 		*parv, (timeofday - sptr->firsttime), (timeofday - sptr->firsttime) == 1 ? "sec" : "secs",
 		parv[1], cloak_key_checksum());
@@ -1494,7 +1492,6 @@ static int  report_array[11][3] =
     {0, 0}
 };
 
-#ifdef AZZURRA
 static char *get_oflags_str(int flags)
 {
     static char ret[(sizeof(flags) * 8) + 1];
@@ -1516,7 +1513,6 @@ static char *get_oflags_str(int flags)
 
     return ret;
 }
-#endif
 
 static void report_configured_links(aClient *sptr, int mask)
 {
@@ -1563,12 +1559,10 @@ static void report_configured_links(aClient *sptr, int mask)
 		sendto_one(sptr, rpl_str(p[1]), me.name,
 			   sptr->name, c, pass, name, port,
 			   get_conf_class(tmp));
-#ifdef AZZURRA
 	    else if (tmp->status & CONF_OPS)
 		sendto_one(sptr, rpl_str(p[1]), me.name,
 			   sptr->name, c, host, name, get_oflags_str(port),
 			   get_conf_class(tmp));
-#endif
 #ifdef RESTRICT_USERS
 	    else if (tmp->status & CONF_CLIENT)
 		sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, 
@@ -1675,10 +1669,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	 *     /trace, this was fiercely obnoxious.  If you don't
 	 *     add an argument, you get all SERVER links.
 	 */
-#ifdef AZZURRA
 	if(!IsAnOper(sptr))
 	    break;
-#endif
 	sendto_one(sptr, Sformat, me.name, RPL_STATSLINKINFO, parv[0]);
 	if ((parc > 2) && !(doall || wilds))
 	{         /* Single client lookup */
@@ -1753,10 +1745,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	break;
     case 'E':
     case 'e':
-#if defined( E_LINES_OPER_ONLY ) || defined( AZZURRA )
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	report_conf_links(sptr, &EList1, RPL_STATSELINE, 'E');
 	report_conf_links(sptr, &EList2, RPL_STATSELINE, 'E');
 	report_conf_links(sptr, &EList3, RPL_STATSELINE, 'E');
@@ -1764,10 +1754,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
     case 'F':
     case 'f':
-#if defined( F_LINES_OPER_ONLY ) || defined( AZZURRA )
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	report_conf_links(sptr, &FList1, RPL_STATSFLINE, 'F');
 	report_conf_links(sptr, &FList2, RPL_STATSFLINE, 'F');
 	report_conf_links(sptr, &FList3, RPL_STATSFLINE, 'F');
@@ -1775,10 +1763,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
     case 'G':
     case 'g':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	report_configured_links(sptr, CONF_GCOS);
 	break;
 
@@ -1794,26 +1780,20 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
     case 'I':
     case 'i':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	report_configured_links(sptr, CONF_CLIENT);
 	break;
 		
     case 'k':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	if(IsAnOper(sptr))
 	    report_temp_klines(sptr);
 
     case 'K':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	if (parc > 3)
 	    report_matching_host_klines(sptr, parv[3]);
 	else if (IsAnOper(sptr)) {
@@ -1827,10 +1807,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
     case 'M':
     case 'm':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	/*
 	 * original behaviour was not to report the command, if
 	 * the command hadn't been used. I'm going to always
@@ -1858,10 +1836,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	break;
     case 'o':
     case 'O':
-#ifdef AZZURRA
 	if(!IsAnOper(sptr))
 	    break;
-#endif
 	report_configured_links(sptr, CONF_OPS);
 	break;
 		
@@ -1872,26 +1848,21 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
     case 'Q':
     case 'q':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	report_configured_links(sptr, CONF_QUARANTINE);
 	break;
 		
     case 'R':
     case 'r':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 #ifdef DEBUGMODE
 	send_usage(sptr, parv[0]);
 #endif
 	break;
 		
     case 'S':
-#ifdef AZZURRA
 	if(IsAdmin(sptr) || IsSAdmin(sptr))
 	{
 	    Spam *s;
@@ -1913,7 +1884,6 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	}
 	break;
-#endif
     case 's':
 	if (IsAnOper(sptr))
 	    list_scache(cptr, sptr, parc, parv);
@@ -1964,10 +1934,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		
     case 'v':
     case 'V':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	show_servers(sptr, parv[0]);
 	break;
 
@@ -1984,10 +1952,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif	
     case 'Y':
     case 'y':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	report_classes(sptr);
 	break;
 		
@@ -2000,10 +1966,8 @@ int m_stats(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	break;
 		
     case '?':
-#ifdef AZZURRA
 	if (!IsAnOper(sptr))
 	    break;
-#endif
 	serv_info(sptr, parv[0]);
 		
     default:
@@ -2648,7 +2612,6 @@ int m_globops(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
 }
 
-#ifdef AZZURRA
 int m_snotice(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     char *message = parc > 1 ? parv[1] : NULL;
@@ -2673,7 +2636,6 @@ int m_snotice(aClient *cptr, aClient *sptr, int parc, char *parv[])
     sendto_snotice("from %s: %s", parv[0], message);
     return 0;
 }
-#endif
 
 int m_chatops(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
@@ -2779,7 +2741,7 @@ extern int  spam_time;
 extern int  server_split_recovery_time;
 #endif
 
-#if defined( MSG_TARGET_LIMIT ) && defined( AZZURRA )
+#ifdef MSG_TARGET_LIMIT
 extern unsigned short int tlim_target_min,
     tlim_target_max, 	/* MUST BE >= tlim_target_min !!! */
     tlim_target_mintomaxtime,
@@ -2787,13 +2749,7 @@ extern unsigned short int tlim_target_min,
     tlim_enabled;
 #endif
 
-#ifdef AZZURRA
 extern int unknown_list_allowed;
-#endif
-
-#ifdef AZZURRA
-extern int unknown_list_allowed;
-#endif
 
 /* m_set - set options while running */
 int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
@@ -3115,7 +3071,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	}	
 #endif
-#ifdef AZZURRA
 	else if (!strncasecmp(command, "SPAMDETECT", 10)) 
 	{
 	    extern int  spam_detect;
@@ -3140,33 +3095,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    {
 		sendto_one(sptr, ":%s NOTICE %s :spam detection is currently %s",
 			   me.name, parv[0], spam_detect ? "enabled" : "disabled");
-		return 0;
-	    }
-	}
-	else if (!strncasecmp(command, "HALFOP", 6)) 
-	{
-	    extern int  halfop;
-
-	    if (parc > 2) 
-	    {
-		if(!strncasecmp(parv[2], "ON", 2))
-		{
-		    halfop = YES;
-		}
-		else
-		{
-		    halfop = NO;
-		}
-		sendto_realops_lev(SPAM_LEV, "%s has changed half op support to %s",
-			parv[0], halfop ? "ON" : "OFF");
-		sendto_one(sptr, ":%s NOTICE %s :half op support is now set to %s",
-			   me.name, parv[0], halfop ? "ON" : "OFF");
-		return 0;
-	    }
-	    else 
-	    {
-		sendto_one(sptr, ":%s NOTICE %s :half op support is currently %s",
-			   me.name, parv[0], halfop ? "enabled" : "disabled");
 		return 0;
 	    }
 	}
@@ -3285,7 +3213,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		return 0;
 	    }
 	}
-#endif
 #ifdef RESTRICT_USERS
 	else if (!strncasecmp(command, "RESTRICT", 8)) 
 	{
@@ -3451,7 +3378,7 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    parv[0], throttle_rtime);
 	   }
 	}
-#if defined(AZZURRA) && defined(DYNAMIC_CLOAKING)
+#ifdef DYNAMIC_CLOAKING
 	else if(!strncasecmp(command, "CLOAK_KEY", 10) && IsAdmin(sptr))
 	{
 	    if(parc > 2)
@@ -3516,7 +3443,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	}
 #endif	
-#ifdef AZZURRA
 	else if (!strncasecmp(command, "TLIMIT", 6))  {
 	   char *changed = NULL;
 	   char *to = NULL;
@@ -3596,7 +3522,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    parv[0], tlim_target_time);
 	   }
 	}
-#endif
     }
     else 
     {
@@ -3613,7 +3538,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		   "INVITESPAM <ON|OFF>", me.name, parv[0]);
 #endif
  
-#ifdef AZZURRA
 	sendto_one(sptr, ":%s NOTICE %s :Options: SPAMDETECT <ON|OFF>, TUNIX <ON|OFF>, LANG <IT|EN>, UNKNOWN_LIST <ON|OFF>",
 		   me.name, parv[0]);
 #ifdef DYNAMIC_CLOAKING
@@ -3623,9 +3547,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #ifdef MSG_TARGET_LIMIT
 	sendto_one(sptr, ":%s NOTICE %s :Options: TLIMIT "
 	      "<ENABLE|MIN|MAX|MINTOMAXTIME|TIME> [setting]", me.name, parv[0]);
-#endif
-	sendto_one(sptr, ":%s NOTICE %s :Options: HALFOP <ON|OFF>",
-		   me.name, parv[0]);
 #endif
 #ifdef RESTRICT_USERS
 	sendto_one(sptr, ":%s NOTICE %s :Options: RESTRICT_USERS <ON|OFF>",
@@ -4976,10 +4897,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
     {
 	if (mycmp(parv[1], "DNS") == 0) 
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is rehashing DNS.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0], "DNS");
 	    flush_cache();		/* flush the dns cache */
 	    res_init();		/* re-read /etc/resolv.conf */
@@ -4989,10 +4908,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	if (mycmp(parv[1], "SZLINES") == 0) 
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is removing SZLINES.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		       "SLINES");
 	    remove_szline("*", 1);		/* flush the dns cache */
@@ -5002,10 +4919,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	else if (mycmp(parv[1], "TKLINES") == 0)
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is clearing temp klines.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		       "temp klines");
 	    flush_temp_klines();
@@ -5015,10 +4930,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	else if (mycmp(parv[1], "GC") == 0) 
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is garbage collecting.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		       "garbage collecting");
 	    block_garbage_collect();
@@ -5028,10 +4941,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	else if (mycmp(parv[1], "MOTD") == 0) 
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is rehashing MOTD.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_ops("%s is forcing re-reading of MOTD file", parv[0]);
 	    read_motd(MOTD);
 #ifdef SHORT_MOTD
@@ -5041,10 +4952,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	else if (mycmp(parv[1], "IP") == 0) 
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is rehashing IPHASH.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		       "ip hash");
 	    rehash_ip_hash();
@@ -5053,21 +4962,18 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	else if(mycmp(parv[1], "AKILLS") == 0) 
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is rehashing AKILLS.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		       "akills");
 	    do_rehash_akills();
 	    sendto_ops("%s is rehashing akills", parv[0]);
 	    return 0;
 	}
-	else if(mycmp(parv[1], "THROTTLES") == 0) {
-#ifdef AZZURRA
+	else if(mycmp(parv[1], "THROTTLES") == 0)
+	{
 	   sendto_security(NULL, "%s (%s@%s) is rehashing THROTTLES.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	   sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		 "throttles");
 	   throttle_rehash();
@@ -5077,10 +4983,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #ifdef USE_SSL
 	else if(mycmp(parv[1], "SSL") == 0)
 	{
-#ifdef AZZURRA
 	    sendto_security(NULL, "%s (%s@%s) is reloading SSL support.", 
 			    parv[0], sptr->user->username, sptr->user->host);
-#endif
 	    sendto_ops("%s is reloading SSL support", parv[0]);
 	    sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0],
 		 "SSL support");
@@ -5091,10 +4995,8 @@ int m_rehash(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     else 
     {
-#ifdef AZZURRA
 	sendto_security(NULL, "%s (%s@%s) is rehashing server config file.", 
 			parv[0], sptr->user->username, sptr->user->host);
-#endif
 	sendto_one(sptr, rpl_str(RPL_REHASHING), me.name, parv[0], configfile);
 	sendto_ops("%s is rehashing Server config file while whistling "
 		   "innocently", parv[0]);
@@ -5161,13 +5063,11 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
     int          cnt = 0, wilds = 0, dow = 0;
 	
     tname = (parc > 1) ? parv[1] : me.name;
-#ifdef AZZURRA
     if(!IsAnOper(sptr))
     {
 	sendto_one(sptr, err_str(ERR_NOPRIVILEGES), me.name, sptr->name);
 	return 0;
     }
-#endif
 
 #ifdef HIDEULINEDSERVS
     if((acptr = next_client_double(client, tname)))
@@ -5892,17 +5792,8 @@ int m_akill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     /* if this is already klined, don't akill it now */
     ac2 = find_is_klined(host, user);
     if (ac2 != NULL) 
-    {
-#ifndef AZZURRA
-    	/* pass along the akill anyways */
-    	sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
-    			   sptr->name, host, user, length, akiller,
-    			   timeset, reason);
-    	return 0;
-#else
     	remove_temp_kline(host, user, CONF_KILL);
-#endif
-    }
+
     /* fill out aconf */
     aconf = make_conf();
     aconf->status = CONF_AKILL;
@@ -6005,11 +5896,8 @@ static void show_watch(aClient *cptr, char *name, int rpl1, int rpl2)
     if ((acptr = find_person(name, NULL)))
 	sendto_one(cptr, rpl_str(rpl1), me.name, cptr->name,
 		   acptr->name, acptr->user->username,
-#ifdef AZZURRA
-		   (!CanShowIP(cptr, acptr))
-		   ? acptr->user->virthost :
-#endif
-		   acptr->user->host, acptr->lasttime);
+		   (!CanShowIP(cptr, acptr)) ? acptr->user->virthost : acptr->user->host,
+		   acptr->lasttime);
     else
 	sendto_one(cptr, rpl_str(rpl2), me.name, cptr->name,
 		   name, "*", "*", 0);
@@ -6143,11 +6031,8 @@ int   m_watch(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		if ((acptr = find_person(lp->value.wptr->nick, NULL)))
 		    sendto_one(sptr, rpl_str(RPL_NOWON), me.name, parv[0],
 			       acptr->name, acptr->user->username,
-#ifdef AZZURRA
-			       (!CanShowIP(sptr, acptr))
-			       ? acptr->user->virthost :
-#endif
-			       acptr->user->host, acptr->tsinfo);
+			       (!CanShowIP(sptr, acptr)) ? acptr->user->virthost : acptr->user->host,
+			       acptr->tsinfo);
 		/*
 		 * But actually, only show them offline if its a capital
 		 * 'L' (full list wanted).
@@ -6196,11 +6081,10 @@ int m_sqline(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (!(aconf = find_conf_name(mask, *mask == '#' ?
 		    CONF_QUARANTINED_CHAN : CONF_QUARANTINED_NICK)))
     {
-#ifdef AZZURRA
 	int i;
 	aClient *acptr;
 	char fbuf[512];
-#endif
+
 	/* okay, it doesn't suck, build a new conf for it */
 	aconf = make_conf();
 	
@@ -6213,13 +6097,10 @@ int m_sqline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	aconf->next = conf;
 	conf = aconf;
 
-#ifdef AZZURRA
 	for(i = 0; i <= highest_fd; i++)
 	{
-	    if(!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr) || IsAnOper(acptr))
-	    {
+	    if(!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr) || IsAnOper(acptr) || IsUmodez(acptr))
 		continue;
-	    }
 
 	    if(IsPerson(acptr))
 	    {
@@ -6232,7 +6113,6 @@ int m_sqline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 	    }
 	}
-#endif
     }
 
     sendto_serv_butone(cptr, ":%s SQLINE %s :%s", sptr->name, mask,
@@ -6335,11 +6215,10 @@ int m_sgline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
     if (!(aconf = find_conf_name(mask, CONF_GCOS)))
     {
-#ifdef AZZURRA
 	int i;
 	aClient *acptr;
 	char fbuf[512];
-#endif
+
 	/* okay, it doesn't suck, build a new conf for it */
 	aconf = make_conf();
 	
@@ -6348,13 +6227,11 @@ int m_sgline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	DupString(aconf->passwd, reason ? reason : "Reason Unspecified");
 	aconf->next = conf;
 	conf = aconf;
-#ifdef AZZURRA
+
 	for(i = 0; i <= highest_fd; i++)
 	{
-	    if(!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr) || IsAnOper(acptr))
-	    {
+	    if(!(acptr = local[i]) || IsMe(acptr) || IsLog(acptr) || IsAnOper(acptr) || IsUmodez(acptr))
 		continue;
-	    }
 
 	    if(IsPerson(acptr))
 	    {
@@ -6367,8 +6244,6 @@ int m_sgline(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		}
 	    }
 	}
-#endif
-
     }
     sendto_serv_butone(cptr, ":%s SGLINE %d :%s:%s", sptr->name, len,
 		       aconf->name,aconf->passwd);
@@ -6497,7 +6372,6 @@ int m_unszline(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
 }
 
-#ifdef AZZURRA
 /* 
  * m_spam() - add a spam rule to the irc server
  *  old protocol:
@@ -6638,9 +6512,7 @@ int m_unspam(aClient *cptr, aClient *sptr, int parc, char *parv[])
     return 0;
 }
 
-#endif /* AZZURRA */
-#if defined(AZZURRA) && defined(DYNAMIC_CLOAKING)
-
+#ifdef DYNAMIC_CLOAKING
 int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
     int l; 
@@ -6709,7 +6581,6 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
     
     return 0;
 }
-
 #endif
 
 #define DKEY_GOTIN  0x01

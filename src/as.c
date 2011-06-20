@@ -92,11 +92,7 @@ as_cmd as_cmds[] = {
    {"CONF", CPATH, AS_BUF_CONF, 5, as_filecommand},
    {"MOTD", MPATH, AS_BUF_MOTD, 5, as_filecommand},
    {"OPERMOTD", OPATH, AS_BUF_OPERMOTD, 5, as_filecommand},
-#ifndef AZZURRA   
-   {"KLINE", KPATH, AS_BUF_KLINE, 5, as_filecommand},
-#else
    {"AZZURRA", KPATH, AS_BUF_KLINE, 5, as_filecommand},
-#endif   
    {"REHASH", NULL, 0, 1, as_rehash}, /* 27/05/02 -tsk */
    {"SYS", NULL, 0, 1, as_getsysinfo},
    {NULL, NULL, 0, 0, NULL}

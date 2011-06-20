@@ -39,11 +39,7 @@
 #else
 #define PATCH1 "-inet6(1.0a)"
 #endif
-#ifndef AZZURRA
-#define PATCH2 ""
-#else
 #define PATCH2 "-azzurra(4.6d)"
-#endif
 #ifndef USE_SSL
 #define PATCH3 ""
 #else

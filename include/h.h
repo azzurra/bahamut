@@ -89,10 +89,8 @@ extern void 	 send_user_joins(aClient *, aClient *);
 extern int  	 can_send(aClient *, aChannel *, char *);
 extern int   	 is_chan_op(aClient *, aChannel *);
 extern int  	 has_voice(aClient *, aChannel *);
-#ifdef AZZURRA
 extern int   	 is_half_op(aClient *, aChannel *);
 extern int  	 can_change_nick (aChannel *, aClient *);
-#endif
 extern int  	 count_channels(aClient *);
 extern char 	*pretty_mask(char *);
 
@@ -362,10 +360,8 @@ extern int     	  hash_del_watch_list(aClient  *);
 extern aWatch 	 *hash_get_watch(char *);
 #define MAXWATCH       128
 
-#ifdef AZZURRA
 extern int	  cloakhost(char *, char *);
 extern char	* cloak_key_checksum(void);
-#endif
 
 #ifdef SHUN
 #define MAXSHUNS 10

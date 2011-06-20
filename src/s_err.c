@@ -23,37 +23,19 @@
 static char *replies[] = 
 {
     /* 000 */	NULL,
-#ifndef AZZURRA
-    /* 001 RPL_WELCOME */	":%s 001 %s :Welcome to the DALnet IRC "
-                                "Network %s!%s@%s",
-#else
     /* 001 RPL_WELCOME */	":%s 001 %s :Welcome to the " NETWORK_NAME " IRC "
                                 "Network %s!%s@%s",
-#endif
     /* 002 RPL_YOURHOST */	":%s 002 %s :Your host is %s, running "
                                 "version %s",
     /* 003 RPL_CREATED */	":%s 003 %s :This server was created %s",
-#ifndef AZZURRA
-    /* 004 RPL_MYINFO */	":%s 004 %s %s %s oOiwscrknfydaAbgheF "
-                                "biklLmMnoOprRstvc",
-#else
     /* 004 RPL_MYINFO */	":%s 004 %s %s %s oOiwscrknfydaAbghexzSjFI "
                                 "bBhijklmMnoOprRstvcdSuUz bklohvz",
-#endif
     /* 005 RPL_PROTOCTL*/       ":%s 005 %s NOQUIT WATCH=%i SAFELIST MODES=%i "
                                 "MAXCHANNELS=%i MAXBANS=%i NICKLEN=%i "
                                 "TOPICLEN=%i KICKLEN=%i CHANTYPES=&# "
-#ifndef AZZURRA
-                                "PREFIX=(ov)@+ NETWORK=DALnet SILENCE=%i "
-#else
 				"PREFIX=(ohv)@%%+ NETWORK=" NETWORK_NAME " SILENCE=%i "
-#endif
                                 "CASEMAPPING=ascii "
-#ifndef AZZURRA
-                                "CHANMODES=b,k,l,ciLmMnOprRst "
-#else
                                 "CHANMODES=bz,k,l,BcdijmMnOprRsStuU "
-#endif
                                 ":are available on this server",
     /* 006 */	                NULL,
     /* 007 */	                NULL,
@@ -277,11 +259,7 @@ static char *replies[] =
     /* 225 RPL_STATSZLINE */	":%s 225 %s %c %s %s",
     /* 226 RPL_STATSCOUNT */	":%s 226 %s %s %l",
     /* 227 RPL_STATSGLINE */	":%s 227 %s %c %s * %s %d %d",
-#ifndef AZZURRA
-    /* 228 */	                NULL,
-#else
     /* 228 RPL_STATSSPAM */	":%s 228 %s S D: %d W: %d M: %d T: %d L: %d %s :%s -> %s",
-#endif
 #ifndef WEBIRC
     /* 229 */	                NULL,
 #else
@@ -377,11 +355,7 @@ static char *replies[] =
     /* 308 RPL_WHOISADMIN */	":%s 308 %s %s :is an IRC Server "
                                 "Administrator",
     /* 309 RPL_WHOISSADMIN */	":%s 309 %s %s :is a Services Administrator",
-#ifndef AZZURRA
-    /* 310 RPL_WHOISSVCMSG */	":%s 310 %s %s",
-#else
     /* 310 RPL_WHOISHELPER */	":%s 310 %s %s :is a Help Operator",
-#endif
     /* 311 RPL_WHOISUSER */	":%s 311 %s %s %s %s * :%s",
     /* 312 RPL_WHOISSERVER */	":%s 312 %s %s %s :%s",
     /* 313 RPL_WHOISOPERATOR */	":%s 313 %s %s :is %s",
@@ -397,13 +371,8 @@ static char *replies[] =
     /* 322 RPL_LIST */		":%s 322 %s %s %d :%s",
     /* 323 RPL_LISTEND */	":%s 323 %s :End of /LIST",
     /* 324 RPL_CHANNELMODEIS */	":%s 324 %s %s %s %s",
-#ifdef AZZURRA
     /* 325 RPL_WHOISAGENT */	":%s 325 %s %s :is a Services Agent",
     /* 326 RPL_WHOISMODES */	":%s 326 %s %s :is using modes %s",
-#else
-    /* 325 */	                NULL,
-    /* 326 */	                NULL,
-#endif
     /* 327 */	                NULL,
     /* 328 */	                NULL,
     /* 329 RPL_CREATIONTIME */	":%s 329 %s %s %lu",
@@ -415,13 +384,8 @@ static char *replies[] =
     /* 335 */	                NULL,
     /* 336 */	                NULL,
     /* 337 */	                NULL,
-#ifndef AZZURRA
-    /* 338 RPL_WHOISACTUALLY */	":%s 338 %s :%s is actually %s@%s [%s]",
-    /* 339 */	                NULL,
-#else
     /* 338 */			NULL,
     /* 339 RPL_WHOISJAVA */	":%s 339 %s %s :is a Java User",
-#endif
 #ifdef SHUN
     /* 340 RPL_SHUNNED */	":%s 340 %s %s :is currently shunned",
 #else
@@ -430,15 +394,9 @@ static char *replies[] =
     /* 341 RPL_INVITING */	":%s 341 %s %s %s",
     /* 342 RPL_SUMMONING */     ":%s 342 %s %s :User summoned to irc",
     /* 343 */	                NULL,
-#ifdef AZZURRA
     /* 344 RPL_RESTRICTLIST */       ":%s 344 %s %s %s %s %lu",
     /* 345 RPL_ENDOFRESTRICTLIST */  ":%s 345 %s %s :End of Channel Restrict List",
     /* 346 ERR_RESTRICTLISTFULL  */  ":%s 478 %s %s %s :Channel Restrict list is full",
-#else
-    /* 344 */	                NULL,
-    /* 345 */	                NULL,
-    /* 346 */	                NULL,
-#endif
     /* 347 */	                NULL,
     /* 348 */	                NULL,
     /* 349 */	                NULL,
@@ -470,11 +428,7 @@ static char *replies[] =
     /* 375 RPL_MOTDSTART */	":%s 375 %s :- %s Message of the Day - ",
     /* 376 RPL_ENDOFMOTD */	":%s 376 %s :End of /MOTD command.",
     /* 377 */	                NULL,
-#ifndef AZZURRA
-    /* 378 */	                NULL,
-#else
     /* 378 RPL_WHOISACTUALLY */	":%s 378 %s %s :is connecting from %s [%s]",
-#endif
     /* 379 */	                NULL,
     /* 380 */	                NULL,
     /* 381 RPL_YOUREOPER */	":%s 381 %s :You are now an IRC Operator",
@@ -542,12 +496,8 @@ static char *replies[] =
     /* 436 ERR_NICKCOLLISION */	":%s 436 %s %s :Nickname collision KILL",
     /* 437 ERR_BANNICKCHANGE */	":%s 437 %s %s :Cannot change nickname while "
                                 "banned or moderated on channel",
-#ifndef AZZURRA
-    /* 438 */	                NULL,	/* In use by Undernet */
-#else
     /* 438 ERR_NONICKCHANGE */	":%s 438 %s %s :Cannot change nickname while "
 				"on a +d channel (%s)",
-#endif
     /* 439 ERR_TARGETTOOFAST */	":%s 439 %s %s :Message target change too fast. "
                                 "Please wait %d seconds and then try again.",
     /* 440 ERR_SERVICESDOWN */	":%s 440 %s %s :Services is currently down. "
@@ -599,11 +549,7 @@ static char *replies[] =
     /* 474 ERR_BANNEDFROMCHAN */	":%s 474 %s %s :Cannot join channel "
                                         "(+b)",
     /* 475 ERR_BADCHANNELKEY */	":%s 475 %s %s :Cannot join channel (+k)",
-#ifndef AZZURRA
-    /* 476 ERR_BADCHANMASK */	":%s 476 %s %s :Bad Channel Mask",
-#else
     /* 476 ERR_ONLYSSLCLIENTS */":%s 476 %s %s :Only SSL clients can join",
-#endif
     /* 477 ERR_NEEDREGGEDNICK */":%s 477 %s %s :You need to identify "
                                 "to a registered nick to %s that "
                                 "channel.",
@@ -616,27 +562,14 @@ static char *replies[] =
     /* 482 ERR_CHANOPRIVSNEEDED */	":%s 482 %s %s :You're not channel "
                                         "operator",
     /* 483 ERR_CANTKILLSERVER */	":%s 483 %s :You cant kill a server!",
-#ifndef AZZURRA
-    /* 484 ERR_NOUNKNOWNLISTS */	NULL,	/* In use by Undernet */
-#else
     /* 484 ERR_NOUNKNOWNLISTS */	":%s 484 %s :You must identify to a registered nick in order to issue the /list command",	/* In use by Undernet */
-#endif
     /* 485 ERR_CHANBANREASON */	":%s 485 %s %s :Cannot join channel (%s)",
     /* 486 ERR_NONONREG */	":%s 486 %s :You must identify to a "
                                 "registered nick to private message %s",
     /* 487 ERR_MSGSERVICES */	":%s 487 %s :Error! \"/msg %s\" is no longer supported. "
-#ifndef AZZURRA
-                                "Use \"/msg %s@services.dal.net\" or \"/%s\" instead.",
-#else
     				"Use \"/msg %s@services.azzurra.org\" or \"/%s\" instead.",
-#endif
-#ifndef AZZURRA
-    /* 488 */	                NULL,
-    /* 489 */	                NULL,	/* In use by Undernet */
-#else
     /* 488 ERR_CANNOTKICKMODEZ*/":%s 488 %s :You cannot kick a services agent!",
     /* 489 ERR_CANNOTKILLMODEZ*/":%s 489 %s :You cannot kill a services agent!",
-#endif
     /* 490 */	                NULL,
     /* 491 ERR_NOOPERHOST */	":%s 491 %s :No O-lines for your host",
     /* 492 */	                NULL,

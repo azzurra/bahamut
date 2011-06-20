@@ -35,7 +35,6 @@
 #define RECV(fd, buf, size) recv(fd, buf, size, 0)
 #define SEND(fd, buf, size) send(fd, buf, size, 0)
 #define USE_SSL
-#define AZZURRA
 #define ADMINSERV
 #define STATS_NOTICE
 #define SHORT_MOTD

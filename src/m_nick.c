@@ -139,15 +139,14 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
      
     }
-#ifdef AZZURRA
-	if (IsSVSnicked(sptr))
-	{
-	    if((NOW - sptr->user->svsnick_time) > 10) /* sanity check */
-		UnsetSVSnicked(sptr);
-	    else
-		return 0;
-	}
-#endif
+
+    if (IsSVSnicked(sptr))
+    {
+	if((NOW - sptr->user->svsnick_time) > 10) /* sanity check */
+	    UnsetSVSnicked(sptr);
+	else
+	    return 0;
+    }
    
     strncpyzt(nick, parv[1], NICKLEN + 1);
     /*
@@ -498,11 +497,7 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 		
 		if (MyConnect(sptr) && (!IsServer(cptr)) && (!IsOper(cptr))
-		    && (!IsULine(sptr))
-#ifdef AZZURRA
-		    && (!IsUmodez(sptr))
-#endif
-		   )
+		    && (!IsULine(sptr)) && (!IsUmodez(sptr)))
 		{
 		    sendto_one(sptr, err_str(ERR_ERRONEUSNICKNAME), me.name,
 			       BadPtr(parv[0]) ? "*" : parv[0], nick,
@@ -542,15 +537,13 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				   sptr->name, nick, lp->value.chptr->chname);
 			return 0;
 		    }
-#ifdef AZZURRA
 		    if (lp->value.chptr->mode.mode & MODE_NONICKCHG && 
 			    can_change_nick (lp->value.chptr, sptr))
-		      {
+		    {
 			sendto_one (sptr, err_str (ERR_NONICKCHANGE), me.name, 
 				   sptr->name, nick, lp->value.chptr->chname);
 		        return 0;
-		      }
-#endif
+		    }
 		}
 #ifdef ANTI_NICK_FLOOD
 		if ((sptr->last_nick_change + MAX_NICK_TIME) < NOW)
@@ -613,11 +606,7 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    if ((aconf = find_conf_name(nick, CONF_QUARANTINED_NICK)))
 	    {
 		if (MyConnect(sptr) && (!IsServer(cptr)) && (!IsOper(cptr))
-		    && (!IsULine(sptr))
-#ifdef AZZURRA
-		    && (!IsUmodez(sptr))
-#endif
-		   )
+		    && (!IsULine(sptr)) && (!IsUmodez(sptr)))
 		{
 		    sendto_one(sptr, err_str(ERR_ERRONEUSNICKNAME), me.name,
 			       BadPtr(parv[0]) ? "*" : parv[0], nick,
@@ -651,25 +640,15 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	del_from_client_hash_table(sptr->name, sptr);
 	samenick = mycmp(sptr->name, nick) ? 0 : 1;
 
-	if (IsPerson(sptr) && !samenick
-#ifdef AZZURRA
-		&& !IsHiddenIdle(sptr)
-#endif
-	   ) {
+	if (IsPerson(sptr) && !samenick && !IsHiddenIdle(sptr))
 	    hash_check_watch(sptr, RPL_LOGOFF);
-	}
     }
 
     strcpy(sptr->name, nick);
     add_to_client_hash_table(nick, sptr);
 
-    if (IsPerson(sptr) && !samenick
-#ifdef AZZURRA
-	    && !IsHiddenIdle(sptr)
-#endif
-       ) {
+    if (IsPerson(sptr) && !samenick && !IsHiddenIdle(sptr))
 	hash_check_watch(sptr, RPL_LOGON);
-    }
 
     return 0;
 }

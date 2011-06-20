@@ -1145,10 +1145,7 @@ void show_opers(aClient *cptr, char *name)
 		sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %d",
 			   me.name, RPL_STATSDEBUG, name, cptr2->name,
 			   cptr2->user->username, 
-#ifdef AZZURRA
-			   IsUmodex(cptr2) ? cptr2->user->virthost :
-#endif
-			   cptr2->user->host,
+			   IsUmodex(cptr2) ? cptr2->user->virthost : cptr2->user->host,
 			   timeofday - cptr2->user->last);
 		j++;
 	    }
@@ -1158,10 +1155,7 @@ void show_opers(aClient *cptr, char *name)
 	    sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %d",
 		       me.name, RPL_STATSDEBUG, name, cptr2->name,
 		       cptr2->user->username,
-#ifdef AZZURRA
-		       IsUmodex(cptr2) ? cptr2->user->virthost :
-#endif
-		       cptr2->user->host,
+		       IsUmodex(cptr2) ? cptr2->user->virthost : cptr2->user->host,
 		       timeofday - cptr2->user->last);
 	    j++;
 	}

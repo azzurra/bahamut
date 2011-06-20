@@ -208,10 +208,6 @@ int parse(aClient *cptr, char *buffer, char *bufend)
 		if (IsPerson(from))
 		    sendto_one(from, ":%s %d %s %s :Unknown command",
 			       me.name, ERR_UNKNOWNCOMMAND, from->name, ch);
-#ifndef AZZURRA /* stop syslogd flooding by lag-checkers */
-		Debug((DEBUG_ERROR, "Unknown (%s) from %s",
-		       ch, get_client_name(cptr, TRUE)));
-#endif
 	    }
 	    ircstp->is_unco++;
 	    return -1;
@@ -226,11 +222,7 @@ int parse(aClient *cptr, char *buffer, char *bufend)
 	 * are allowed -SRB Opers can send 1 msg per second, burst of ~20
 	 * -Taner
 	 */
-	if ((mptr->flags & 1) && !(IsServer(cptr)
-#ifdef AZZURRA
-	    || IsUmodez(cptr)
-#endif			
-	)) 
+	if ((mptr->flags & 1) && !(IsServer(cptr) || IsUmodez(cptr)))
 	{
 #ifdef NO_OPER_FLOOD
 	    if (IsAnOper(cptr))

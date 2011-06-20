@@ -56,9 +56,7 @@ void add_history(aClient *cptr, int online)
     strncpyzt(new->username, cptr->user->username, USERLEN + 1);
     strncpyzt(new->hostname, cptr->user->host, HOSTLEN);
     strncpyzt(new->realname, cptr->info, REALLEN);
-#ifdef AZZURRA
     strncpyzt(new->virthost, cptr->user->virthost, HOSTLEN);
-#endif
     /*
      * Its not string copied, a pointer to the scache hash is copied
      * -Dianora
@@ -168,15 +166,11 @@ int m_whowas(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		sendto_one(sptr, rpl_str(RPL_WHOWASUSER),
 			   me.name, parv[0], temp->name,
 			   temp->username,
-#ifdef AZZURRA
 			   (IsAdmin(sptr) || IsSAdmin(sptr) ||
 			    (IsAnOper(sptr) &&
 			     (OPCanGShowIP(sptr) ||
 			      (OPCanLShowIP(sptr) && !mycmp(temp->servername, me.name)))))
 			   ? temp->hostname : temp->virthost,
-#else
-			   temp->hostname,
-#endif
 			   temp->realname);
 		sendto_one(sptr, rpl_str(RPL_WHOISSERVER),
 			   me.name, parv[0], temp->name,

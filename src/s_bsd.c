@@ -686,14 +686,7 @@ int check_client(aClient * cptr)
 			sizeof(struct IN_ADDR))) break;
 
 	if (!hp->h_addr_list[i])
-	{
-#ifndef AZZURRA	   
-	    sendto_one(cptr,
-		       "NOTICE AUTH :*** Your forward and reverse DNS do "
-		       "not match, ignoring hostname.");
-#endif
 	    hp = NULL;
-	}
     }
 
     if ((i = attach_Iline(cptr, hp, sockname)))
@@ -1734,10 +1727,7 @@ static int read_packet(aClient * cptr)
 #ifdef NO_OPER_FLOOD
 	    !IsAnOper(cptr) &&
 #endif
-#ifdef AZZURRA
-		!IsUmodez(cptr) &&
-#endif
-	    DBufLength(&cptr->recvQ) > CLIENT_FLOOD)
+	    !IsUmodez(cptr) && DBufLength(&cptr->recvQ) > CLIENT_FLOOD)
 	{
 	    sendto_realops_lev(FLOOD_LEV,
 			       "Flood -- %s!%s@%s (%d) Exceeds %d RecvQ",
