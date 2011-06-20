@@ -1034,7 +1034,6 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int         mcount = 0, chanop=0;
     int		stripped_mcount = 0;
-    chanMember	*cm;
     aChannel   *chptr;
     int subparc = 2;
     /* Now, try to find the channel in question */
@@ -1103,20 +1102,25 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    }
 	    break;
 	default:
-		if (stripped_mcount == mcount) {
+		if (stripped_mcount == mcount)
+		{
 		    sendto_channel_butserv(chptr, sptr,
 					   ":%s MODE %s %s %s", parv[0],
 					   chptr->chname, modebuf,
 					   parabuf);
-		} else {
-			for (cm = chptr->members; cm; cm = cm->next) {
-				if (MyConnect(cm->cptr)) {
-					if (cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(cm->cptr) || IsUmodeh(cm->cptr))
-						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, modebuf, parabuf);
-					else if (stripped_mcount > 0)
-						sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s",  sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, stripped_modebuf, stripped_parabuf);
-				}
-			}
+		}
+		else
+		{
+		    /* I mode vengono settati anche dai server, STRONZONE */
+		    sendto_chanops_butserv(chptr, sptr, 1,
+					   ":%s MODE %s %s %s", parv[0],
+					   chptr->chname, modebuf,
+					   parabuf);
+		    if (stripped_mcount > 0)
+			sendto_chanops_butserv(chptr, sptr, 0,
+					       ":%s MODE %s %s %s", parv[0],
+					       chptr->chname, stripped_modebuf,
+					       stripped_parabuf);
 		}
 
 	    sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
@@ -1636,6 +1640,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		{
 		    strncpy(chptr->mode.key,parv[args],KEYLEN);
 		    ADD_PARA(chptr->mode.key);
+		    ADD_STRIPPED_PARA(chptr->mode.key);
 		    *chptr->mode.key = '\0';
 		}
 		else
@@ -3407,8 +3412,9 @@ void kill_restrict_list(aClient *cptr, aChannel *chptr)
 	if (count == MAXMODEPARAMS)
 	    send = 1;
 
-	if (send) {
-	    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
+	if (send)
+	{
+	    sendto_chanops_butserv(chptr, &me, 1, ":%s MODE %s %s %s", cptr->name,
 				   chptr->chname, modebuf, parabuf);
 	    send = 0;
 	    *parabuf = '\0';
@@ -3427,10 +3433,8 @@ void kill_restrict_list(aClient *cptr, aChannel *chptr)
     }
 
     if(*parabuf)
-    {
-	sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
+	sendto_chanops_butserv(chptr, &me, 1, ":%s MODE %s %s %s", cptr->name,
 			       chptr->chname, modebuf, parabuf);
-    }
 
     /* physically destroy channel restrict list */   
 
@@ -3477,9 +3481,15 @@ void kill_ban_list(aClient *cptr, aChannel *chptr)
 	if (count == MAXMODEPARAMS)
 	    send = 1;
     
-	if (send) {
-	    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
-				   chptr->chname, modebuf, parabuf);
+	if (send)
+	{
+	    /* Do not send banlist reset MODE to non-privileged users if the channel is +B */
+	    if (!(chptr->mode.mode & MODE_HIDEBANS))
+		sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
+				       chptr->chname, modebuf, parabuf);
+	    else
+		sendto_chanops_butserv(chptr, &me, 1, ":%s MODE %s %s %s", cptr->name,
+				       chptr->chname, modebuf, parabuf);
 	    send = 0;
 	    *parabuf = '\0';
 	    cp = modebuf;
@@ -3498,8 +3508,13 @@ void kill_ban_list(aClient *cptr, aChannel *chptr)
 
     if(*parabuf)
     {
-	sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
-			       chptr->chname, modebuf, parabuf);
+	/* Ditto */
+	if (!(chptr->mode.mode & MODE_HIDEBANS))
+	    sendto_channel_butserv(chptr, &me, ":%s MODE %s %s %s", cptr->name,
+				   chptr->chname, modebuf, parabuf);
+	else
+	    sendto_chanops_butserv(chptr, &me, 1, ":%s MODE %s %s %s", cptr->name,
+				   chptr->chname, modebuf, parabuf);
     }
 
     /* physically destroy channel ban list */   
@@ -4279,7 +4294,6 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int sendts;
     int stripped_mcount = 0;
-    chanMember	*cm;
     aChannel *chptr;
 
     if (check_registered(cptr))
@@ -4313,22 +4327,25 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	
     if (strlen(modebuf) > (size_t)1)
     {
-	if (stripped_mcount == sendts) {
+	if (stripped_mcount == sendts)
+	{
 	    sendto_channel_butserv(chptr, sptr,
 				   ":%s MODE %s %s %s", parv[0],
 				   chptr->chname, modebuf,
 				   parabuf);
-	} else {
-	    for (cm = chptr->members; cm; cm = cm->next)
-	    {
-		if (MyConnect(cm->cptr))
-		{
-		    if (cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(cm->cptr) || IsUmodeh(cm->cptr))
-			sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, modebuf, parabuf);
-		    else if (stripped_mcount > 0)
-			sendto_one(cm->cptr, ":%s!%s@%s MODE %s %s %s", sptr->name, sptr->user->username, IsUmodex(sptr) ? sptr->user->virthost : sptr->user->host, chptr->chname, stripped_modebuf, stripped_parabuf);
-		}
-	    }
+	}
+	else
+	{
+	    /* Stesso discorso di set_mode */
+	    sendto_chanops_butserv(chptr, sptr, 1,
+				   ":%s MODE %s %s %s", parv[0],
+				   chptr->chname, modebuf,
+				   parabuf);
+	    if (stripped_mcount > 0)
+		sendto_chanops_butserv(chptr, sptr, 0,
+				       ":%s MODE %s %s %s", parv[0],
+				       chptr->chname, stripped_modebuf,
+				       stripped_parabuf);
 	}
 
 	sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,

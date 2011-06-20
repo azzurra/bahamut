@@ -44,6 +44,8 @@ extern void sendto_channel_butone(aClient *one, aClient *from,
 				  aChannel *chptr, char *pattern, ...);
 extern void sendto_channel_butserv(aChannel *chptr, aClient *from,
 				   char *pattern, ...);
+extern void sendto_chanops_butserv(aChannel *chptr, aClient *from, int privileged,
+				   char *pattern, ...);
 extern void sendto_channelflag_butone(aClient *one, aClient *from, int typedest,
 				     aChannel *chptr,char *pattern, ...);
 extern void sendto_common_channels(aClient *user, char *pattern, ...);

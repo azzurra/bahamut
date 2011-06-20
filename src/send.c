@@ -1017,6 +1017,51 @@ void sendto_channel_butserv(aChannel *chptr, aClient *from, char *pattern, ...)
     return;
 }
 
+/*
+ * sendto_chanops_butserv
+ *
+ * Send a message to all members of a channel that are connected to this
+ * server.
+ *
+ * If privileged is 1, send the message only to chanops, halfops, helpops, IRC operators and
+ * services agents.
+ *
+ * If it is 0, send it only to unprivileged clients (voice, normal users)
+ */
+void sendto_chanops_butserv(aChannel *chptr, aClient *from, int privileged, char *pattern, ...)
+{
+    chanMember *cm;
+    aClient *acptr;
+    va_list vl;
+    int didlocal = 0;
+    char *pfix;
+    int user_is_privileged;
+
+    va_start(vl, pattern);
+
+    pfix = va_arg(vl, char *);
+
+    for (cm = chptr->members; cm; cm = cm->next)
+    {
+	if (MyConnect(acptr = cm->cptr))
+	{
+	    user_is_privileged = cm->flags & CHFL_CHANOP || cm->flags & CHFL_HALFOP || IsAnOper(acptr) || IsUmodeh(acptr) || IsUmodez(acptr);
+	    if ((privileged && !user_is_privileged) || (!privileged && user_is_privileged))
+		continue;
+
+	    if(!didlocal)
+		didlocal = prefix_buffer(0, from, pfix, sendbuf, pattern, vl);
+
+	    if(check_fake_direction(from, acptr))
+		continue;
+
+	    send_message(acptr, sendbuf, didlocal);
+	}
+    }
+    va_end(vl);
+    return;
+}
+
 
 /*
  * * send a msg to all ppl on servers/hosts that match a specified mask *
