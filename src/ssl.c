@@ -27,9 +27,17 @@
 
 #ifdef USE_SSL
 
+#include <openssl/dh.h>
+
+/* from dh.c */
+extern DH *get_dh1024(void);
+
 #define SAFE_SSL_READ	1
 #define SAFE_SSL_WRITE	2
 #define SAFE_SSL_ACCEPT	3
+
+/* Because I'm paranoid --morph */
+#define IRCD_CIPHER_LIST "HIGH:!ADH:!MD5"
 
 extern int errno;
 
@@ -38,6 +46,8 @@ int ssl_capable = 0;
 
 int initssl(void)
 {
+    DH *dh_tmp = NULL;
+
     SSL_load_error_strings();
     SSLeay_add_ssl_algorithms();
     ircdssl_ctx = SSL_CTX_new(SSLv23_server_method());
@@ -45,6 +55,10 @@ int initssl(void)
 	ERR_print_errors_fp(stderr);
 	return 0;
     }
+
+    /* Kill SSLv2 support */
+    SSL_CTX_set_options(ircdssl_ctx, SSL_OP_NO_SSLv2);
+
     if (SSL_CTX_use_certificate_file(ircdssl_ctx,
 		IRCDSSL_CPATH, SSL_FILETYPE_PEM) <= 0) {
 	ERR_print_errors_fp(stderr);
@@ -62,6 +76,27 @@ int initssl(void)
 	SSL_CTX_free(ircdssl_ctx);
 	return 0;
     }
+    if (!SSL_CTX_set_cipher_list(ircdssl_ctx, IRCD_CIPHER_LIST))
+    {
+	ERR_print_errors_fp(stderr);
+	SSL_CTX_free(ircdssl_ctx);
+	return 0;
+    }
+    if ((dh_tmp = get_dh1024()) == NULL)
+    {
+	ERR_print_errors_fp(stderr);
+	SSL_CTX_free(ircdssl_ctx);
+	return 0;
+    }
+    if (!SSL_CTX_set_tmp_dh(ircdssl_ctx, dh_tmp))
+    {
+	ERR_print_errors_fp(stderr);
+	SSL_CTX_free(ircdssl_ctx);
+	DH_free(dh_tmp);
+	return 0;
+    }
+    DH_free(dh_tmp);
+
     return 1;
 }
 
@@ -92,6 +127,8 @@ static void disable_ssl(int do_errors)
 
 int rehash_ssl(void)
 {
+    DH *dh_tmp = NULL;
+
     if(ircdssl_ctx)
     {
 	SSL_CTX_free(ircdssl_ctx);
@@ -102,6 +139,9 @@ int rehash_ssl(void)
 	disable_ssl(1);
 	return 0;
     }
+
+    /* Kill SSLv2 support */
+    SSL_CTX_set_options(ircdssl_ctx, SSL_OP_NO_SSLv2);
 
     if (SSL_CTX_use_certificate_file(ircdssl_ctx,
 		IRCDSSL_CPATH, SSL_FILETYPE_PEM) <= 0)
@@ -126,6 +166,26 @@ int rehash_ssl(void)
 
 	return 0;
     }
+
+    if (!SSL_CTX_set_cipher_list(ircdssl_ctx, IRCD_CIPHER_LIST))
+    {
+	disable_ssl(1);
+	return 0;
+    }
+
+    if ((dh_tmp = get_dh1024()) == NULL)
+    {
+	disable_ssl(1);
+	return 0;
+    }
+
+    if (!SSL_CTX_set_tmp_dh(ircdssl_ctx, dh_tmp))
+    {
+	disable_ssl(1);
+	DH_free(dh_tmp);
+	return 0;
+    }
+    DH_free(dh_tmp);
 
     return 1;
 }
