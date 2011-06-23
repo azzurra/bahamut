@@ -68,7 +68,6 @@ unsigned long tsdms;
 extern __inline__ int check_for_spam(aClient *, char *, char *, char *);
 int hide_tunix = YES;
 int unknown_list_allowed = UNKNOWN_LISTS; /* Defined in ./config -> options.h */
-int halfop = YES;
                 
 #ifdef ANTI_INVITE_FLOOD
 int  invite_num = MAX_INVITES;
@@ -1385,9 +1384,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    break;
 
 	case 'h':
-	/* check if users can use HALFOP (set via /set halfop  on|off */
-	if (!halfop && level<2 && MyClient(sptr)) 
-	    break;
+	    /* Halfop can't be disabled anymore, just fall through */
 
 	case 'o':
 	    /* deny mode -/+o for half operators */
