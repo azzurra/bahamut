@@ -75,7 +75,6 @@ int  invite_time = MAX_INVITE_TIME;
 int  invite_spam = YES;
 #endif
 
-#ifdef RESTRICT_USERS
 #ifdef SHOW_RESTRICTED_JOINS
 int  show_restricted_joins = YES;
 #else
@@ -84,7 +83,6 @@ int  show_restricted_joins = NO;
 int  restricted_joins_num = RESTRICTED_JOINS_NUM;
 int  restricted_joins_time = RESTRICTED_JOINS_TIME;
 extern int restriction_enabled;
-#endif /* RESTRICT_USERS */
 
 /* number of seconds to add to all readings of time() when making TS's */
 
@@ -1944,7 +1942,6 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 	return (ERR_NEEDREGGEDNICK);
     if (chptr->mode.mode & MODE_NOUNKNOWN && !IsKnownNick(sptr))
 	return (ERR_NEEDREGGEDNICK);
-#ifdef RESTRICT_USERS
     if (!(chptr->mode.mode & MODE_UNRESTRICT) && check_restricted_user(sptr)) {
         static unsigned int rjoin_count = 0;
 	static time_t rjoin_last = 0;
@@ -1965,7 +1962,6 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 	
         return -1; /* check_restircted_user has already sent an error message */
     }
-#endif
     if (chptr->mode.mode & MODE_OPERONLY && !IsOper(sptr))
 	return (ERR_NOPRIVILEGES);
     if (*chptr->mode.key && (BadPtr(key) || mycmp(chptr->mode.key, key)))
@@ -2325,11 +2321,9 @@ int m_join(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	     */
 	    flags = (ChannelExists(name)) ? 0 : CHFL_CHANOP;
 
-#ifdef RESTRICT_USERS
 	    /* Channel does not exist - prevent creation if JOIN comes from a restricted user */
 	    if (flags != 0 && check_restricted_user(sptr))
 		continue; /* Message already sent by check_restricted_user */
-#endif
 
 #ifdef NO_CHANOPS_WHEN_SPLIT
 	    if (!IsAnOper(sptr) && server_was_split &&
@@ -3194,10 +3188,8 @@ int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
     }
 
-#ifdef RESTRICT_USERS
     if (check_restricted_user(sptr))
 	return 0;
-#endif
 
     /* If a /list is in progress, then another one will cancel it */
     if ((lopt = sptr->user->lopt)!=NULL)

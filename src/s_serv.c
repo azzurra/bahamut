@@ -77,9 +77,7 @@ int         max_connection_count = 1, max_client_count = 1;
 extern void reset_sock_opts();
 #endif
 
-#ifdef RESTRICT_USERS
 extern int restriction_enabled;
-#endif
 
 extern char *smalldate(time_t);	/* defined in s_misc.c */
 extern void outofmemory(void);	/* defined in list.c */
@@ -135,11 +133,9 @@ int CONF_SERVER_LANGUAGE = LANG_IT;
 #define CK_TEMPTPL	DPATH "/.cloak.XXXXXXXX"
 #endif
 
-#ifdef RESTRICT_USERS
 extern int  show_restricted_joins;
 extern int  restricted_joins_num;
 extern int  restricted_joins_time;
-#endif
 
 
 /*
@@ -682,7 +678,6 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	{
 	    acptr->flags |= FLAGS_ULINE;
 	    sendto_ops("%s introducing U:lined server %s", cptr->name, acptr->name);
-#ifdef RESTRICT_USERS
 	    if(mycmp(acptr->name, SERVICES_NAME) == 0)
 	    {
 		/* Services are up, enable the
@@ -690,7 +685,6 @@ int m_server(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		 */
 		restriction_enabled = YES;
 	    }
-#endif
 	}
 	
 	Count.server++;
@@ -880,7 +874,6 @@ int do_server_estab(aClient *cptr)
     {
 	Count.myulined++;
 	cptr->flags |= FLAGS_ULINE; 
-#ifdef RESTRICT_USERS
 	if(mycmp(cptr->name, SERVICES_NAME) == 0)
 	{
 	    /* Services are up, enable the
@@ -888,7 +881,6 @@ int do_server_estab(aClient *cptr)
 	     */
 	    restriction_enabled = YES;
 	}
-#endif
     }
     
     sendto_gnotice("from %s: Link with %s established, states:%s%s%s%s",
@@ -1394,10 +1386,8 @@ int m_links(aClient *cptr, aClient *sptr, int parc, char *parv[])
     char       *d;
     int         n;
 
-#ifdef RESTRICT_USERS
     if (check_restricted_user(sptr))
 	return 0;
-#endif    
     
     if (parc > 2) 
     {
@@ -1563,12 +1553,10 @@ static void report_configured_links(aClient *sptr, int mask)
 		sendto_one(sptr, rpl_str(p[1]), me.name,
 			   sptr->name, c, host, name, get_oflags_str(port),
 			   get_conf_class(tmp));
-#ifdef RESTRICT_USERS
 	    else if (tmp->status & CONF_CLIENT)
 		sendto_one(sptr, rpl_str(p[1]), me.name, sptr->name, 
 		tmp->flags & CONF_FLAGS_I_RESTRICTED ? 'i' : 'I', 
 		host, name, get_oflags_str(port), get_conf_class(tmp));
-#endif
 	    else {
 		if(!IsAnOper(sptr) && !IsULine(sptr))
 		    sendto_one(sptr, rpl_str(p[1]), me.name,
@@ -2689,10 +2677,8 @@ int m_admin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     aConfItem  *aconf;
 
-#ifdef RESTRICT_USERS
     if (check_restricted_user(sptr))
 	return 0;
-#endif
         
     if (hunt_server(cptr, sptr, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
 	return 0;
@@ -2915,7 +2901,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 #endif
 
-#ifdef RESTRICT_USERS
 	else if (!strncasecmp(command, "SHOW_RESTRICTED_JOINS", 21)) 
 	{
 
@@ -2991,8 +2976,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		return 0;
 	    }
 	}	
-#endif
-
 
 #ifdef ANTI_INVITE_FLOOD
 	else if (!strncasecmp(command, "INVITESPAM", 10)) 
@@ -3213,7 +3196,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		return 0;
 	    }
 	}
-#ifdef RESTRICT_USERS
 	else if (!strncasecmp(command, "RESTRICT", 8)) 
 	{
 	    if (parc > 2) 
@@ -3239,7 +3221,6 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		return 0;
 	    }
 	}
-#endif
 #ifdef ANTI_SPAMBOT
 	/* int spam_time = MIN_JOIN_LEAVE_TIME; 
 	 * int spam_num = MAX_JOIN_LEAVE_COUNT;
@@ -3548,12 +3529,10 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	sendto_one(sptr, ":%s NOTICE %s :Options: TLIMIT "
 	      "<ENABLE|MIN|MAX|MINTOMAXTIME|TIME> [setting]", me.name, parv[0]);
 #endif
-#ifdef RESTRICT_USERS
 	sendto_one(sptr, ":%s NOTICE %s :Options: RESTRICT_USERS <ON|OFF>",
 		   me.name, parv[0]);
 	sendto_one(sptr, ":%s NOTICE %s :Options: SHOW_RESTRICTED_JOINS <ON|OFF>, "
 			 "RESTRICTED_JOINS_NUM <NUM>, RESTRICTED_JOINS_TIME <SECS>", me.name, parv[0]);
-#endif
  
 #ifdef ANTI_SPAMBOT
 	sendto_one(sptr, ":%s NOTICE %s :Options: SPAMNUM <NUM>, SPAMTIME <SECS>",

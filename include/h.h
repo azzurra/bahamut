@@ -223,9 +223,7 @@ extern int  	  deliver_it(aClient *, char *, int);
 
 extern int  	  check_registered(aClient *);
 extern int  	  check_registered_user(aClient *);
-#ifdef RESTRICT_USERS
 extern int  	  check_restricted_user(aClient *);
-#endif
 extern char 	 *get_client_name(aClient *, int);
 extern char 	 *get_client_host(aClient *);
 extern char 	 *my_name_for_link(char *, aConfItem *);

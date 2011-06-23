@@ -81,9 +81,7 @@ extern char ProxyMonHost[HOSTLEN + 1];
 extern void ip6_expand(char *, size_t);
 #endif
 
-#ifdef RESTRICT_USERS
 extern int restriction_enabled;
-#endif
 
 static char buf[BUFSIZE], buf2[BUFSIZE];
 int  user_modes[] =
@@ -1198,11 +1196,9 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	sendto_one(sptr, ":%s NOTICE %s :*** Notice -- For more information "
 		   "please visit %s", me.name, nick, ProxyMonURL);
 #endif
-#ifdef RESTRICT_USERS
 	if (restriction_enabled && (sptr->confs->value.aconf->flags & CONF_FLAGS_I_RESTRICTED))
 		sendto_one(sptr, ":%s NOTICE %s :*** Notice -- Your connection is restricted! For more information "
 				 "please visit "RESTRICT_USERS_URL, me.name, nick);
-#endif
     }
     else if (IsServer(cptr)) 
     {
@@ -1872,7 +1868,6 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	    continue;
 #endif
 
-#ifdef RESTRICT_USERS
 	  if (MyClient(sptr) && !IsKnownNick(sptr) && !IsULine(acptr) && !IsAnOper(acptr))
 	  {
 	  	/* check if destination user is on a +U channel. If test is
@@ -1891,7 +1886,6 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 	  	if (!umodeu && check_restricted_user(sptr))
 	  		continue;
 	  }
-#endif
 
 /*	  if (IsNoNonReg(acptr) && !IsRegNick(sptr) && !IsULine(sptr) && AZZURRA */
 	  if (IsNoNonReg(acptr) && !IsRegNick(sptr) && !IsULine(sptr) && !IsServer(sptr) && !IsOper(sptr))

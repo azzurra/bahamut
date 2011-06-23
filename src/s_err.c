@@ -510,13 +510,9 @@ static char *replies[] =
     /* 444 ERR_NOLOGIN */	":%s 444 %s %s :User not logged in",
     /* 445 ERR_SUMMONDISABLED */	":%s 445 %s :SUMMON has been removed",
     /* 446 ERR_USERSDISABLED */	":%s 446 %s :USERS has been removed",
-#ifndef RESTRICT_USERS
-    /* 447 */	                NULL,
-#else
     /* 447 ERR_RESTRICTED */	":%s 447 %s :You need a registered nick to issue commands! "
 			 	"/msg "NICKSERV" HELP REGISTER for registration info, "
 			 	"/join "OPERATORS_CHANNEL" for Operator Help. ",
-#endif
     /* 448 */	                NULL,
     /* 449 */	                NULL,
     /* 450 */	                NULL,

@@ -347,9 +347,7 @@
 #define	ERR_SUMMONDISABLED   445
 #define ERR_USERSDISABLED    446
 
-#ifdef RESTRICT_USERS
 #define ERR_RESTRICTED       447
-#endif
 
 #define ERR_NOTREGISTERED    451
 

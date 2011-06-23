@@ -58,9 +58,7 @@ extern void activity_log(char *, ...);
 int currently_processing_netsplit = NO;
 #endif
 
-#ifdef RESTRICT_USERS
 int restriction_enabled = NO;
-#endif
 
 static void exit_one_client(aClient *, aClient *, aClient *, char *);
 
@@ -457,7 +455,6 @@ void exit_one_server(aClient *cptr, aClient *dead, aClient *from,
 
     Debug((DEBUG_NOTICE, "server noquit: %s", cptr->name));
 
-#ifdef RESTRICT_USERS
     if(mycmp(cptr->name, SERVICES_NAME) == 0)
     {
 	/* Services are being exited, disable the 
@@ -465,7 +462,6 @@ void exit_one_server(aClient *cptr, aClient *dead, aClient *from,
 	 */
 	restriction_enabled = NO;
     }
-#endif
 
     for (acptr = client; acptr; acptr = next) 
     {
@@ -1198,7 +1194,6 @@ void show_servers(aClient *cptr, char *name)
 	       name, j, (j == 1) ? "" : "s");
 }
 
-#ifdef RESTRICT_USERS
 inline int check_restricted_user(aClient *sptr)
 {
     if (restriction_enabled && MyClient(sptr) && !IsKnownNick(sptr) && 
@@ -1211,4 +1206,3 @@ inline int check_restricted_user(aClient *sptr)
 
     return 0;
 }
-#endif

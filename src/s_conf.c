@@ -1376,9 +1376,7 @@ initconf(int opt, int fd)
 	    break;
 
 	case 'i':		/* to connect me (restricted) */
-#ifdef RESTRICT_USERS
 	    aconf->flags |= CONF_FLAGS_I_RESTRICTED;
-#endif
 	case 'I':		/* to connect me (unrestricted) */
 	    aconf->status = CONF_CLIENT;
 	    break;
@@ -1632,12 +1630,11 @@ initconf(int opt, int fd)
 		    bconf->class->links -= bconf->clients;
 		    bconf->class = aconf->class;
 		    bconf->class->links += bconf->clients;
-#ifdef RESTRICT_USERS
-		if (aconf->flags & CONF_FLAGS_I_RESTRICTED)
-		    bconf->flags |= CONF_FLAGS_I_RESTRICTED;
-		else
-		    bconf->flags &= ~CONF_FLAGS_I_RESTRICTED;
-#endif
+
+		    if (aconf->flags & CONF_FLAGS_I_RESTRICTED)
+			bconf->flags |= CONF_FLAGS_I_RESTRICTED;
+		    else
+			bconf->flags &= ~CONF_FLAGS_I_RESTRICTED;
 		}
 		free_conf(aconf);
 		aconf = bconf;

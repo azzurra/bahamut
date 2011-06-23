@@ -785,10 +785,8 @@ struct spam_
 #define CONF_FLAGS_I_HELPERPORT	   0x0010
 /* did the password field specify FASTWEB? */
 #define CONF_FLAGS_I_FASTWEBPORT   0x0020
-#ifdef RESTRICT_USERS
 /* did the i-line specify a restricted connection? */
 #define CONF_FLAGS_I_RESTRICTED    0x0040
-#endif
 
 /* Client structures */
 struct User

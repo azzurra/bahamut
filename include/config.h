@@ -1158,13 +1158,7 @@
 #define ACTIVITY_LOG_ROTATE 43200
 #endif
 
-/* RESTRICT_USERS
- * Define this if you want to deny the following commands to
- * unregistered users: NICK [L]USERS LIST LINKS ADMIN JOIN PRIVMSG NOTICE
- * (*) except JOIN/PRIVMSG/NOTICE on +U channels.
- * This option is applied only to clients that have 
- */
-#define RESTRICT_USERS
+/* RESTRICT_USERS is always enabled, move along */
 
 /* RESTRICT_USERS_URL
  * URL used to display more information about users restrictions.
@@ -1177,11 +1171,9 @@
  * RESTRICT_JOINS_COUNT:  maximum number of joins to notify. (default: 10)
  * RESTRICT_JOINS_TIME: minimum time (in secs) to reset joins count. (default: 20)
  */
-#ifdef RESTRICT_USERS
 #undef SHOW_RESTRICTED_JOINS
 #define RESTRICTED_JOINS_NUM 10
 #define RESTRICTED_JOINS_TIME 20
-#endif
 
 /* FAILEDOPER_SHOWPASS
  * Define this if you want failedoper passwords to be shown in security channel.
