@@ -43,14 +43,16 @@ static void add_invite(aClient *, aChannel *);
 static int  add_banid(aClient *, aChannel *, char *);
 static int  add_restrictid(aClient *, aChannel *, char *);
 static int  can_join(aClient *, aChannel *, char *);
-static void channel_modes(aClient *, char *, char *, aChannel *);
+static void channel_modes(aClient *, char *, char *, char *, aChannel *);
 static int  del_banid(aChannel *, char *);
 static int  del_restrictid(aChannel*, char *);
 static aBan *is_banned(aClient *, aChannel *);
 static aBan *is_restricted(aClient *, aChannel *);
 
+/* SUX */
 static int  set_mode(aClient *, aClient *, aChannel *, int,
-		     int, char **, char *, char *, char *, char *, int *);
+		     int, char **, char *, char *, char *, char *, int *,
+		     char *, char *, int *);
 
 static void sub1_from_channel(aChannel *);
 
@@ -104,6 +106,8 @@ static char *newCliSJOINFmt = ":%s SJOIN %ld %s";
 static char nickbuf[BUFSIZE], buf[BUFSIZE];
 static char modebuf[REALMODEBUFLEN], parabuf[REALMODEBUFLEN];
 static char stripped_modebuf[REALMODEBUFLEN], stripped_parabuf[REALMODEBUFLEN];
+/* mode buffers for non-EBMODE capable servers (cybcop and stats) */
+static char noneb_modebuf[REALMODEBUFLEN], noneb_parabuf[REALMODEBUFLEN];
 
 /* htm ... */
 extern int lifesux;
@@ -762,47 +766,43 @@ __inline int can_change_nick (aChannel *chptr, aClient *cptr)
  * buffer mbuf with the parameters in pbuf.
  */
 static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
-			  aChannel *chptr)
+			  char *noneb_mbuf, aChannel *chptr)
 {
+#define ADDMODE(x,c)                    \
+	do {                            \
+	    if (chptr->mode.mode & (x)) \
+	    {                           \
+		*mbuf++ = c;            \
+		*noneb_mbuf++ = c;      \
+	    }                           \
+	}                               \
+	while (0)
+
     *mbuf++ = '+';
-    if (chptr->mode.mode & MODE_SECRET)
-	*mbuf++ = 's';
-    if (chptr->mode.mode & MODE_PRIVATE)
-	*mbuf++ = 'p';
-    if (chptr->mode.mode & MODE_MODERATED)
-	*mbuf++ = 'm';
-    if (chptr->mode.mode & MODE_TOPICLIMIT)
-	*mbuf++ = 't';
-    if (chptr->mode.mode & MODE_INVITEONLY)
-	*mbuf++ = 'i';
-    if (chptr->mode.mode & MODE_NOPRIVMSGS)
-	*mbuf++ = 'n';
-    if (chptr->mode.mode & MODE_REGISTERED)
-	*mbuf++ = 'r';
-    if (chptr->mode.mode & MODE_REGONLY)
-	*mbuf++ = 'R';
-    if (chptr->mode.mode & MODE_NOCOLOR)
-	*mbuf++ = 'c';
-    if (chptr->mode.mode & MODE_OPERONLY)
-	*mbuf++ = 'O';
-    if (chptr->mode.mode & MODE_MODREG)
-	*mbuf++ = 'M';
-    if (chptr->mode.mode & MODE_NONICKCHG)
-	*mbuf++ = 'd';
-    if (chptr->mode.mode & MODE_NOSPAM)
-	*mbuf++ = 'u';
-    if (chptr->mode.mode & MODE_NOCTCP)
-	*mbuf++ = 'C';
-    if (chptr->mode.mode & MODE_SSLONLY)
-	*mbuf++ = 'S';
-    if (chptr->mode.mode & MODE_NOUNKNOWN)
-	*mbuf++ = 'j';
-    if (chptr->mode.mode & MODE_UNRESTRICT)
-	*mbuf++ = 'U';
+    *noneb_mbuf++ = '+';
+    ADDMODE(MODE_SECRET, 's');
+    ADDMODE(MODE_PRIVATE, 'p');
+    ADDMODE(MODE_MODERATED, 'm');
+    ADDMODE(MODE_TOPICLIMIT, 't');
+    ADDMODE(MODE_INVITEONLY, 'i');
+    ADDMODE(MODE_NOPRIVMSGS, 'n');
+    ADDMODE(MODE_REGISTERED, 'r');
+    ADDMODE(MODE_REGONLY, 'R');
+    ADDMODE(MODE_NOCOLOR, 'c');
+    ADDMODE(MODE_OPERONLY, 'O');
+    ADDMODE(MODE_MODREG, 'M');
+    ADDMODE(MODE_NONICKCHG, 'd');
+    ADDMODE(MODE_NOSPAM, 'u');
+    ADDMODE(MODE_NOCTCP, 'C');
+    ADDMODE(MODE_SSLONLY, 'S');
+    ADDMODE(MODE_NOUNKNOWN, 'j');
+    ADDMODE(MODE_UNRESTRICT, 'U');
+    /* don't add to noneb_mbuf */
     if (chptr->mode.mode & MODE_HIDEBANS)
 	*mbuf++ = 'B';
     if (chptr->mode.limit) {
 	*mbuf++ = 'l';
+	*noneb_mbuf++ = 'l';
 	if (IsMember(cptr, chptr) || IsServer(cptr) || IsULine(cptr) || IsUmodez(cptr))
 	{
 	    if (*chptr->mode.key)
@@ -814,11 +814,14 @@ static void channel_modes(aClient *cptr, char *mbuf, char *pbuf,
     if (*chptr->mode.key)
     {
 	*mbuf++ = 'k';
+	*noneb_mbuf++ = 'k';
 	if (IsMember(cptr, chptr) || IsServer(cptr) || IsULine(cptr) || IsUmodez(cptr))
 	    strcat(pbuf, chptr->mode.key);
     }
     *mbuf++ = '\0';
+    *noneb_mbuf++ = '\0';
     return;
+#undef ADDMODE
 }
 
 static void send_restrict_list(aClient *cptr, aChannel *chptr)
@@ -933,15 +936,17 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
     if (*chptr->chname != '#')
 	return;
 
-    *modebuf = *parabuf = '\0';
-    channel_modes(cptr, modebuf, parabuf, chptr);
+    *modebuf = *parabuf = *noneb_modebuf = '\0';
+    channel_modes(cptr, modebuf, parabuf, noneb_modebuf, chptr);
 
     if(IsCapable(cptr, CAP_NSJOIN))
 	ircsprintf(buf, ":%s SJOIN %ld %s %s %s :", me.name,
-		   chptr->channelts, chptr->chname, modebuf, parabuf);
+		   chptr->channelts, chptr->chname,
+		   IsCapable(cptr, CAP_EBMODE) ? modebuf : noneb_modebuf, parabuf);
     else
 	ircsprintf(buf, ":%s SJOIN %ld %ld %s %s %s :", me.name,
-		   chptr->channelts, chptr->channelts, chptr->chname, modebuf,
+		   chptr->channelts, chptr->channelts, chptr->chname,
+		   IsCapable(cptr, CAP_EBMODE) ? modebuf : noneb_modebuf,
 		   parabuf);
     t = buf + strlen(buf);
     for (l = chptr->members; l; l = l->next)
@@ -1015,7 +1020,8 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
     *modebuf = '+';
     modebuf[1] = '\0';
     send_ban_list(cptr, chptr);
-    send_restrict_list(cptr, chptr);
+    if (IsCapable(cptr, CAP_EBMODE))
+	send_restrict_list(cptr, chptr);
 
     if (modebuf[1] || *parabuf)
     {
@@ -1032,9 +1038,10 @@ void send_channel_modes(aClient *cptr, aChannel *chptr)
 
 int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
-    int         mcount = 0, chanop=0;
-    int		stripped_mcount = 0;
-    aChannel   *chptr;
+    int mcount = 0, chanop=0;
+    int stripped_mcount = 0;
+    int noneb_mcount = 0;
+    aChannel *chptr;
     int subparc = 2;
     /* Now, try to find the channel in question */
     if (parc > 1)
@@ -1061,9 +1068,9 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	
     if (parc < 3)
     {
-	*modebuf = *parabuf = '\0';
+	*modebuf = *parabuf = *noneb_modebuf = '\0';
 	modebuf[1] = '\0';
-	channel_modes(sptr, modebuf, parabuf, chptr);
+	channel_modes(sptr, modebuf, parabuf, noneb_modebuf, chptr);
 	sendto_one(sptr, rpl_str(RPL_CHANNELMODEIS), me.name, parv[0],
 		   chptr->chname, modebuf, parabuf);
 	sendto_one(sptr, rpl_str(RPL_CREATIONTIME), me.name, parv[0],
@@ -1084,7 +1091,8 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
        subparc++;
     }
     mcount = set_mode(cptr, sptr, chptr, chanop, parc - subparc, parv + subparc,
-		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount);
+		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount,
+		      noneb_modebuf, noneb_parabuf, &noneb_mcount);
 
     if (strlen(modebuf) > (size_t) 1)
 	switch (mcount)
@@ -1123,14 +1131,42 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 					       stripped_parabuf);
 		}
 
-	    sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
-			   ":%s MODE %s %s %s",
-			   parv[0], chptr->chname,
-			   modebuf, parabuf);
-	    sendto_server(cptr, chptr, CAP_TSMODE, NOCAPS,
-			   ":%s MODE %s %ld %s %s",
-			   parv[0], chptr->chname, chptr->channelts,
-			   modebuf, parabuf);
+	    if (noneb_mcount == mcount)
+	    {
+		/* We got only baseline modes, no need to check for CAP_EBMODE */
+		sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
+			      ":%s MODE %s %s %s",
+			      parv[0], chptr->chname,
+			      modebuf, parabuf);
+		sendto_server(cptr, chptr, CAP_TSMODE, NOCAPS,
+			      ":%s MODE %s %ld %s %s",
+			      parv[0], chptr->chname, chptr->channelts,
+			      modebuf, parabuf);
+	    }
+	    else
+	    {
+		/* Ok, fine, let's send out full modes first */
+		sendto_server(cptr, chptr, CAP_EBMODE, CAP_TSMODE,
+			      ":%s MODE %s %s %s",
+			      parv[0], chptr->chname,
+			      modebuf, parabuf);
+		sendto_server(cptr, chptr, CAP_EBMODE | CAP_TSMODE, NOCAPS,
+			      ":%s MODE %s %ld %s %s",
+			      parv[0], chptr->chname, chptr->channelts,
+			      modebuf, parabuf);
+		/* Now send baseline modes only (if any) */
+		if (noneb_mcount > 0)
+		{
+		    sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE | CAP_EBMODE,
+				  ":%s MODE %s %s %s",
+				  parv[0], chptr->chname,
+				  noneb_modebuf, noneb_parabuf);
+		    sendto_server(cptr, chptr, CAP_TSMODE, CAP_EBMODE,
+				  ":%s MODE %s %ld %s %s",
+				  parv[0], chptr->chname, chptr->channelts,
+				  noneb_modebuf, noneb_parabuf);
+		}
+	    }
 	}
     return 0;
 }
@@ -1139,7 +1175,9 @@ int m_mode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  * hackery, so I rewrote it.  Hope this works. }:> --wd
  */
 static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
-		    int level, int parc, char *parv[], char *mbuf, char *pbuf, char *stripped_mbuf, char *stripped_pbuf, int *stripped_mcount)
+		    int level, int parc, char *parv[], char *mbuf, char *pbuf,
+		    char *stripped_mbuf, char *stripped_pbuf, int *stripped_mcount,
+		    char *noneb_mbuf, char *noneb_pbuf, int *noneb_mcount)
 {
 #define SM_ERR_NOPRIVS 0x0001 /* is not an op */
 #define SM_ERR_MOREPARMS 0x0002 /* needs more parameters */	
@@ -1165,7 +1203,16 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    while (*pptr)                                 \
 	        stripped_pbuf[stripped_pidx++] = *pptr++; \
 	} while (0)
-    
+
+#define ADD_NONEB_PARA(p)                                 \
+	do {                                              \
+	    pptr = p;                                     \
+	    if (noneb_pidx)                               \
+		noneb_pbuf[noneb_pidx++] = ' ';           \
+	    while (*pptr)                                 \
+		noneb_pbuf[noneb_pidx++] = *pptr++;       \
+	} while (0)
+
     static int flags[] = 
     {
 	MODE_PRIVATE, 'p', MODE_SECRET, 's',
@@ -1175,7 +1222,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	MODE_MODREG, 'M', 
 	MODE_NONICKCHG, 'd', MODE_NOSPAM, 'u',
 	MODE_NOCTCP, 'C', MODE_SSLONLY, 'S',
-	MODE_NOUNKNOWN, 'j', MODE_UNRESTRICT, 'U', MODE_HIDEBANS, 'B',
+	MODE_NOUNKNOWN, 'j', MODE_UNRESTRICT, 'U',
 	0x0, 0x0
     };
     
@@ -1203,8 +1250,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
     int pidx = 0; /* index into pbuf */
     char *pptr; /* temporary paramater pointer */
     char *morig = mbuf; /* beginning of mbuf */
-    int  stripped_pidx = 0; /*index into stripped_pbuf*/
-    int	 stripped_nmodes = 0; /*How many stripped modes we've set so far*/
+    int stripped_pidx = 0; /*index into stripped_pbuf*/
+    int stripped_nmodes = 0; /*How many stripped modes we've set so far*/
+    int noneb_pidx = 0; /* Ditto for noneb_pbuf */
+    int noneb_nmodes = 0; /* Ditto for noneb_mbuf */
 
     /* :cptr-name MODE chptr->chname [MBUF] [PBUF] (buflen - 3 max and NULL) */
     int prelen = strlen(cptr->name) + strlen(chptr->chname) + 16;
@@ -1218,6 +1267,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 
     *mbuf++='+'; /* add the plus, even if they don't */
     *stripped_mbuf++='+';
+    *noneb_mbuf++='+';
     /* go through once to clean the user's mode string so we can
      * have a simple parser run through it...*/
 
@@ -1233,6 +1283,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		*(stripped_mbuf-1) = '+';
 	    else if (change != '+')
 		*stripped_mbuf++ = '+';
+
+	    if(*(noneb_mbuf-1) == '-')
+		*(noneb_mbuf-1) = '+';
+	    else if (change != '+')
+		*noneb_mbuf++ = '+';
 
             if(*(mbuf-1)=='-') 
             {
@@ -1250,6 +1305,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		*(stripped_mbuf-1) = '-';
 	    else if (change != '-')
 		*stripped_mbuf++ = '-';
+
+	    if(*(noneb_mbuf-1) == '+')
+		*(noneb_mbuf-1) = '-';
+	    else if (change != '-')
+		*noneb_mbuf++ = '-';
 
             if(*(mbuf-1)=='+') 
             {
@@ -1276,7 +1336,9 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		    chptr->mode.mode |= MODE_OPERONLY;
 		    *mbuf++ = *modes;
 		    *stripped_mbuf++ = *modes;
+		    *noneb_mbuf++ = *modes;
 		    stripped_nmodes++;
+		    noneb_nmodes++;
 		    nmodes++;
 		}
 		else if(change=='-' && chptr->mode.mode & MODE_OPERONLY)
@@ -1284,11 +1346,41 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		    chptr->mode.mode &= ~MODE_OPERONLY;
 		    *mbuf++ = *modes;
 		    *stripped_mbuf++ = *modes;
+		    *noneb_mbuf++ = *modes;
 		    stripped_nmodes++;
+		    noneb_nmodes++;
 		    nmodes++;
 		}
 		else
 		    break;
+	    }
+	    break;
+
+	case 'B':
+	    /* Special handling for MODE_HIDEBANS */
+	    if (level < 1)
+	    {
+		errors |= SM_ERR_NOPRIVS;
+		break;
+	    }
+
+	    if (change == '+' && !(chptr->mode.mode & MODE_HIDEBANS))
+	    {
+		chptr->mode.mode |= MODE_HIDEBANS;
+		*mbuf++ = *modes;
+		*stripped_mbuf++ = *modes;
+		stripped_nmodes++;
+		nmodes++;
+		/* Don't add to noneb_mbuf */
+	    }
+	    else if (change == '-' && (chptr->mode.mode & MODE_HIDEBANS))
+	    {
+		chptr->mode.mode &= ~MODE_HIDEBANS;
+		*mbuf++ = *modes;
+		*stripped_mbuf++ = *modes;
+		stripped_nmodes++;
+		nmodes++;
+		/* Don't add to noneb_mbuf */
 	    }
 	    break;
 
@@ -1353,6 +1445,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        nmodes++;
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
+		*noneb_mbuf++ = *modes;
+		noneb_nmodes++;
 
 	    }
 	    else if(change=='-' && cm->flags & (*modes=='o' ? CHFL_CHANOP :
@@ -1367,12 +1461,15 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	        nmodes++;
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
+		*noneb_mbuf++ = *modes;
+		noneb_nmodes++;
 	    }
 	    else
 		break;
 
 	    ADD_PARA(cm->cptr->name);
 	    ADD_STRIPPED_PARA(cm->cptr->name);
+	    ADD_NONEB_PARA(cm->cptr->name);
 	    args++;
 
 	    if (IsServer(sptr) && *modes == 'o' && change=='+') 
@@ -1446,11 +1543,6 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             *mbuf++ = 'z';
 	    ADD_PARA(parv[args]);
 
-	    if (!(chptr->mode.mode & MODE_HIDEBANS)) {
-		*stripped_mbuf++ = *modes;
-		stripped_nmodes++;
-	    }
-
 	    args++;
             nmodes++;
             break;
@@ -1519,6 +1611,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    
             *mbuf++ = 'b';
 	    ADD_PARA(parv[args]);
+	    *noneb_mbuf++ = 'b';
+	    ADD_NONEB_PARA(parv[args]);
 	    if (!(chptr->mode.mode & MODE_HIDEBANS)) {
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
@@ -1526,6 +1620,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 
 	    args++;
             nmodes++;
+	    noneb_nmodes++;
             break;
 
 	case 'l':
@@ -1546,6 +1641,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		nmodes++;
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
+		*noneb_mbuf++ = *modes;
+		noneb_nmodes++;
 
 		break;
             }
@@ -1577,9 +1674,12 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		chptr->mode.limit = i;
 		chptr->mode.mode |= MODE_LIMIT;
 		*mbuf++ = 'l';
-		*stripped_mbuf++ = *modes;
+		*stripped_mbuf++ = 'l';
 		stripped_nmodes++;
 		ADD_STRIPPED_PARA(tmp);
+		*noneb_mbuf++ = 'l';
+		noneb_nmodes++;
+		ADD_NONEB_PARA(tmp);
 
 		ADD_PARA(tmp);
 		args++;
@@ -1630,6 +1730,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		strncpy(chptr->mode.key,parv[args],KEYLEN);
 		ADD_PARA(chptr->mode.key);
 		ADD_STRIPPED_PARA(chptr->mode.key);
+		ADD_NONEB_PARA(chptr->mode.key);
 	    }
             else 
             {
@@ -1641,6 +1742,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		    strncpy(chptr->mode.key,parv[args],KEYLEN);
 		    ADD_PARA(chptr->mode.key);
 		    ADD_STRIPPED_PARA(chptr->mode.key);
+		    ADD_NONEB_PARA(chptr->mode.key);
 		    *chptr->mode.key = '\0';
 		}
 		else
@@ -1652,8 +1754,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             *mbuf++='k';
             args++;
             nmodes++;
-	    *stripped_mbuf++ = *modes;
+	    *stripped_mbuf++ = 'k';
 	    stripped_nmodes++;
+	    *noneb_mbuf++ = 'k';
+	    noneb_nmodes++;
             break;
 
 	case 'r':
@@ -1675,8 +1779,10 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
             }
             *mbuf++='r';
             nmodes++;
-	    *stripped_mbuf++ = *modes;
+	    *stripped_mbuf++ = 'r';
 	    stripped_nmodes++;
+	    *noneb_mbuf++ = 'r';
+	    noneb_nmodes++;
 
             break;
 	    
@@ -1732,6 +1838,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		        nmodes++;
 			*stripped_mbuf++ = *modes;
 			stripped_nmodes++;
+			*noneb_mbuf++ = *modes;
+			noneb_nmodes++;
 		    }
 		    else if(change=='-' && chptr->mode.mode & flags[i-1])
 		    {		
@@ -1740,6 +1848,8 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 		        nmodes++;
 			*stripped_mbuf++ = *modes;
 			stripped_nmodes++;
+			*noneb_mbuf++ = *modes;
+			noneb_nmodes++;
 		    }
 
 		    break;
@@ -1765,10 +1875,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
     }
 
     /* clean up the end of the string... */
-    if(*(mbuf-1) == '+' || *(mbuf-1) == '-')
-		*(mbuf-1) = '\0';
+    if (*(mbuf-1) == '+' || *(mbuf-1) == '-')
+	*(mbuf-1) = '\0';
     else
-		*mbuf = '\0';
+	*mbuf = '\0';
+    pbuf[pidx] = '\0';
 
     if (*(stripped_mbuf-1) == '+' || *(stripped_mbuf-1) == '-')
 	*(stripped_mbuf-1) = '\0';
@@ -1776,7 +1887,12 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	*(stripped_mbuf) = '\0';
     stripped_pbuf[stripped_pidx] = '\0';
 
-    pbuf[pidx] = '\0';
+    if (*(noneb_mbuf-1) == '+' || *(noneb_mbuf-1) == '-')
+	*(noneb_mbuf-1) = '\0';
+    else
+	*(noneb_mbuf) = '\0';
+    noneb_pbuf[noneb_pidx] = '\0';
+
     if(MyClient(sptr)) 
     {
 	if(errors & SM_ERR_NOPRIVS)
@@ -1791,9 +1907,11 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
     }
     /* all done! */
     *stripped_mcount = stripped_nmodes;
+    *noneb_mcount = noneb_nmodes;
     return nmodes;
 #undef ADD_PARA
 #undef ADD_STRIPPED_PARA
+#undef ADD_NONEB_PARA
 }
 
 /*
@@ -4132,13 +4250,20 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     }
     
     *modebuf = '\0';
+    *noneb_modebuf = '\0';
     parabuf[0] = '\0';
     if (parv[3][0] != '0' && keepnewmodes)
-	channel_modes(sptr, modebuf, parabuf, chptr);
+    {
+	channel_modes(sptr, modebuf, parabuf, noneb_modebuf, chptr);
+	if (noneb_modebuf[0] == '+' && noneb_modebuf[1] == '\0')
+	    noneb_modebuf[0] = '0';
+    }
     else 
     {
 	modebuf[0] = '0';
 	modebuf[1] = '\0';
+	noneb_modebuf[0] = '0';
+	noneb_modebuf[1] = '\0';
     }
     
     /* We do this down below now, so we can send out for two sjoin formats.
@@ -4263,18 +4388,38 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 	if(keep_parabuf[0] != '\0')
 	{
-	    sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS, newSJOINFmt, parv[0], tstosend,
+	    /* Full modes first */
+	    sendto_server(cptr, chptr, CAP_NSJOIN | CAP_EBMODE, NOCAPS,
+			  newSJOINFmt, parv[0], tstosend,
 			  parv[2], keep_modebuf, keep_parabuf, sjbuf);
-	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN, oldSJOINFmt, parv[0],
+	    sendto_server(cptr, chptr, CAP_EBMODE, CAP_NSJOIN, oldSJOINFmt, parv[0],
 			  tstosend, tstosend, parv[2], keep_modebuf,
+			  keep_parabuf, sjbuf);
+	    /* Then baseline modes only */
+	    sendto_server(cptr, chptr, CAP_NSJOIN, CAP_EBMODE,
+			  newSJOINFmt, parv[0], tstosend,
+			  parv[2], noneb_modebuf, keep_parabuf, sjbuf);
+	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN | CAP_EBMODE,
+			  oldSJOINFmt, parv[0],
+			  tstosend, tstosend, parv[2], noneb_modebuf,
 			  keep_parabuf, sjbuf);
 	} 
 	else
 	{
-	    sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS, newSJOINFmtNP, parv[0],
+	    /* Full modes first */
+	    sendto_server(cptr, chptr, CAP_NSJOIN | CAP_EBMODE, NOCAPS,
+			  newSJOINFmtNP, parv[0],
 			  tstosend, parv[2], keep_modebuf, sjbuf);
-	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN, oldSJOINFmtNP, parv[0],
+	    sendto_server(cptr, chptr, CAP_EBMODE, CAP_NSJOIN,
+			  oldSJOINFmtNP, parv[0],
 			  tstosend, tstosend, parv[2], keep_modebuf,
+			  sjbuf);
+	    /* Then baseline modes only */
+	    sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS, newSJOINFmtNP, parv[0],
+			  tstosend, parv[2], noneb_modebuf, sjbuf);
+	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN | CAP_EBMODE,
+			  oldSJOINFmtNP, parv[0],
+			  tstosend, tstosend, parv[2], noneb_modebuf,
 			  sjbuf);
 	}
     }
@@ -4294,6 +4439,7 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
     int sendts;
     int stripped_mcount = 0;
+    int noneb_mcount = 0;
     aChannel *chptr;
 
     if (check_registered(cptr))
@@ -4323,7 +4469,8 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
 
     sendts = set_mode(cptr, sptr, chptr, 2, parc - 2, parv + 2,
-		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount);
+		      modebuf, parabuf, stripped_modebuf, stripped_parabuf, &stripped_mcount,
+		      noneb_modebuf, noneb_parabuf, &noneb_mcount);
 	
     if (strlen(modebuf) > (size_t)1)
     {
@@ -4348,12 +4495,36 @@ int m_samode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				       stripped_parabuf);
 	}
 
-	sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
-		      ":%s MODE %s %s %s",
-		      parv[0], chptr->chname, modebuf, parabuf);
-	sendto_server(cptr, chptr, CAP_TSMODE, NOCAPS,
-		      ":%s MODE %s 0 %s %s",
-		      parv[0], chptr->chname, modebuf, parabuf);
+	if (noneb_mcount == sendts)
+	{
+		/* No extended modes, don't check for CAP_EBMODE */
+		sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE,
+			      ":%s MODE %s %s %s",
+			      parv[0], chptr->chname, modebuf, parabuf);
+		sendto_server(cptr, chptr, CAP_TSMODE, NOCAPS,
+			      ":%s MODE %s 0 %s %s",
+			      parv[0], chptr->chname, modebuf, parabuf);
+	}
+	else
+	{
+		/* Ok, fine, send out full modes first */
+		sendto_server(cptr, chptr, CAP_EBMODE, CAP_TSMODE,
+			      ":%s MODE %s %s %s",
+			      parv[0], chptr->chname, modebuf, parabuf);
+		sendto_server(cptr, chptr, CAP_EBMODE | CAP_TSMODE, NOCAPS,
+			      ":%s MODE %s 0 %s %s",
+			      parv[0], chptr->chname, modebuf, parabuf);
+		/* And then only baseline modes */
+		if (noneb_mcount > 0)
+		{
+		    sendto_server(cptr, chptr, NOCAPS, CAP_TSMODE | CAP_EBMODE,
+				  ":%s MODE %s %s %s",
+				  parv[0], chptr->chname, noneb_modebuf, noneb_parabuf);
+		    sendto_server(cptr, chptr, CAP_TSMODE, CAP_EBMODE,
+				  ":%s MODE %s 0 %s %s",
+				  parv[0], chptr->chname, noneb_modebuf, noneb_parabuf);
+		}
+	}
 	if(MyClient(sptr))
 	{
 	    sendto_serv_butone(NULL, ":%s GLOBOPS :%s used SAMODE (%s %s%s%s)",
