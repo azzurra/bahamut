@@ -1081,6 +1081,7 @@ int main(int argc, char *argv[])
     (void) add_to_client_hash_table(me.name, &me);
 
     check_class();
+    build_rplisupport();
     write_pidfile();
 	
     Debug((DEBUG_NOTICE, "Server ready..."));

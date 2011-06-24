@@ -233,6 +233,10 @@ extern void 	  initstats(void), tstats(aClient *, char *);
 extern void 	  serv_info(aClient *, char *);
 int               msg_has_colors(char *);
 
+extern void	  send_rplisupport(aClient *);
+extern void	  send_rplisupportoper(aClient *);
+extern void	  build_rplisupport(void);
+
 extern int  	  parse(aClient *, char *, char *);
 extern void 	  init_tree_parse(struct Message *);
 

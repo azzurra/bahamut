@@ -993,9 +993,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	    sendto_one(sptr, rpl_str(RPL_CREATED), me.name, nick, creation);
 	    sendto_one(sptr, rpl_str(RPL_MYINFO), me.name, parv[0],
 	    	   me.name, version);
-	    sendto_one(sptr, rpl_str(RPL_PROTOCTL), me.name, parv[0], MAXWATCH,
-	    	   MAXMODEPARAMSUSER, MAXCHANNELSPERUSER, MAXBANS, NICKLEN,
-	    	   TOPICLEN, TOPICLEN, MAXSILES);
+	    send_rplisupport(sptr);
 	}
 
 #if (RIDICULOUS_PARANOIA_LEVEL>=1)
@@ -3095,15 +3093,25 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
 	Count.oper++;
 	if (IsMe(cptr))
+	{
+	    /* Don't send RPL_ISUPPORT again if this user is +z */
+	    if (!IsUmodez(sptr))
+		send_rplisupportoper(sptr);
 	    sendto_one(sptr, rpl_str(RPL_YOUREOPER),
 		       me.name, parv[0]);
+	}
 	return 0;
     }
     else if (IsAnOper(sptr))
     {
 	if (MyConnect(sptr))
+	{
+	    /* Don't send RPL_ISUPPORT again if this user is +z */
+	    if (!IsUmodez(sptr))
+		send_rplisupportoper(sptr);
 	    sendto_one(sptr, rpl_str(RPL_YOUREOPER),
 		       me.name, parv[0]);
+	}
 	return 0;
     }
 
@@ -3206,6 +3214,9 @@ int m_oper(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			parv[0], sptr->user->username, sptr->user->host, IsOper(sptr) ? 'O' : 'o');
 
 		send_umode_out(cptr, sptr, old);
+		/* Don't send RPL_ISUPPORT again if this user is +z */
+		if (!IsUmodez(sptr))
+		    send_rplisupportoper(sptr);
 		sendto_one(sptr, rpl_str(RPL_YOUREOPER), me.name, parv[0]);
 		sptr->pingval = get_client_ping(sptr);
 		sptr->sendqlen = get_sendq(sptr);
@@ -3597,7 +3608,12 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		Count.oper--;
 
 		if (MyConnect(sptr))
+		{
+			/* Resend RPL_ISUPPORT to sptr */
+			if (!IsUmodez(sptr))
+				send_rplisupportoper(sptr);
 			delfrom_fdlist(sptr->fd, &oper_fdlist);
+		}
 
         /*
          * Now that the user is no longer opered, let's return

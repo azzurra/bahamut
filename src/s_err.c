@@ -30,13 +30,7 @@ static char *replies[] =
     /* 003 RPL_CREATED */	":%s 003 %s :This server was created %s",
     /* 004 RPL_MYINFO */	":%s 004 %s %s %s oOiwscrknfydaAbghexzSjFI "
                                 "bBhijklmMnoOprRstvcdSuUz bklohvz",
-    /* 005 RPL_PROTOCTL*/       ":%s 005 %s NOQUIT WATCH=%i SAFELIST MODES=%i "
-                                "MAXCHANNELS=%i MAXBANS=%i NICKLEN=%i "
-                                "TOPICLEN=%i KICKLEN=%i CHANTYPES=&# "
-				"PREFIX=(ohv)@%%+ NETWORK=" NETWORK_NAME " SILENCE=%i "
-                                "CASEMAPPING=ascii "
-                                "CHANMODES=bz,k,l,BcdijmMnOprRsStuU "
-                                ":are available on this server",
+    /* 005 RPL_ISUPPORT*/       ":%s 005 %s %s :are supported by this server",
     /* 006 */	                NULL,
     /* 007 */	                NULL,
     /* 008 */	                NULL,

@@ -29,6 +29,7 @@
 #include "sys.h"
 #include "numeric.h"
 #include "zlink.h"
+#include "channel.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -59,6 +60,16 @@ int currently_processing_netsplit = NO;
 #endif
 
 int restriction_enabled = NO;
+
+/* RPL_ISUPPORT buffers
+ * Ripped from bahamut-1.8.x/src/s_debug.c
+ */
+static char rplisupport1[BUFSIZE];
+static char rplisupport2[BUFSIZE];
+static char rplisupportoper[BUFSIZE];    /* OPER overrides for MAXCHANNELS and CHANLIMIT */
+static char rplisupportagent[BUFSIZE];   /* Ditto for Services Agents */
+static char rplisupportreset[BUFSIZE];   /* Limit reset after losing +zoO */
+static char scratchbuf[BUFSIZE];
 
 static void exit_one_client(aClient *, aClient *, aClient *, char *);
 
@@ -1205,4 +1216,62 @@ inline int check_restricted_user(aClient *sptr)
     }
 
     return 0;
+}
+
+/* RPL_ISUPPORT stuff */
+
+/* send_rplisupport* should probably belong to send.c, but what the hell... */
+void send_rplisupport(aClient *cptr)
+{
+    sendto_one(cptr, rplisupport1, cptr->name);
+    sendto_one(cptr, rplisupport2, cptr->name);
+}
+
+void send_rplisupportoper(aClient *cptr)
+{
+    if (IsUmodez(cptr))
+	sendto_one(cptr, rplisupportagent, cptr->name);
+    else if (IsAnOper(cptr))
+	sendto_one(cptr, rplisupportoper, cptr->name);
+    else
+	sendto_one(cptr, rplisupportreset, cptr->name);
+}
+
+/* Build RPL_ISUPPORT cache */
+void build_rplisupport(void)
+{
+    /* First half of RPL_ISUPPORT */
+    ircsprintf(scratchbuf, "NETWORK=%s SAFELIST MAXBANS=%i MAXCHANNELS=%i "
+	       "CHANNELLEN=%i KICKLEN=%i NICKLEN=%i TOPICLEN=%i MODES=%i "
+	       "CHANTYPES=&# CHANLIMIT=&#:%i PREFIX=(ohv)@%s+ STATUSMSG=@%s+",
+	       NETWORK_NAME, MAXBANS, MAXCHANNELSPERUSER, CHANNELLEN, TOPICLEN,
+	       NICKLEN, TOPICLEN, MAXMODEPARAMSUSER, MAXCHANNELSPERUSER, "%%", "%%");
+
+    ircsprintf(rplisupport1, rpl_str(RPL_ISUPPORT), me.name, "%s", scratchbuf);
+
+    /* Post-OPER overrides */
+    ircsprintf(scratchbuf, "MAXCHANNELS=%i CHANLIMIT=&#:%i",
+	       MAXCHANNELSPERUSER * 3, MAXCHANNELSPERUSER * 3);
+
+    ircsprintf(rplisupportoper, rpl_str(RPL_ISUPPORT), me.name, "%s", scratchbuf);
+
+    /* The old MAXCHANNELS from RPL_PROTOCTL does not explain how to specify "unlimited", so we set it
+     * to a VERY large value and override it with CHANLIMIT.
+     */
+    ircsprintf(rplisupportagent, rpl_str(RPL_ISUPPORT), me.name, "%s",
+	       "MAXCHANNELS=999 CHANLIMIT=&#:");
+
+    /* Reset limits for users */
+    ircsprintf(scratchbuf, "MAXCHANNELS=%i CHANLIMIT=&#:%i",
+	       MAXCHANNELSPERUSER, MAXCHANNELSPERUSER);
+
+    ircsprintf(rplisupportreset, rpl_str(RPL_ISUPPORT), me.name, "%s", scratchbuf);
+
+    /* Second half of RPL_ISUPPORT */
+    ircsprintf(scratchbuf, "CASEMAPPING=ascii WATCH=%i SILENCE=%i "
+	       "CHANMODES=bz,k,l,BcdijmMnOprRsStuU MAXLIST=b:%i,z:%i "
+	       "TARGMAX=JOIN:,KICK:4,KILL:20,NOTICE:20,PRIVMSG:20,WHOIS:,WHOWAS:",
+	       MAXWATCH, MAXSILES, MAXBANS, MAXBANS);
+
+    ircsprintf(rplisupport2, rpl_str(RPL_ISUPPORT), me.name, "%s", scratchbuf);
 }

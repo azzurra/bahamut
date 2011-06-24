@@ -480,6 +480,11 @@ int channel_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
  */
 int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 {
+
+#define HAS_FLIPPED(x)                                  \
+	(((oldumode & (x)) && !(acptr->umode & (x))) || \
+	 (!(oldumode & (x)) && (acptr->umode & (x))))
+
     int            flag, *s, what, oldumode;
     char          *m, *modes, *optarg;
     aClient       *acptr;
@@ -628,10 +633,13 @@ int m_svsmode(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (MyConnect(acptr) && (oldumode != acptr->umode))
     {
 	char buf[BUFSIZE];
+	/* Refresh the client's idea of RPL_ISUPPORT if needed */
+	if (HAS_FLIPPED(UMODE_z) || HAS_FLIPPED(UMODE_o) || HAS_FLIPPED(UMODE_O))
+	    send_rplisupportoper(acptr);
 	/* Don't mess around with SVSMODE +d */
 	send_umode(acptr, acptr, oldumode, ALL_UMODES, buf);
     }
 
     return 0;
+#undef HAS_FLIPPED
 }
-
