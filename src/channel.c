@@ -4242,11 +4242,7 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
     *noneb_modebuf = '\0';
     parabuf[0] = '\0';
     if (parv[3][0] != '0' && keepnewmodes)
-    {
 	channel_modes(sptr, modebuf, parabuf, noneb_modebuf, chptr);
-	if (noneb_modebuf[0] == '+' && noneb_modebuf[1] == '\0')
-	    noneb_modebuf[0] = '0';
-    }
     else 
     {
 	modebuf[0] = '0';
@@ -4404,7 +4400,7 @@ int m_sjoin(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			  tstosend, tstosend, parv[2], keep_modebuf,
 			  sjbuf);
 	    /* Then baseline modes only */
-	    sendto_server(cptr, chptr, CAP_NSJOIN, NOCAPS, newSJOINFmtNP, parv[0],
+	    sendto_server(cptr, chptr, CAP_NSJOIN, CAP_EBMODE, newSJOINFmtNP, parv[0],
 			  tstosend, parv[2], noneb_modebuf, sjbuf);
 	    sendto_server(cptr, chptr, NOCAPS, CAP_NSJOIN | CAP_EBMODE,
 			  oldSJOINFmtNP, parv[0],
