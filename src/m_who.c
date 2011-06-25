@@ -48,7 +48,7 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
 {
   static char *who_oper_help[] =
   {
-      "/WHO [+|-][acghimnsuCM] [args]",
+      "/WHO [+|-][acghilmnstuHAxCMR] [args]",
       "Flags are specified like channel modes,",
       "The flags cghimnsu all have arguments",
       "Flags are set to a positive check by +, a negative check by -",
@@ -77,6 +77,7 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
       "Behavior flags:",
       "Flag C: show first visible channel user is in",
       "Flag M: check for user in channels I am a member of",
+      "Flag R: show user's real host name regardless of usermode +x",
       NULL
   };
 
@@ -219,6 +220,15 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
 	  break;
       case 'M':
 	  wsopts.search_chan = change;
+	  break;
+      case 'R':
+	  if(!IsAnOper(sptr))
+	  {
+	      sendto_one(sptr, getreply(ERR_WHOSYNTAX), me.name,
+			 sptr->name);
+	      return 0;
+	  }
+	  wsopts.show_realhost = change;
 	  break;
       case 'c':
 	  if(parv[args]==NULL || !change)
@@ -687,7 +697,7 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 				sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name,
 					wsopts.channel->chname, ac->user->username,
-					(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+					(!CanShowIPCond(sptr, ac, wsopts.show_realhost)) ? ac->user->virthost : ac->user->host,
 					ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 			   ++shown;
@@ -731,7 +741,7 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 				sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name,
 					wsopts.show_chan ? first_visible_channel(ac, sptr) : "*", ac->user->username, 
-					(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+					(!CanShowIPCond(sptr, ac, wsopts.show_realhost)) ? ac->user->virthost : ac->user->host,
 					ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 				sendto_one(sptr, getreply(RPL_ENDOFWHO), me.name, sptr->name,
@@ -786,7 +796,7 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				status[++i] = 0;
 
 				sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name, lp->value.chptr->chname, ac->user->username,
-					(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+					(!CanShowIPCond(sptr, ac, wsopts.show_realhost)) ? ac->user->virthost : ac->user->host,
 					ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 				shown++;
@@ -819,7 +829,7 @@ int m_who(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 			sendto_one(sptr, getreply(RPL_WHOREPLY), me.name, sptr->name,
 				wsopts.show_chan ? first_visible_channel(ac, sptr) : "*", ac->user->username,
-				(!CanShowIP(sptr, ac)) ? ac->user->virthost : ac->user->host,
+				(!CanShowIPCond(sptr, ac, wsopts.show_realhost)) ? ac->user->virthost : ac->user->host,
 				ac->user->server, ac->name, status, WHO_HOPCOUNT(sptr, ac), ac->info);
 
 				shown++;

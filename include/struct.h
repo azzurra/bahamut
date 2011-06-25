@@ -1249,10 +1249,16 @@ struct Channel
 #define	MyClient(x)			(MyConnect(x) && IsClient(x))
 #define	MyOper(x)			(MyConnect(x) && IsOper(x))
 
-/* This macro checks if x can see the IP of y -INT */
-#define CanShowIP(x,y)		(!IsUmodex(y) || IsAdmin(x) || IsSAdmin(x) || \
+/* Check if user x can override UMODE_x for user y */
+#define CanOverrideUmodex(x,y)	(IsAdmin(x) || IsSAdmin(x) || \
 				 (IsAnOper(x) && (OPCanGShowIP(x) || \
 				  (OPCanLShowIP(x) && MyClient(y)))))
+
+/* This macro checks if x can see the IP of y -INT */
+#define CanShowIP(x,y)		(!IsUmodex(y) || CanOverrideUmodex(x,y))
+
+/* Ditto, but override UMODE_x if and only if z is non-zero (used in m_who.c) */
+#define CanShowIPCond(x,y,z)	(!IsUmodex(y) || ((z) && CanOverrideUmodex(x,y)))
 
 /* String manipulation macros */
 
@@ -1401,6 +1407,7 @@ typedef struct SearchOptions
     char* away_msg;
     char away_msg_plus:1;
     char check_nochan:1;
+    char show_realhost:1;
     int maxhits;
 } SOpts;
 
