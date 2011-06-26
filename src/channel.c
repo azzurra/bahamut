@@ -209,7 +209,7 @@ static int add_restrictid(aClient *cptr, aChannel *chptr, char *resid)
     {
 	if (MyClient(cptr) && (++cnt >= MAXBANS))
 	{
-	    sendto_one(cptr, getreply(ERR_RESTRICTLISTFULL), me.name, cptr->name,
+	    sendto_one(cptr, getreply(ERR_BANLISTFULL), me.name, cptr->name,
 		       chptr->chname, resid);
 	    return -1;
 	}

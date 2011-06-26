@@ -272,9 +272,6 @@
 /* rpl_endofnames above (366) */
 #define RPL_BANLIST          367
 #define RPL_ENDOFBANLIST     368
-#define RPL_RESTRICTLIST     344
-#define RPL_ENDOFRESTRICTLIST 345
-#define ERR_RESTRICTLISTFULL 346
 /* rpl_endofwhowas above (369) */
 
 #define	RPL_INFO             371
@@ -413,5 +410,9 @@
 #define RPL_DCCINFO          620
 
 #define ERR_NOCTCPSTOCHAN    630
+
+#define RPL_RESTRICTLIST     728
+#define RPL_ENDOFRESTRICTLIST 729
+
 
 #define ERR_NUMERIC_ERR      999
