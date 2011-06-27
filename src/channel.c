@@ -1611,6 +1611,7 @@ static int set_mode(aClient *cptr, aClient *sptr, aChannel *chptr,
 	    if (!(chptr->mode.mode & MODE_HIDEBANS)) {
 		*stripped_mbuf++ = *modes;
 		stripped_nmodes++;
+		ADD_STRIPPED_PARA(parv[args]);
 	    }
 
 	    args++;
