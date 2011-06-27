@@ -27,7 +27,7 @@
 #define STABLE  3
 #define BETA    4
 
-#define BRANCHSTATUS CURRENT
+#define BRANCHSTATUS BETA
 #define BRANCH "perimeter"
 
 #define BASENAME "bahamut"
