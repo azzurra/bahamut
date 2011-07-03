@@ -117,10 +117,6 @@ char        serveropts[] =
 #endif /* HAVE_GETRUSAGE */
 #include "h.h"
 
-#ifndef ssize_t
-#define ssize_t unsigned int
-#endif
-
 #if defined(DNS_DEBUG) || defined(DEBUGMODE)
 static char debugbuf[1024];
 

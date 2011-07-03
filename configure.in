@@ -42,6 +42,35 @@ AC_EGREP_CPP(yes,
 #endif
 ], AC_DEFINE(HAVE_MINMAX, [1], [Define if you have MIN and MAX in sys/param.h]) AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
+dnl Check for standard integer types
+AC_CHECK_HEADERS(stdint.h sys/types.h sys/limits.h inttypes.h)
+
+AC_CHECK_SIZEOF(int8_t)
+AC_CHECK_SIZEOF(int16_t)
+AC_CHECK_SIZEOF(int32_t)
+AC_CHECK_SIZEOF(int64_t)
+AC_CHECK_SIZEOF(uint8_t)
+AC_CHECK_SIZEOF(uint16_t)
+AC_CHECK_SIZEOF(uint32_t)
+AC_CHECK_SIZEOF(uint64_t)
+AC_CHECK_SIZEOF(intptr_t)
+AC_CHECK_SIZEOF(uintptr_t)
+
+dnl Just in case we don't have exact width integers
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(__int64)
+AC_CHECK_SIZEOF(void *)
+
+dnl Check size of generic types
+AC_CHECK_SIZEOF(time_t)
+AC_CHECK_SIZEOF(size_t)
+
+dnl Check u_types
+AC_CHECK_TYPES([uint, u_char, u_short, u_long, u_int, ssize_t])
 
 dnl Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
@@ -258,6 +287,25 @@ DFDSS=' # FD_SETSIZE is broken on this machine!'
 AC_MSG_RESULT(can't tell))
 
 AC_SUBST(DFDSS)
+
+dnl Check if we're living in a 2s-complement world
+AC_CACHE_CHECK([whether we are living in a 2s-complement world], baha_cv_twos_complement,
+[AC_RUN_IFELSE([AC_LANG_SOURCE(
+[[int main () { int problem = ((-99) != (~99)+1);
+return problem ? 1 : 0; }]])],
+       [baha_cv_twos_complement=yes],
+       [baha_cv_twos_complement=no],
+       [baha_cv_twos_complement=cross])])
+
+if test "$baha_cv_twos_complement" = cross ; then
+  # Cross-compiling ?!?!?!?!
+  AC_MSG_NOTICE([Cross-compiling: we'll assume that negative integers are represented with two's complement.])
+fi
+
+if test "$baha_cv_twos_complement" != no ; then
+  AC_DEFINE([USING_TWOS_COMPLEMENT], 1,
+            [Define to 1 iff we represent negative integers with two's complement])
+fi
 
 dnl ---------- check for zlib, half stolen from http://www.gnu.org/software/autoconf-archive/ax_check_zlib.html
 

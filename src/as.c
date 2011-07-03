@@ -36,9 +36,6 @@
 #if defined( __FreeBSD__ ) || defined( __NetBSD__ ) || defined( __OpenBSD__ ) || defined( __darwin__ )
 #include <sys/sysctl.h>
 #endif
-#if defined( __darwin__ )
-#include <stdint.h>
-#endif
 #ifdef sun
 #include <utmpx.h>
 #endif
