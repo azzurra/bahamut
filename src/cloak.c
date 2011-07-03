@@ -126,12 +126,12 @@ int cloak_init(void)
 
 */
 
-#define FNV_prime 16777619UL
+#define FNV_prime 16777619U
 
-__inline long
+__inline int
 fnv_hash (const char *p, int s)
 {
-    long h = 0;
+    int h = 0;
     int i = 0;
 
     for (; i < s; i++)
@@ -139,24 +139,6 @@ fnv_hash (const char *p, int s)
 
     return h;
 }
-
-/* 
-
-#define FNV_64_prime ((long long)0x100000001b3ULL)
-
-__inline long long
-fnv64_hash (const char *p, int s)
-{
-    long long h = 0;
-    int i = 0;
-
-    for (; i < s; i++)
-	h = ((h * FNV_64_prime ) ^ (p[i]));
-
-    return h;
-}
-
-*/
 
 #define SHABUFLEN 40
 
@@ -193,30 +175,30 @@ int
 cloakhost(char *host, char *dest)
 {
    char virt[HOSTLEN + 1], isdns = 0, *p;
-   unsigned short i;
-   long csum;
+   unsigned short dotCount;
+   int csum;
 
    csum = fnv_hash(sha1_hash(host, strlen(host)), SHABUFLEN);
 
-   for (p = host, i = 0; *p; p++) {
+   for (p = host, dotCount = 0; *p; p++) {
       if(!isdns && isalpha(*p))
 	  isdns = 1;
       else if (*p == '.')
-	  i++;
+	  dotCount++;
    }
 
    memset(virt, 0x0, HOSTLEN+1);
 
    if (isdns) {
-      if (i == 1)
+      if (dotCount == 1)
       {
 	  // XXX: Fix the domainname len > HOSTLEN case
 	  // 
-	  snprintf(virt, HOSTLEN, "%s%c%lX.%s",
+	  snprintf(virt, HOSTLEN, "%s%c%X.%s",
 		  cloak_host,
 		  (csum < 0 ? '=' : '-'),
 		  (csum < 0 ? -csum : csum), host);
-      } else if (i > 1) {
+      } else if (dotCount > 1) {
 	  int chlen = strlen(cloak_host) + 10; // -12345678.
 
 	  p = (char *) strchr((char *)host, '.');
@@ -229,7 +211,7 @@ cloakhost(char *host, char *dest)
 	      if ((p = (char *) strchr((char *) ++p, '.')) == NULL)
 		return 0;
 	  }
-	  snprintf(virt, HOSTLEN, "%s%c%lX.%s",
+	  snprintf(virt, HOSTLEN, "%s%c%X.%s",
 		    cloak_host,
 		    (csum < 0 ? '=' : '-'),
 		    (csum < 0 ? -csum : csum), p + 1);
@@ -245,11 +227,11 @@ cloakhost(char *host, char *dest)
 	      *p = '\0';
 
       if (p == NULL)
-	 snprintf(virt, HOSTLEN, "%s%c%lX",
+	 snprintf(virt, HOSTLEN, "%s%c%X",
 		    cloak_host, csum < 0 ? '=' : '-',
 		    csum < 0 ? -csum : csum);
       else
-	 snprintf(virt, HOSTLEN, "%s.%s%c%lX",
+	 snprintf(virt, HOSTLEN, "%s.%s%c%X",
 		    ipmask, cloak_host, csum < 0 ? '=' : '-',
 		    csum < 0 ? -csum : csum);
    }
