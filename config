@@ -408,15 +408,6 @@ while [ -z "$FOO" ] ; do
     esac
 done
 
-# Fall back to cc if $CC is empty
-if [ -z "$CC" ] ; then
-    CC=cc
-fi
-
-$CC -o tools/align tools/must_align.c
-
-tools/align > include/align.h
-
 OS=`uname -a`
 case "$OS" in
     *SunOS*4.*DBE*)
