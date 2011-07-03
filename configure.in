@@ -307,6 +307,9 @@ if test "$baha_cv_twos_complement" != no ; then
             [Define to 1 iff we represent negative integers with two's complement])
 fi
 
+dnl Check endianess
+AC_C_BIGENDIAN
+
 dnl ---------- check for zlib, half stolen from http://www.gnu.org/software/autoconf-archive/ax_check_zlib.html
 
 tryzlib=""

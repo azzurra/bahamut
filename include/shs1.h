@@ -112,7 +112,7 @@ typedef unsigned long ULONG;	/* must be at least a 4 byte unsigned value */
  *	b	pointer to SHS1_CHUNKSIZE words of byte sex fixed data
  *	c	pointer to SHS1_CHUNKSIZE words that do not need to be fixed
  */
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 # define SHS1_TRANSFORM(a,b,c)						\
     shs1Transform(((SHS1_INFO *)(a))->digest, (ULONG *)(c))
 #else
@@ -150,21 +150,6 @@ typedef struct {
 } SHS1_INFO;
 
 /*
- * elements of the stat structure that we will process
- */
-struct shs1_stat {
-    dev_t stat_dev;
-    ino_t stat_ino;
-    mode_t stat_mode;
-    nlink_t stat_nlink;
-    uid_t stat_uid;
-    gid_t stat_gid;
-    off_t stat_size;
-    time_t stat_mtime;
-    time_t stat_ctime;
-};
-
-/*
  * Used to remove arguments in function prototypes for non-ANSI C
  */
 #if defined(__STDC__) && __STDC__ == 1
@@ -189,32 +174,5 @@ void shs1Stream P((BYTE*, UINT, FILE*, SHS1_INFO*));
 void shs1File P((BYTE*, UINT, char*, int, SHS1_INFO*));
 extern ULONG shs1_zero[];
 */
-
-/*
- * Some external programs use the functions found in shs1.c and shs1io.c.
- * These routines define SHS1_IO so that such external programs will not
- * pick up the following declarations.
- */
-
-#if 0
-#if !defined(SHS1_IO)
-
-/* shs1dual.c */
-void multiMain P((int, char**, BYTE*, UINT, char*, int, UINT));
-void multiTest P((void));
-extern char *shs1dual_what;
-
-/* shs1drvr.c */
-void shs1Print P((int, int, SHS1_INFO*));
-extern int c_flag;
-extern int i_flag;
-extern int q_flag;
-extern int dot_zero;
-#endif /* SHS1_IO */
-/* // Shaka 22/04/02 - don't needed
-extern int debug;
-extern char *program;
-*/
-#endif
 
 #endif /* SHS1_H */

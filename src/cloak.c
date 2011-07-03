@@ -32,7 +32,7 @@
 
 extern char *cloak_key;		/* in ircd.c --vjt */
 extern char *cloak_host;
-extern unsigned short cloak_key_len;
+extern size_t cloak_key_len;
 
 int cloak_init(void)
 {
@@ -47,7 +47,8 @@ int cloak_init(void)
 	
 	if(fstat(fd, &st) == 0)
 	{
-	    int sz = st.st_size;
+	    /* FIXME: this should be off_t */
+	    ssize_t sz = st.st_size;
 
 	    if(sz > MIN_CLOAK_KEY_LEN)
 	    {
@@ -127,11 +128,11 @@ int cloak_init(void)
 
 #define FNV_prime 16777619U
 
-__inline int
-fnv_hash (const char *p, int s)
+__inline int32_t
+fnv_hash (const char *p, int32_t s)
 {
-    int h = 0;
-    int i = 0;
+    int32_t h = 0;
+    int32_t i = 0;
 
     for (; i < s; i++)
 	h = ((h * FNV_prime ) ^ (p[i]));
@@ -175,7 +176,7 @@ cloakhost(char *host, char *dest)
 {
    char virt[HOSTLEN + 1], isdns = 0, *p;
    unsigned short dotCount;
-   int csum;
+   int32_t csum;
 
    csum = fnv_hash(sha1_hash(host, strlen(host)), SHABUFLEN);
 

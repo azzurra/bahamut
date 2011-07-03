@@ -408,21 +408,14 @@ while [ -z "$FOO" ] ; do
     esac
 done
 
-$ECHO
-$ECHO "Verifying your system endianness for SHA1 . . "
-
 # Fall back to cc if $CC is empty
 if [ -z "$CC" ] ; then
     CC=cc
 fi
 
-$CC -o tools/endian tools/endian.c
 $CC -o tools/align tools/must_align.c
 
-tools/endian > include/irc_endian.h
 tools/align > include/align.h
-
-echo "done"
 
 OS=`uname -a`
 case "$OS" in

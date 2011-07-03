@@ -27,14 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#undef SHS1_IO // Shaka 22/04/02 - don't needed
-
 #include "shs1.h"
 
 #include "align.h"
-#ifndef BYTE_ORDER
-#include "irc_endian.h"
-#endif
 
 char *shs1_what="@(#)";	/* #(@) if checked in */
 
@@ -102,7 +97,7 @@ char *shs1_what="@(#)";	/* #(@) if checked in */
 
 /* forward declarations */
 static void shs1Transform P((ULONG*, ULONG*));
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 static ULONG in[SHS1_CHUNKWORDS];
 #endif
 
@@ -371,7 +366,7 @@ void shs1Final(dig)
 		/* Pad chunk to 56 bytes */
 		memset((BYTE *)dig->data + count, 0, 56 - count);
 	}
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	SHS1_SWAP_BYTE_SEX(dig->data, dig->data);
 #endif
 

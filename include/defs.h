@@ -86,11 +86,6 @@
 
 #if defined( aix ) || defined( OS_AIX )
 # include <sys/machine.h>
-# if BYTE_ORDER == BIG_ENDIAN
-#	define BIT_ZERO_ON_LEFT
-# elif BYTE_ORDER == LITTLE_ENDIAN
-#	define BIT_ZERO_ON_RIGHT
-# endif
 # define BSD_INCLUDES
 # if !defined( AIX )
 #	define AIX 1
