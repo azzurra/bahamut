@@ -273,6 +273,9 @@
 /* Define this if we have a sys_errlist */
 #undef SYS_ERRLIST_DECLARED
 
+/* Define to 1 iff time_t is signed */
+#undef TIME_T_IS_SIGNED
+
 /* Define this if we have (fd_set *)->read_bits */
 #undef USE_FAST_FD_ISSET
 

@@ -72,6 +72,31 @@ AC_CHECK_SIZEOF(size_t)
 dnl Check u_types
 AC_CHECK_TYPES([uint, u_char, u_short, u_long, u_int, ssize_t])
 
+dnl Check time_t signedness
+AC_CACHE_CHECK([whether time_t is signed], baha_cv_time_t_signed, [
+AC_RUN_IFELSE(AC_LANG_SOURCE([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+int main(int c, char**v) { if (((time_t)-1)<0) return 1; else return 0; }]),
+  baha_cv_time_t_signed=no, baha_cv_time_t_signed=yes, baha_cv_time_t_signed=cross)
+])
+
+if test "$baha_cv_time_t_signed" = cross; then
+  AC_MSG_NOTICE([Cross compiling: assuming that time_t is signed.])
+fi
+
+if test "$baha_cv_time_t_signed" != no; then
+  AC_DEFINE([TIME_T_IS_SIGNED], 1,
+            [Define to 1 iff time_t is signed])
+fi
+
 dnl Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 AC_CHECK_FUNCS(index strerror strtoken strtok inet_addr inet_ntoa inet_netof inet_aton)

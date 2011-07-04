@@ -12284,6 +12284,73 @@ _ACEOF
 fi
 
 
+echo "$as_me:$LINENO: checking whether time_t is signed" >&5
+echo $ECHO_N "checking whether time_t is signed... $ECHO_C" >&6
+if test "${baha_cv_time_t_signed+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+if test "$cross_compiling" = yes; then
+  baha_cv_time_t_signed=cross
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+int main(int c, char**v) { if (((time_t)-1)<0) return 1; else return 0; }
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  baha_cv_time_t_signed=no
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+baha_cv_time_t_signed=yes
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+fi
+echo "$as_me:$LINENO: result: $baha_cv_time_t_signed" >&5
+echo "${ECHO_T}$baha_cv_time_t_signed" >&6
+
+if test "$baha_cv_time_t_signed" = cross; then
+  { echo "$as_me:$LINENO: Cross compiling: assuming that time_t is signed." >&5
+echo "$as_me: Cross compiling: assuming that time_t is signed." >&6;}
+fi
+
+if test "$baha_cv_time_t_signed" != no; then
+
+cat >>confdefs.h <<\_ACEOF
+#define TIME_T_IS_SIGNED 1
+_ACEOF
+
+fi
+
 if test $ac_cv_c_compiler_gnu = yes; then
     echo "$as_me:$LINENO: checking whether $CC needs -traditional" >&5
 echo $ECHO_N "checking whether $CC needs -traditional... $ECHO_C" >&6
