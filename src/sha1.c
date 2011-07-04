@@ -16,6 +16,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "struct.h"
+#include "common.h"
+#include "sys.h"
+
+/* Prefer OpenSSL's internal implementation */
+#ifndef HAVE_ENCRYPTION_ON
 
 /*
  * SHA-1 in C
@@ -30,10 +36,6 @@
  * A million repetitions of "a"
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  */
-
-#include "struct.h"
-#include "common.h"
-#include "sys.h"
 
 /* Hands off, please */
 
@@ -67,7 +69,7 @@ typedef union
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void
+static void
 SHA1Transform(uint32_t state[5], const unsigned char buffer[SHA1_BLOCK_LENGTH])
 {
     uint32_t a, b, c, d, e;
@@ -179,3 +181,5 @@ SHA1Final(unsigned char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 
     memset(&finalcount, '\0', 8);
 }
+
+#endif /* HAVE_ENCRYPTION_ON */
