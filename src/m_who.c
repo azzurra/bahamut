@@ -441,18 +441,28 @@ int build_searchopts(aClient *sptr, int parc, char *parv[])
       }
   } 
   else /* can't show_chan if nothing else is set! */
-      if(wsopts.show_chan && !(wsopts.check_away || wsopts.gcos ||
+      if((wsopts.show_chan || wsopts.show_realhost) && !(wsopts.check_away || wsopts.gcos ||
 			       wsopts.host || wsopts.check_umode ||
 			       wsopts.server || wsopts.user || wsopts.nick ||
 			       wsopts.ip || wsopts.channel || wsopts.class || wsopts.away_msg))
       {
-	  if(parv[args]==NULL)
+	  if (parv[args]==NULL || (wsopts.show_chan && (parv[args][0] == '#' || parv[args][0] == '&')))
 	  {
 	      sendto_one(sptr, getreply(ERR_WHOSYNTAX), me.name, sptr->name);
 	      return 0;
 	  }
-	  
-	  if (strchr(parv[args], '.'))
+
+	  if (parv[args][0] == '#' || parv[args][0] == '&')
+	  {
+	      wsopts.channel = find_channel(parv[args], NullChn);
+	      if (wsopts.channel == NULL)
+	      {
+		   sendto_one(sptr, getreply(ERR_NOSUCHCHANNEL), me.name,
+			      sptr->name, parv[args]);
+		   return 0;
+	      }
+	  }
+	  else if (strchr(parv[args], '.'))
 	  {
 	      wsopts.host_plus=1;
 	      wsopts.host=parv[args];
