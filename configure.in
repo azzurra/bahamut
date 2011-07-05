@@ -99,7 +99,7 @@ fi
 
 dnl Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
-AC_CHECK_FUNCS(index strerror strtoken strtok inet_addr inet_ntoa inet_netof inet_aton)
+AC_CHECK_FUNCS(index strerror strtoken strtok inet_addr inet_ntoa inet_netof inet_aton inet_ntop inet_pton)
 AC_CHECK_FUNCS(gettimeofday lrand48 sigaction bzero bcmp bcopy dn_expand __dn_expand poll writev mkstemp)
 AC_CHECK_FUNCS(dn_skipname __dn_skipname getrusage times, break)
 
@@ -334,6 +334,17 @@ fi
 
 dnl Check endianess
 AC_C_BIGENDIAN
+
+dnl Check basic IPv6 support (AF_INET6, struct in6_addr et al.) - required by host cloaking code
+AC_CACHE_CHECK([for basic IPv6 support], baha_cv_ipv6_support,
+[AC_TRY_LINK([ #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>], [struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; t.s6_addr[0] = 0; ],
+    [baha_cv_ipv6_support=yes], [baha_cv_ipv6_support=no])])
+
+if test "$baha_cv_ipv6_support" = no; then
+  AC_MSG_ERROR([Sorry, your C library apparently lacks support for AF_INET6 and I do not like this.])
+fi
 
 dnl ---------- check for zlib, half stolen from http://www.gnu.org/software/autoconf-archive/ax_check_zlib.html
 

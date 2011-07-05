@@ -929,9 +929,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     else
 	strncpyzt(user->username, username, USERLEN + 1);
 
-    if(IsIPv6(sptr))
-	strncpyzt(user->virthost, user->host, HOSTLEN);
-    else if(!cloakhost(user->host, user->virthost))
+    if(!cloakhost(user->host, user->virthost))
 	strncpyzt(user->virthost, user->host, HOSTLEN);
  
     SetClient(sptr);
@@ -2452,11 +2450,9 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 	sptr->umode |= UMODE_i;
 #endif
 
-#ifndef INET6
 #ifndef NO_DEFAULT_UMODEX
-	if(!(sptr->user->real_oper_host) && !(IsIPv6(sptr)))
+	if(!(sptr->user->real_oper_host))
 	    SetCloak(sptr);
-#endif
 #endif
 #ifdef USE_SSL
 	if(IsSSL(sptr))
@@ -3533,19 +3529,6 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 					break;
 
-#ifdef INET6
-
-				case 'x': /* IPv6 users cannot set themselves +x! */
-
-					if (!MyConnect(sptr)) {
-
-						if (what == MODE_ADD)
-							sptr->umode |= UMODE_x;
-						else
-							sptr->umode &= ~UMODE_x;
-					}
-					break;
-#endif
 				case 'z': /* users can`t set themselves +z ! */
 				case 'j': /* users can`t set themselves +j ! */
 				case 'a': /* users can`t set themselves +a ! */
