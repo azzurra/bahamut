@@ -627,7 +627,7 @@ int arpa_to_ip(const char *arpastring, u_char *sa, size_t size)
 {
    unsigned short int idx = 0;
    struct IN_ADDR in;
-   u_char ipbuf[RESHOSTLEN+1];
+   char ipbuf[RESHOSTLEN+1];
    u_char *ipptr =in.S_ADDR;
    char *fragptr[4];
 
@@ -694,7 +694,7 @@ int arpa_to_ip(const char *arpastring, u_char *sa, size_t size)
       for(i = 0; i < 31; i++) {
     	 bf[1] =ipbuf[i*2];
     	 bf[0] =ipbuf[++i*2];
-	 ipptr[j--] = (u_char) strtoul(bf, NULL, 16);
+	 ipptr[j--] = (u_char) strtoul((char* )bf, NULL, 16);
       }
    } else if(str == ip4) {
       memset(ipptr, 0x0, 10);

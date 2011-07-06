@@ -15,10 +15,8 @@ tools/viconf
 tools/mkpasswd
 tools/fixklines
 tools/chkconf
-include/align.h
 include/options.h
 include/setup.h
-include/irc_endian.h
 include/stamp-h1
 *~
 *.swp

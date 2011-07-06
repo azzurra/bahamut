@@ -42,6 +42,12 @@
 /* Define to 1 if you have the `inet_ntoa' function. */
 #undef HAVE_INET_NTOA
 
+/* Define to 1 if you have the `inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
+/* Define to 1 if you have the `inet_pton' function. */
+#undef HAVE_INET_PTON
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -78,6 +84,9 @@
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
 
+/* Define to 1 if the system has the type `ssize_t'. */
+#undef HAVE_SSIZE_T
+
 /* Define to 1 if you have the <stddef.h> header file. */
 #undef HAVE_STDDEF_H
 
@@ -105,6 +114,9 @@
 /* Define to 1 if you have the `strtoken' function. */
 #undef HAVE_STRTOKEN
 
+/* Define to 1 if you have the <sys/limits.h> header file. */
+#undef HAVE_SYS_LIMITS_H
+
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
@@ -123,8 +135,23 @@
 /* Define to 1 if you have the `times' function. */
 #undef HAVE_TIMES
 
+/* Define to 1 if the system has the type `uint'. */
+#undef HAVE_UINT
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if the system has the type `u_char'. */
+#undef HAVE_U_CHAR
+
+/* Define to 1 if the system has the type `u_int'. */
+#undef HAVE_U_INT
+
+/* Define to 1 if the system has the type `u_long'. */
+#undef HAVE_U_LONG
+
+/* Define to 1 if the system has the type `u_short'. */
+#undef HAVE_U_SHORT
 
 /* Define to 1 if you have the `writev' function. */
 #undef HAVE_WRITEV
@@ -186,6 +213,63 @@
 /* Define if you have reliable POSIX signals */
 #undef POSIX_SIGNALS
 
+/* The size of a `char', as computed by sizeof. */
+#undef SIZEOF_CHAR
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `int16_t', as computed by sizeof. */
+#undef SIZEOF_INT16_T
+
+/* The size of a `int32_t', as computed by sizeof. */
+#undef SIZEOF_INT32_T
+
+/* The size of a `int64_t', as computed by sizeof. */
+#undef SIZEOF_INT64_T
+
+/* The size of a `int8_t', as computed by sizeof. */
+#undef SIZEOF_INT8_T
+
+/* The size of a `intptr_t', as computed by sizeof. */
+#undef SIZEOF_INTPTR_T
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of a `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of a `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of a `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
+
+/* The size of a `time_t', as computed by sizeof. */
+#undef SIZEOF_TIME_T
+
+/* The size of a `uint16_t', as computed by sizeof. */
+#undef SIZEOF_UINT16_T
+
+/* The size of a `uint32_t', as computed by sizeof. */
+#undef SIZEOF_UINT32_T
+
+/* The size of a `uint64_t', as computed by sizeof. */
+#undef SIZEOF_UINT64_T
+
+/* The size of a `uint8_t', as computed by sizeof. */
+#undef SIZEOF_UINT8_T
+
+/* The size of a `uintptr_t', as computed by sizeof. */
+#undef SIZEOF_UINTPTR_T
+
+/* The size of a `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
+
+/* The size of a `__int64', as computed by sizeof. */
+#undef SIZEOF___INT64
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -195,8 +279,18 @@
 /* Define this if we have a sys_errlist */
 #undef SYS_ERRLIST_DECLARED
 
+/* Define to 1 iff time_t is signed */
+#undef TIME_T_IS_SIGNED
+
 /* Define this if we have (fd_set *)->read_bits */
 #undef USE_FAST_FD_ISSET
+
+/* Define to 1 iff we represent negative integers with two's complement */
+#undef USING_TWOS_COMPLEMENT
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
 
 /* Define to 1 if on AIX 3.
    System headers sometimes define this.
