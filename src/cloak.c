@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include "sha1.h"
 
 extern char *cloak_key;		/* in ircd.c --vjt */
