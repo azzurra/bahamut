@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	case 0:		/* Child */
 		if((ed = getenv("EDITOR")) == NULL)
 			ed = "vi";
-		execlp(ed, ed, filename, NULL);
+		execlp(ed, ed, filename, (char *)NULL);
 		fprintf(stderr, "error running editor, %d\n", errno);
 		exit(errno);
 	default:
