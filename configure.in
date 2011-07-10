@@ -27,6 +27,7 @@ AC_CHECK_FUNC(crypt,, AC_CHECK_LIB(crypt, crypt))
 AC_CHECK_FUNC(res_mkquery, AC_DEFINE(HAVE_RES_MKQUERY, [1], [Define if you have the res_mkquery function]),
  AC_CHECK_LIB(resolv, res_mkquery, AC_DEFINE(HAVE_RES_MKQUERY, [1]) LIBS="$LIBS -lresolv",
   AC_CHECK_LIB(resolv, __res_mkquery, AC_DEFINE(HAVE___RES_MKQUERY, [1], [Define if you have the __res_mkquery function]) LIBS="$LIBS -lresolv",)))
+AC_CHECK_FUNC(socket,, AC_CHECK_LIB(socket, socket))
 
 dnl Checks for header files.
 AC_HEADER_STDC
