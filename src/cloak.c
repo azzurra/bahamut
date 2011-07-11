@@ -193,21 +193,13 @@ cloakhost(char *host, char *dest)
     htype = host_type(host, &dotCount, &colCount);
     memset(virt, 0x0, HOSTLEN+1);
 
-    if (htype == HT_IPv6)
-    {
-	/* Expand address before hashing */
-	expand_ipv6(host, colCount, ip6buffer);
-	Debug((DEBUG_INFO, "%s expanded to %s (%u columns)", host, ip6buffer, colCount));
-	csum = fnv_hash(sha1_hash(ip6buffer, strlen(ip6buffer)), SHABUFLEN);
-    }
-    else if (htype == HT_IPv4 || htype == HT_FQDN)
-	csum = fnv_hash(sha1_hash(host, strlen(host)), SHABUFLEN);
-
     switch (htype)
     {
 	case HT_INVALID:
 	    return 0;
 	case HT_FQDN:
+	    csum = fnv_hash(sha1_hash(host, strlen(host)), SHABUFLEN);
+
 	    if (dotCount == 1)
 	    {
 		snprintf(virt, HOSTLEN, "%s%c%X.%s",
@@ -240,6 +232,8 @@ cloakhost(char *host, char *dest)
 	{
 	    char ipmask[16];
 
+	    csum = fnv_hash(sha1_hash(host, strlen(host)), SHABUFLEN);
+
 	    strncpy(ipmask, host, sizeof(ipmask));
 	    ipmask[sizeof(ipmask) - 1] = '\0';
 	    if ((p = strchr(ipmask, '.')) != NULL)
@@ -262,6 +256,13 @@ cloakhost(char *host, char *dest)
 	    /* FFFFFFFUUUUUUUU */
 	    int rv;
 	    struct in6_addr ip6addr;
+
+	    /* Expand address before hashing */
+	    expand_ipv6(host, colCount, ip6buffer);
+	    Debug((DEBUG_INFO, "%s expanded to %s (%u columns)", host, ip6buffer, colCount));
+	    csum = fnv_hash(sha1_hash(ip6buffer, strlen(ip6buffer)), SHABUFLEN);
+
+	    /* Clear the buffer */
 	    memset(ip6buffer, 0, sizeof(ip6buffer));
 	    /* Get raw bytes... */
 	    rv = inet_pton(AF_INET6, host, &ip6addr);
