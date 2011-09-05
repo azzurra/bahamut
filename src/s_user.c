@@ -47,9 +47,6 @@
 #include <strings.h>
 #endif
 
-extern struct SOCKADDR_IN vserv;
-extern char specific_virtual_host;
-
 int         do_user(char *, aClient *, aClient *, char *, char *, char *,
 		    unsigned long, char *, char *);
 
@@ -4658,7 +4655,6 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
     char *protocol;
     char srcaddr[HOSTIPLEN+1];
     Link lin;
-    int doident = YES;
 
     if (!MyConnect(sptr))
 	return 0;
@@ -4736,24 +4732,6 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 	SetDNS(sptr);
 
     nextdnscheck = 1;
-
-    /* Restart identd (if allowed) */
-#if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) && defined(NO_LOCAL_IDENTD)
-    /* Stop auth if this connection is coming from M-lined IP */
-    if (doident && (specific_virtual_host == 1))
-       if (!memcmp((char *) &sptr->ip,
-		   (char *) &vserv.SIN_ADDR,  sizeof(struct IN_ADDR)))
-           doident = NO;
-#endif
-
-#ifdef WEBIRC
-    /* ident lookup on W:lined IPs is pointless */
-    if (doident && find_webirc_host(sptr->sockhost) != NULL)
-        doident = NO;
-#endif
-
-    if (doident)
-       start_auth(sptr);
 
     /* We're done (hopefully) - clear HAProxy status */
     ClearHAProxy(sptr);

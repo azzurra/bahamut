@@ -1576,7 +1576,7 @@ aClient *add_connection(aClient * cptr, int fd)
 #endif
 
 #endif
-    /* Delay identd checks for clients behind HAProxy */
+    /* Disable identd lookup if we're behind HAProxy */
     if (doident && IsHAProxy(acptr))
 	doident = NO;
 
