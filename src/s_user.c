@@ -4733,6 +4733,11 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 
     nextdnscheck = 1;
 
+#ifdef INET6
+    /* Check for 6to4/Teredo tunnel on real client host */
+    set_tunnel_host(sptr);
+#endif
+
     /* We're done (hopefully) - clear HAProxy status */
     ClearHAProxy(sptr);
     return 0;
