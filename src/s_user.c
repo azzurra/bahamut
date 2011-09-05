@@ -4652,6 +4652,7 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
 
 int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 {
+    aConfItem *tmp;
     char *protocol;
     char srcaddr[HOSTIPLEN+1];
     Link lin;
@@ -4715,14 +4716,31 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 	return exit_client(cptr, sptr, &me, "Protocol error");
     }
 
-    /* All checks are fine, overwrite sockhost */
+    /* Overwrite sockhost *BEFORE* running checks that could leak the upstream's internal address */
 #ifdef INET6
     ip6_expand(srcaddr, sizeof(srcaddr));
 #endif
     get_sockhost(sptr, srcaddr);
     Debug((DEBUG_DEBUG, "sockhost after get_sockhost: %s", sptr->sockhost));
 
-    /* Restart asynchronous hostname resolution */
+    /* Check for matching Z:lines */
+    if ((tmp = find_is_zlined(parv[2])) != NULL)
+    {
+	char dumpstring[491];
+
+	ircstp->is_ref++;
+	ircsprintf(dumpstring, "Host zlined: %s", tmp->passwd);
+	return exit_client(cptr, sptr, &me, dumpstring);
+    }
+
+    /* Check for throttles */
+    if (throttle_check(parv[2], sptr->fd, NOW) == 0)
+    {
+	ircstp->is_ref++;
+	return exit_client(cptr, sptr, &me, NULL);
+    }
+
+    /* Everything is fine, restart asynchronous hostname resolution */
     lin.flags = ASYNC_CLIENT;
     lin.value.cptr = sptr;
     Debug((DEBUG_DNS, "lookup %s", srcaddr));

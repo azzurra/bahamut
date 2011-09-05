@@ -598,7 +598,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 	    Count.local--;
 	if (IsNegoServer(sptr))
 	    sendto_realops("Lost server %s during negotiation: %s", 
-			   sptr->name, comment);
+			   sptr->name, comment != NULL ? comment : "throttled (?!?!)");
 	
 	if (IsServer(sptr)) 
 	{
@@ -638,7 +638,9 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 		MyFree(sptr->user->lopt);
 		sptr->user->lopt = NULL;
 	    }
-	    sendto_realops_lev(CCONN_LEV,
+	    if (comment != NULL)
+	    {
+		sendto_realops_lev(CCONN_LEV,
 		    	       "Client exiting: %s (%s@%s) [%s] [%s] %s",
 			       sptr->name, sptr->user->username,
 			       sptr->user->host,
@@ -648,7 +650,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 			       IsSSL(sptr) ? "SSL" : "");
 	    
 #ifdef USE_ACTIVITY_LOG
-	    activity_log("(EXIT): %s (%s@%s) [%s] [%s] %lu %luKb %lu %luKb %s",
+		activity_log("(EXIT): %s (%s@%s) [%s] [%s] %lu %luKb %lu %luKb %s",
 			 sptr->name, sptr->user->username,
 			 sptr->user->host,
 			 (sptr->flags & FLAGS_NORMALEX) ?
@@ -661,6 +663,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 			 IsSSL(sptr) ? "SSL" : "");
 
 #endif
+	    }
 	}
 #ifdef FNAME_USERLOG
 	on_for = timeofday - sptr->firsttime;
@@ -722,7 +725,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 	    }
 	}
 #endif
-	if (sptr->fd >= 0
+	if (comment != NULL && sptr->fd >= 0
 #ifdef USE_SSL
 		&& !IsDead(sptr)
 #endif
@@ -812,7 +815,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 	}
 		
     }
-    exit_one_client(cptr, sptr, from, comment);
+    exit_one_client(cptr, sptr, from, comment != NULL ? comment : "throttled (?!?!)");
     return cptr == sptr ? FLUSH_BUFFER : 0;
 }
 

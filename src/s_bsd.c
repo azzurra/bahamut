@@ -1867,7 +1867,8 @@ void accept_connection(aClient *cptr)
     {
 	int rv;
 	ircstp->is_ref++;
-	ircsprintf(dumpstring,"ERROR :Host zlined: %s\r\n",tmp->passwd);
+	ircsprintf(dumpstring, "ERROR :Closing Link: %s (Host zlined: %s)\r\n",
+		INADDRANY_STR, tmp->passwd);
 	rv = write(newfd, dumpstring, strlen(dumpstring));
 	close(newfd);
 	return;
