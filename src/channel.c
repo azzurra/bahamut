@@ -1969,7 +1969,7 @@ static int can_join(aClient *sptr, aChannel *chptr, char *key)
 	return (ERR_BADCHANNELKEY);
     if (chptr->mode.limit && chptr->users >= chptr->mode.limit) 
 	return (ERR_CHANNELISFULL);
-    if (chptr->mode.mode & MODE_SSLONLY && !IsSSL(sptr))
+    if (chptr->mode.mode & MODE_SSLONLY && !(IsSSL(sptr) || IsStud(sptr)))
 	return (ERR_ONLYSSLCLIENTS);
     return 0;
 }

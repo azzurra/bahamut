@@ -1130,7 +1130,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		webirc_spoof ? 80 :
 #endif
 		sptr->lport,
-		IsSSL(sptr) ? " SSL" : "",
+		IsSSL(sptr) || IsStud(sptr) ? " SSL" : "",
 #ifdef WEBIRC
 		webirc_spoof ? " (Spoofed WEBIRC Host)" : 
 #endif
@@ -1143,7 +1143,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		     user->host,
 		     sptr->hostip,
 		     get_client_class(sptr),
-		     IsSSL(sptr) ? "SSL" : "");
+		     IsSSL(sptr) || IsStud(sptr) ? "SSL" : "");
 #endif
 
 	(void) send_lusers(sptr, sptr, 1, parv);
@@ -2458,6 +2458,9 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 	if(IsSSL(sptr))
 	    SetSSLUmode(sptr);
 #endif
+	/* Ditto for HAProxy/stud */
+	if (IsStud(sptr))
+	    SetSSLUmode(sptr);
 	
 	sptr->umode |= (UFLAGS & atoi(host));
 	strncpyzt(user->host, host, sizeof(user->host));

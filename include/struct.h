@@ -228,6 +228,7 @@ typedef struct MotdItem aMotd;
 #define FLAGS_6TO4         0x0080 /* User is behind a 6to4 tunnel */
 #define FLAGS_TEREDO       0x0100 /* User is behind a Teredo tunnel */
 #define FLAGS_HAPROXY      0x0200 /* This port support HAProxy IP address spoofing */
+#define FLAGS_STUD         0x0400 /* Ditto, but upstream uses SSL/TLS */
 
 /* Capabilities of the ircd or clients */
 
@@ -404,6 +405,7 @@ typedef struct MotdItem aMotd;
 #define SetJava(x)		((x)->flags2 |= FLAGS_JAVA)
 #define IsSSL(x)		((x)->flags2 & FLAGS_SSL)
 #define SetSSL(x)		((x)->flags2 |= FLAGS_SSL) 
+#define ClearSSL(x)		((x)->flags2 &= ~FLAGS_SSL)
 #define SetSSLUmode(x)		((x)->umode |= UMODE_S)
 #define SetCloak(x)		((x)->umode |= UMODE_x)
 /* SHUN macros. */
@@ -436,6 +438,9 @@ typedef struct MotdItem aMotd;
 #define IsHAProxy(x)		((x)->flags2 & FLAGS_HAPROXY)
 #define SetHAProxy(x)		((x)->flags2 |= FLAGS_HAPROXY)
 #define ClearHAProxy(x)		((x)->flags2 &= ~FLAGS_HAPROXY)
+/* Stud */
+#define IsStud(x)		((x)->flags2 & FLAGS_STUD)
+#define SetStud(x)		((x)->flags2 |= FLAGS_STUD)
 
 #define	SetOper(x)		((x)->umode |= UMODE_o)
 #define SetRegNick(x)           ((x)->umode |= UMODE_r)

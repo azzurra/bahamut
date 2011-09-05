@@ -424,16 +424,16 @@ int add_listener(aConfItem * aconf)
 	{
 	    switch (*ptr)
 	    {
-#ifdef USE_SSL /*AZZURRA*/
 		case 'S':
+#ifdef USE_SSL /*AZZURRA*/
 		    if (ssl_capable)
 		    {
-			    SetSSL(cptr);
-			    cptr->ssl = NULL;
-			    cptr->client_cert = NULL;
+			cptr->ssl = NULL;
+			cptr->client_cert = NULL;
 		    }
-		    break;
 #endif
+		    SetSSL(cptr);
+		    break;
 		case 'H':
 		    SetHAProxy(cptr);
 		    break;
@@ -442,6 +442,19 @@ int add_listener(aConfItem * aconf)
 	    }
 	    ptr++;
 	}
+
+	if (IsHAProxy(cptr) && IsSSL(cptr))
+	{
+	    /* SSL/TLS will be performed by stud, mark this client as secure */
+	    ClearSSL(cptr);
+	    SetStud(cptr);
+	}
+	else if (IsSSL(cptr)
+#ifdef USE_SSL
+		 && !ssl_capable
+#endif
+		)
+	    ClearSSL(cptr);
     } else
 	free_client(cptr);
     return 0;
@@ -1572,6 +1585,9 @@ aClient *add_connection(aClient * cptr, int fd)
 #ifdef USE_SSL
     }
 #endif
+
+    if (IsStud(cptr))
+	SetStud(acptr);
 
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     /* We do NOT want to start auth if the unknown connection

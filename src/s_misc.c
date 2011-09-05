@@ -647,7 +647,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 			       (sptr->flags & FLAGS_NORMALEX) ?
 			       "Client Quit" : comment,
 			       sptr->hostip,
-			       IsSSL(sptr) ? "SSL" : "");
+			       IsSSL(sptr) || IsStud(sptr) ? "SSL" : "");
 	    
 #ifdef USE_ACTIVITY_LOG
 		activity_log("(EXIT): %s (%s@%s) [%s] [%s] %lu %luKb %lu %luKb %s",
@@ -660,7 +660,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 			 sptr->sendK,
 			 sptr->receiveM,
 			 sptr->receiveK,
-			 IsSSL(sptr) ? "SSL" : "");
+			 IsSSL(sptr) || IsStud(sptr) ? "SSL" : "");
 
 #endif
 	    }
