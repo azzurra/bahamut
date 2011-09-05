@@ -1130,7 +1130,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		webirc_spoof ? 80 :
 #endif
 		sptr->lport,
-		IsSSL(sptr) ? " SSL" : "",
+		IsSSL(sptr) || IsStud(sptr) ? " SSL" : "",
 #ifdef WEBIRC
 		webirc_spoof ? " (Spoofed WEBIRC Host)" : 
 #endif
@@ -1143,7 +1143,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		     user->host,
 		     sptr->hostip,
 		     get_client_class(sptr),
-		     IsSSL(sptr) ? "SSL" : "");
+		     IsSSL(sptr) || IsStud(sptr) ? "SSL" : "");
 #endif
 
 	(void) send_lusers(sptr, sptr, 1, parv);
@@ -2458,6 +2458,9 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 	if(IsSSL(sptr))
 	    SetSSLUmode(sptr);
 #endif
+	/* Ditto for HAProxy/stud */
+	if (IsStud(sptr))
+	    SetSSLUmode(sptr);
 	
 	sptr->umode |= (UFLAGS & atoi(host));
 	strncpyzt(user->host, host, sizeof(user->host));
@@ -4649,6 +4652,117 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
     return 0;
 }
 #endif
+
+int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
+{
+    aConfItem *tmp;
+    char *protocol;
+    char srcaddr[HOSTIPLEN+1];
+    Link lin;
+
+    if (!MyConnect(sptr))
+	return 0;
+
+    if (!IsUnknown(sptr))
+    {
+	sendto_one(sptr, err_str(ERR_ALREADYREGISTRED), me.name, parv[0]);
+	return 0;
+    }
+
+    if (!IsHAProxy(sptr))
+    {
+	sendto_realops("%s tried to act as an HAProxy upstream!", sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Go away, fat man."); /* Stewie was here */
+    }
+
+    if (parc < 3 || BadPtr(parv[1]) || BadPtr(parv[2]))
+    {
+	sendto_realops("Bad PROXY message from HAProxy upstream %s", sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Malformed request");
+    }
+
+    /* parv[1] == protocol (TCP) and address family -> TCP4/TCP6 */
+    protocol = parv[1];
+    if (protocol[0] != 'T' || protocol[1] != 'C' || protocol[2] != 'P')
+    {
+	sendto_realops("HAProxy upstream %s tried to use unsupported protocol %s", sptr->sockhost, protocol);
+	return exit_client(cptr, sptr, &me, "Unsupported protocol");
+    }
+    /* Check address family - we can't mix IPv6 clients with IPv4 ircd and vice versa */
+    if (protocol[3] !=
+#ifdef INET6
+	'6'
+#else
+	'4'
+#endif
+    )
+    {
+	sendto_realops("HAProxy upstream %s tried to use unsupported address family AF_INET%s", sptr->sockhost, protocol[3] == '6' ? "6" : "");
+	return exit_client(cptr, sptr, &me, "Unsupported address family");
+    }
+
+    /* parv[2] == Layer3 source address in canonical form */
+    if (strlen(parv[2]) > HOSTIPLEN)
+    {
+	sendto_realops("HAProxy upstream %s sent an invalid source address", sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Protocol error");
+    }
+    strncpyzt(srcaddr, parv[2], sizeof(srcaddr));
+
+    /* Other fields are currently unused by this implementation */
+
+    /* This is where the fun begins... */
+    if (inet_pton(AFINET, srcaddr, (struct IN_ADDR *)&sptr->ip.S_ADDR) != 1)
+    {
+	/* WTF?!?! */
+	sendto_realops_lev(DEBUG_LEV, "inet_pton failed for [%s] in m_proxy (HAProxy upstream: %s)", srcaddr, sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Protocol error");
+    }
+
+    /* Overwrite sockhost *BEFORE* running checks that could leak the upstream's internal address */
+#ifdef INET6
+    ip6_expand(srcaddr, sizeof(srcaddr));
+#endif
+    get_sockhost(sptr, srcaddr);
+    Debug((DEBUG_DEBUG, "sockhost after get_sockhost: %s", sptr->sockhost));
+
+    /* Check for matching Z:lines */
+    if ((tmp = find_is_zlined(parv[2])) != NULL)
+    {
+	char dumpstring[491];
+
+	ircstp->is_ref++;
+	ircsprintf(dumpstring, "Host zlined: %s", tmp->passwd);
+	return exit_client(cptr, sptr, &me, dumpstring);
+    }
+
+    /* Check for throttles */
+    if (throttle_check(parv[2], sptr->fd, NOW) == 0)
+    {
+	ircstp->is_ref++;
+	return exit_client(cptr, sptr, &me, NULL);
+    }
+
+    /* Everything is fine, restart asynchronous hostname resolution */
+    lin.flags = ASYNC_CLIENT;
+    lin.value.cptr = sptr;
+    Debug((DEBUG_DNS, "lookup %s", srcaddr));
+
+    sptr->hostp = gethost_byaddr((char *) &sptr->ip, &lin);
+    if (!sptr->hostp)
+	SetDNS(sptr);
+
+    nextdnscheck = 1;
+
+#ifdef INET6
+    /* Check for 6to4/Teredo tunnel on real client host */
+    set_tunnel_host(sptr);
+#endif
+
+    /* We're done (hopefully) - clear HAProxy status */
+    ClearHAProxy(sptr);
+    return 0;
+}
 
 /* CR, i 0wn j00 */
 int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)
