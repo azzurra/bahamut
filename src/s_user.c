@@ -47,6 +47,9 @@
 #include <strings.h>
 #endif
 
+extern struct SOCKADDR_IN vserv;
+extern char specific_virtual_host;
+
 int         do_user(char *, aClient *, aClient *, char *, char *, char *,
 		    unsigned long, char *, char *);
 
@@ -4649,6 +4652,113 @@ int m_webirc(aClient *cptr, aClient *sptr, int parc, char **parv)
     return 0;
 }
 #endif
+
+int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
+{
+    char *protocol;
+    char srcaddr[HOSTIPLEN+1];
+    Link lin;
+    int doident = YES;
+
+    if (!MyConnect(sptr))
+	return 0;
+
+    if (!IsUnknown(sptr))
+    {
+	sendto_one(sptr, err_str(ERR_ALREADYREGISTRED), me.name, parv[0]);
+	return 0;
+    }
+
+    if (!IsHAProxy(sptr))
+    {
+	sendto_realops("%s tried to act as an HAProxy upstream!", sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Go away, fat man."); /* Stewie was here */
+    }
+
+    if (parc < 6 || BadPtr(parv[1]) || BadPtr(parv[2]) || BadPtr(parv[3]) || BadPtr(parv[4]) || BadPtr(parv[5]))
+    {
+	sendto_realops("Bad PROXY message from HAProxy upstream %s", sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Malformed request");
+    }
+
+    /* parv[1] == protocol (TCP) and address family -> TCP4/TCP6 */
+    protocol = parv[1];
+    if (protocol[0] != 'T' || protocol[1] != 'C' || protocol[2] != 'P')
+    {
+	sendto_realops("HAProxy upstream %s tried to use unsupported protocol %s", sptr->sockhost, protocol);
+	return exit_client(cptr, sptr, &me, "Unsupported protocol");
+    }
+    /* Check address family - we can't mix IPv6 clients with IPv4 ircd and vice versa */
+    if (protocol[3] !=
+#ifdef INET6
+	'6'
+#else
+	'4'
+#endif
+    )
+    {
+	sendto_realops("HAProxy upstream %s tried to use unsupported address family AF_INET%s", sptr->sockhost, protocol[3] == '6' ? "6" : "");
+	return exit_client(cptr, sptr, &me, "Unsupported address family");
+    }
+
+    /* parv[2] == Layer3 source address in canonical form */
+    if (strlen(parv[2]) > HOSTIPLEN)
+    {
+	sendto_realops("HAProxy upstream %s sent an invalid source address", sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Protocol error");
+    }
+    strncpyzt(srcaddr, parv[2], sizeof(srcaddr));
+
+    /* Other fields are currently unused by this implementation */
+
+    /* This is where the fun begins... */
+    if (inet_pton(AFINET, srcaddr, (struct IN_ADDR *)&sptr->ip.S_ADDR) != 1)
+    {
+	/* WTF?!?! */
+	sendto_realops_lev(DEBUG_LEV, "inet_pton failed for [%s] in m_proxy (HAProxy upstream: %s)", srcaddr, sptr->sockhost);
+	return exit_client(cptr, sptr, &me, "Protocol error");
+    }
+
+    /* All checks are fine, overwrite sockhost */
+#ifdef INET6
+    ip6_expand(srcaddr, sizeof(srcaddr));
+#endif
+    get_sockhost(sptr, srcaddr);
+    Debug((DEBUG_DEBUG, "sockhost after get_sockhost: %s", sptr->sockhost));
+
+    /* Restart asynchronous hostname resolution */
+    lin.flags = ASYNC_CLIENT;
+    lin.value.cptr = sptr;
+    Debug((DEBUG_DNS, "lookup %s", srcaddr));
+
+    sptr->hostp = gethost_byaddr((char *) &sptr->ip, &lin);
+    if (!sptr->hostp)
+	SetDNS(sptr);
+
+    nextdnscheck = 1;
+
+    /* Restart identd (if allowed) */
+#if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) && defined(NO_LOCAL_IDENTD)
+    /* Stop auth if this connection is coming from M-lined IP */
+    if (doident && (specific_virtual_host == 1))
+       if (!memcmp((char *) &sptr->ip,
+		   (char *) &vserv.SIN_ADDR,  sizeof(struct IN_ADDR)))
+           doident = NO;
+#endif
+
+#ifdef WEBIRC
+    /* ident lookup on W:lined IPs is pointless */
+    if (doident && find_webirc_host(sptr->sockhost) != NULL)
+        doident = NO;
+#endif
+
+    if (doident)
+       start_auth(sptr);
+
+    /* We're done (hopefully) - clear HAProxy status */
+    ClearHAProxy(sptr);
+    return 0;
+}
 
 /* CR, i 0wn j00 */
 int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)

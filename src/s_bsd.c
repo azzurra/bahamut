@@ -414,17 +414,34 @@ int add_listener(aConfItem * aconf)
 
     if (cptr->fd >= 0)
     {
+	char *ptr;
 	cptr->confs = make_link();
 	cptr->confs->next = NULL;
 	cptr->confs->value.aconf = aconf;
 	set_non_blocking(cptr->fd, cptr);
+	ptr = aconf->name;
+	while (*ptr)
+	{
+	    switch (*ptr)
+	    {
 #ifdef USE_SSL /*AZZURRA*/
-	if((strcmp(aconf->name, "SSL")) == 0 && ssl_capable) {
-	    SetSSL(cptr);
-	    cptr->ssl = NULL;
-	    cptr->client_cert = NULL;
-	}
+		case 'S':
+		    if (ssl_capable)
+		    {
+			    SetSSL(cptr);
+			    cptr->ssl = NULL;
+			    cptr->client_cert = NULL;
+		    }
+		    break;
 #endif
+		case 'H':
+		    SetHAProxy(cptr);
+		    break;
+		default:
+		    break;
+	    }
+	    ptr++;
+	}
     } else
 	free_client(cptr);
     return 0;
@@ -638,17 +655,25 @@ static int check_init(aClient * cptr, char *sockn)
 	return -1;
     }
 
-    inet_ntop(AFINET, (char *) &sk.SIN_ADDR, sockn, HOSTLEN);
-#ifndef INET6
-    if (inet_netof(sk.SIN_ADDR) == IN_LOOPBACKNET)
-#else
-    if (in6_is_addr_loopback((uint32_t *) & cptr->ip))
-#endif
+    /* Damn bahamut... */
+    if (!IsHAProxy(cptr->acpt))
     {
-	cptr->hostp = NULL;
-	strncpyzt(sockn, me.sockhost, HOSTLEN);
+	inet_ntop(AFINET, (char *) &sk.SIN_ADDR, sockn, HOSTLEN);
+#ifndef INET6
+	if (inet_netof(sk.SIN_ADDR) == IN_LOOPBACKNET)
+#else
+	if (in6_is_addr_loopback((uint32_t *) & cptr->ip))
+#endif
+	{
+	    cptr->hostp = NULL;
+	    strncpyzt(sockn, me.sockhost, HOSTLEN);
+	}
+	memcpy((char *) &cptr->ip, (char *) &sk.SIN_ADDR, sizeof(struct IN_ADDR));
     }
-    memcpy((char *) &cptr->ip, (char *) &sk.SIN_ADDR, sizeof(struct IN_ADDR));
+    else
+    {
+	inet_ntop(AFINET, (char *)&cptr->ip, sockn, HOSTLEN);
+    }
     
     cptr->port = (int) (ntohs(sk.SIN_PORT));
 
@@ -1365,8 +1390,8 @@ aClient *add_connection(aClient * cptr, int fd)
     socklen_t len;
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     aConfItem *tmpconf;
-    int doident = YES;
 #endif   
+    int doident = YES;
 #ifdef INET6
     size_t off = 0;
 #endif /* INET6 */
@@ -1472,16 +1497,25 @@ aClient *add_connection(aClient * cptr, int fd)
     }
 #endif
 
-    lin.flags = ASYNC_CLIENT;
-    lin.value.cptr = acptr;	
-    Debug((DEBUG_DNS, "lookup %s", inet_ntop(AFINET, (char *)
-		    &addr.SIN_ADDR, mydummy, sizeof (mydummy))));
-	       
-    acptr->hostp = gethost_byaddr((char *) &acptr->ip, &lin);
-    if (!acptr->hostp)
-	SetDNS(acptr);
+    if (IsHAProxy(cptr))
+    {
+	/* Delay hostname resolution until we get the real IP from upstream */
+	SetHAProxy(acptr);
+    }
+    else
+    {
+	/* Start normal hostname resolution */
+	lin.flags = ASYNC_CLIENT;
+	lin.value.cptr = acptr;
+	Debug((DEBUG_DNS, "lookup %s", inet_ntop(AFINET, (char *)
+		&addr.SIN_ADDR, mydummy, sizeof (mydummy))));
 
-    nextdnscheck = 1;
+	acptr->hostp = gethost_byaddr((char *) &acptr->ip, &lin);
+	if (!acptr->hostp)
+	    SetDNS(acptr);
+
+	nextdnscheck = 1;
+    }
 
     if (aconf)
 	aconf->clients++;
@@ -1532,6 +1566,7 @@ aClient *add_connection(aClient * cptr, int fd)
 	    break;
         }
     }
+
 #ifdef NO_LOCAL_IDENTD
     /* Stop auth if this connection is coming from M-lined IP */
     if (doident && (specific_virtual_host == 1))
@@ -1540,14 +1575,18 @@ aClient *add_connection(aClient * cptr, int fd)
            doident = NO;
 #endif
 
+#endif
+    /* Delay identd checks for clients behind HAProxy */
+    if (doident && IsHAProxy(acptr))
+	doident = NO;
+
 #ifdef WEBIRC
     /* ident lookup on W:lined IPs is pointless */
     if (doident && find_webirc_host(acptr->sockhost) != NULL)
         doident = NO;
 #endif
-   
+
     if (doident)
-#endif
        start_auth(acptr); 
    
 #ifdef INET6
