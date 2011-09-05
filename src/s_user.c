@@ -4675,7 +4675,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 	return exit_client(cptr, sptr, &me, "Go away, fat man."); /* Stewie was here */
     }
 
-    if (parc < 6 || BadPtr(parv[1]) || BadPtr(parv[2]) || BadPtr(parv[3]) || BadPtr(parv[4]) || BadPtr(parv[5]))
+    if (parc < 3 || BadPtr(parv[1]) || BadPtr(parv[2]))
     {
 	sendto_realops("Bad PROXY message from HAProxy upstream %s", sptr->sockhost);
 	return exit_client(cptr, sptr, &me, "Malformed request");
