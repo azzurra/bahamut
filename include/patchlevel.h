@@ -27,7 +27,7 @@
 #define STABLE  3
 #define BETA    4
 
-#define BRANCHSTATUS STABLE
+#define BRANCHSTATUS CURRENT
 #define BRANCH "enterprise"
 
 #define BASENAME "bahamut"
@@ -55,7 +55,7 @@
 #define PATCH4 "-webirc(1.2)"
 #endif
 
-#define PATCH5 ""
+#define PATCH5 "-haproxy(1.0)"
 
 #define PATCH6 ""
 

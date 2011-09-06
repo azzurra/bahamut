@@ -201,6 +201,9 @@ extern void 	  init_sys();
 extern int  	  read_message(time_t, fdlist *);
 extern void 	  report_error(char *, aClient *);
 extern void 	  set_non_blocking(int, aClient *);
+#ifdef INET6
+extern void	  set_tunnel_host(aClient *);
+#endif
 extern int  	  setup_ping(void);
 extern void 	  summon(aClient *, char *, char *, char *);
 extern int  	  unixport(aClient *, char *, int);

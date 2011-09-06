@@ -414,17 +414,47 @@ int add_listener(aConfItem * aconf)
 
     if (cptr->fd >= 0)
     {
+	char *ptr;
 	cptr->confs = make_link();
 	cptr->confs->next = NULL;
 	cptr->confs->value.aconf = aconf;
 	set_non_blocking(cptr->fd, cptr);
+	ptr = aconf->name;
+	while (*ptr)
+	{
+	    switch (*ptr)
+	    {
+		case 'S':
 #ifdef USE_SSL /*AZZURRA*/
-	if((strcmp(aconf->name, "SSL")) == 0 && ssl_capable) {
-	    SetSSL(cptr);
-	    cptr->ssl = NULL;
-	    cptr->client_cert = NULL;
-	}
+		    if (ssl_capable)
+		    {
+			cptr->ssl = NULL;
+			cptr->client_cert = NULL;
+		    }
 #endif
+		    SetSSL(cptr);
+		    break;
+		case 'H':
+		    SetHAProxy(cptr);
+		    break;
+		default:
+		    break;
+	    }
+	    ptr++;
+	}
+
+	if (IsHAProxy(cptr) && IsSSL(cptr))
+	{
+	    /* SSL/TLS will be performed by stud, mark this client as secure */
+	    ClearSSL(cptr);
+	    SetStud(cptr);
+	}
+	else if (IsSSL(cptr)
+#ifdef USE_SSL
+		 && !ssl_capable
+#endif
+	)
+		ClearSSL(cptr);
     } else
 	free_client(cptr);
     return 0;
@@ -638,17 +668,25 @@ static int check_init(aClient * cptr, char *sockn)
 	return -1;
     }
 
-    inet_ntop(AFINET, (char *) &sk.SIN_ADDR, sockn, HOSTLEN);
-#ifndef INET6
-    if (inet_netof(sk.SIN_ADDR) == IN_LOOPBACKNET)
-#else
-    if (in6_is_addr_loopback((uint32_t *) & cptr->ip))
-#endif
+    /* Damn bahamut... */
+    if (!IsHAProxy(cptr->acpt))
     {
-	cptr->hostp = NULL;
-	strncpyzt(sockn, me.sockhost, HOSTLEN);
+	inet_ntop(AFINET, (char *) &sk.SIN_ADDR, sockn, HOSTLEN);
+#ifndef INET6
+	if (inet_netof(sk.SIN_ADDR) == IN_LOOPBACKNET)
+#else
+	if (in6_is_addr_loopback((uint32_t *) & cptr->ip))
+#endif
+	{
+	    cptr->hostp = NULL;
+	    strncpyzt(sockn, me.sockhost, HOSTLEN);
+	}
+        memcpy((char *) &cptr->ip, (char *) &sk.SIN_ADDR, sizeof(struct IN_ADDR));
     }
-    memcpy((char *) &cptr->ip, (char *) &sk.SIN_ADDR, sizeof(struct IN_ADDR));
+    else
+    {
+	inet_ntop(AFINET, (char *)&cptr->ip, sockn, HOSTLEN);
+    }
     
     cptr->port = (int) (ntohs(sk.SIN_PORT));
 
@@ -1356,6 +1394,40 @@ void set_non_blocking(int fd, aClient * cptr)
     return;
 }
 
+#ifdef INET6
+/* Detect 6to4 and/or Teredo tunnels */
+void set_tunnel_host(aClient *cptr)
+{
+    size_t off = 0;
+
+    memset(cptr->tunnel_host, '\0', HOSTIPLEN + 1);
+    if (cptr->ip.s6_addr[0] == 0x20 && cptr->ip.s6_addr[1] == 0x02)
+    {
+        Set6to4(cptr);
+        off = 2;
+    }
+    else if (cptr->ip.s6_addr[0] == 0x20 && cptr->ip.s6_addr[1] == 0x01 && cptr->ip.s6_addr[2] == 0 && cptr->ip.s6_addr[3] == 0)
+    {
+        SetTeredo(cptr);
+        off = 12;
+    }
+    if (IsTunnel(cptr))
+    {
+        struct in_addr endpoint_addr;
+        memcpy(&endpoint_addr.s_addr, cptr->ip.s6_addr + off, sizeof(endpoint_addr.s_addr));
+        /* Flip all bits if this is a Teredo tunnel */
+        if (IsTeredo(cptr))
+            endpoint_addr.s_addr ^= 0xFFFFFFFFU;
+        if (inet_ntop(AF_INET, &endpoint_addr, cptr->tunnel_host, HOSTIPLEN + 1) == NULL)
+        {
+            /* Clear flags and log error */
+            ClearTunnel(cptr);
+            sendto_realops_lev(DEBUG_LEV, "inet_ntop failed while resolving tunnel endpoint for %s", get_client_name(cptr, TRUE));
+        }
+    }
+}
+#endif
+
 /*
  * Creates a client which has just connected to us on the given fd. The
  * sockhost field is initialized with the ip# of the host. The client
@@ -1372,11 +1444,8 @@ aClient *add_connection(aClient * cptr, int fd)
     socklen_t len;
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     aConfItem *tmpconf;
-    int doident = YES;
 #endif   
-#ifdef INET6
-    size_t off = 0;
-#endif /* INET6 */
+    int doident = YES;
    
     acptr = make_client(NULL, &me);
     
@@ -1479,16 +1548,25 @@ aClient *add_connection(aClient * cptr, int fd)
     }
 #endif
 
-    lin.flags = ASYNC_CLIENT;
-    lin.value.cptr = acptr;	
-    Debug((DEBUG_DNS, "lookup %s", inet_ntop(AFINET, (char *)
-		    &addr.SIN_ADDR, mydummy, sizeof (mydummy))));
-	       
-    acptr->hostp = gethost_byaddr((char *) &acptr->ip, &lin);
-    if (!acptr->hostp)
-	SetDNS(acptr);
+    if (IsHAProxy(cptr))
+    {
+	/* Delay hostname resolution until we get the real IP from upstream */
+	SetHAProxy(acptr);
+    }
+    else
+    {
+	/* Start normal hostname resolution */
+	lin.flags = ASYNC_CLIENT;
+	lin.value.cptr = acptr;
+	Debug((DEBUG_DNS, "lookup %s", inet_ntop(AFINET, (char *)
+		&addr.SIN_ADDR, mydummy, sizeof (mydummy))));
 
-    nextdnscheck = 1;
+	acptr->hostp = gethost_byaddr((char *) &acptr->ip, &lin);
+	if (!acptr->hostp)
+	    SetDNS(acptr);
+
+	nextdnscheck = 1;
+    }
 
     if (aconf)
 	aconf->clients++;
@@ -1511,6 +1589,9 @@ aClient *add_connection(aClient * cptr, int fd)
 #ifdef USE_SSL
     }
 #endif
+
+    if (IsStud(cptr))
+	SetStud(acptr);
 
 #if defined(DO_IDENTD) && defined(NO_SERVER_IDENTD) /*AZZURRA*/
     /* We do NOT want to start auth if the unknown connection
@@ -1539,6 +1620,7 @@ aClient *add_connection(aClient * cptr, int fd)
 	    break;
         }
     }
+
 #ifdef NO_LOCAL_IDENTD
     /* Stop auth if this connection is coming from M-lined IP */
     if (doident && (specific_virtual_host == 1))
@@ -1547,6 +1629,11 @@ aClient *add_connection(aClient * cptr, int fd)
            doident = NO;
 #endif
 
+#endif
+    /* Disable identd lookup if we're behind HAProxy */
+    if (doident && IsHAProxy(acptr))
+	doident = NO;
+
 #ifdef WEBIRC
     /* ident lookup on W:lined IPs is pointless */
     if (doident && find_webirc_host(acptr->sockhost) != NULL)
@@ -1554,37 +1641,14 @@ aClient *add_connection(aClient * cptr, int fd)
 #endif
    
     if (doident)
-#endif
        start_auth(acptr); 
    
 #ifdef INET6
     SetIPv6(acptr);
-    /* Detect 6to4 and/or Teredo tunnels */
-    memset(acptr->tunnel_host, '\0', HOSTIPLEN + 1);
-    if (acptr->ip.s6_addr[0] == 0x20 && acptr->ip.s6_addr[1] == 0x02)
-    {
-        Set6to4(acptr);
-        off = 2;
-    }
-    else if (acptr->ip.s6_addr[0] == 0x20 && acptr->ip.s6_addr[1] == 0x01 && acptr->ip.s6_addr[2] == 0 && acptr->ip.s6_addr[3] == 0)
-    {
-        SetTeredo(acptr);
-        off = 12;
-    }
-    if (IsTunnel(acptr))
-    {
-        struct in_addr endpoint_addr;
-        memcpy(&endpoint_addr.s_addr, acptr->ip.s6_addr + off, sizeof(endpoint_addr.s_addr));
-        /* Flip all bits if this is a Teredo tunnel */
-        if (IsTeredo(acptr))
-            endpoint_addr.s_addr ^= 0xFFFFFFFFU;
-        if (inet_ntop(AF_INET, &endpoint_addr, acptr->tunnel_host, HOSTIPLEN + 1) == NULL)
-        {
-            /* Clear flags and log error */
-            ClearTunnel(acptr);
-            sendto_realops_lev(DEBUG_LEV, "inet_ntop failed while resolving tunnel endpoint for %s", get_client_name(acptr, TRUE));
-        }
-    }
+
+    /* If we're not behind HAProxy check for a 6to4/Teredo tunnel */
+    if (!IsHAProxy(acptr))
+	set_tunnel_host(acptr);
 #endif
 
     return acptr;
@@ -1826,7 +1890,8 @@ void accept_connection(aClient *cptr)
     {
 	int rv;
 	ircstp->is_ref++;
-	ircsprintf(dumpstring,"ERROR :Host zlined: %s\r\n",tmp->passwd);
+	ircsprintf(dumpstring, "ERROR :Closing Link: %s (Host zlined: %s)\r\n",
+		INADDRANY_STR, tmp->passwd);
 	rv = write(newfd, dumpstring, strlen(dumpstring));
 	close(newfd);
 	return;

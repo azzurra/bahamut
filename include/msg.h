@@ -139,6 +139,7 @@
 #ifdef WEBIRC
 #define MSG_WEBIRC   "WEBIRC"           /* WEBIRC spoofing command */
 #endif
+#define MSG_HAPROXY  "PROXY"		/* HAProxy PROXY command */
 
 #define MAXPARA      15
 
@@ -249,6 +250,7 @@ extern int m_unshun(aClient *, aClient *, int, char **);
 #ifdef WEBIRC
 extern int m_webirc(aClient *, aClient *, int, char **);
 #endif
+extern int m_proxy(aClient *, aClient *, int, char **);
 
 #ifdef MSGTAB
 struct Message msgtab[] = 
@@ -371,6 +373,7 @@ struct Message msgtab[] =
 #ifdef WEBIRC
     {MSG_WEBIRC, m_webirc, 0, MAXPARA, 1, 1, 0, 0L},
 #endif
+    {MSG_HAPROXY, m_proxy, 0, MAXPARA, 1, 1, 0, 0L},
     {(char *) 0, (int (*)()) 0, 0, 0, 0, 0, 0, 0L}
 };
 
