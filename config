@@ -23,7 +23,8 @@ PATCH=`grep 'PATCH ' include/patchlevel.h | sed s/'.define PATCH '// | xargs $EC
 PATCH1=`grep 'PATCH1 ".*"' include/patchlevel.h | sed 's#.define PATCH1 "\(.*\)"#\1#' | xargs $ECHO`
 PATCH2=`grep 'PATCH2 ".*"' include/patchlevel.h | sed 's#.define PATCH2 "\(.*\)"#\1#' | xargs $ECHO`
 PATCH3=`grep 'PATCH3 ".*"' include/patchlevel.h | sed 's#.define PATCH3 "\(.*\)"#\1#' | xargs $ECHO`
-IRCD=`printf '%s(%s)-%i.%i(%i)%s%s%s' ${BASENAME} ${BRANCH} ${MAJOR} ${MINOR} ${PATCH} ${PATCH1} ${PATCH2} ${PATCH3}`
+PATCH4=`grep 'PATCH4 ".*"' include/patchlevel.h | sed 's#.define PATCH4 "\(.*\)"#\1#' | xargs $ECHO`
+IRCD=`printf '%s(%s)-%i.%i(%i)%s%s%s%s' ${BASENAME} ${BRANCH} ${MAJOR} ${MINOR} ${PATCH} ${PATCH1} ${PATCH2} ${PATCH3} ${PATCH4}`
 OPTIONS_H="include/options.h"
 ##
 ##
