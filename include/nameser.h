@@ -120,39 +120,6 @@
 #define CONV_BADCKSUM -3
 #define CONV_BADBUFLEN -4
 
-#ifndef BYTE_ORDER
-#define	LITTLE_ENDIAN	1234   /* least-significant byte first (vax) */
-#define	BIG_ENDIAN	4321   /* most-significant byte first (IBM, net) */
-#define	PDP_ENDIAN	3412   /* LSB first in word, MSW first in long (pdp) */
-
-#if defined(vax) || defined(ns32000) || defined(sun386) || defined(MIPSEL) || \
-    defined(BIT_ZERO_ON_RIGHT) || defined(sequent) || defined(i386) ||\
-    defined(___vax__) || defined(__ns32000__) || defined(__sun386__) ||\
-    defined(__alpha)
-
-#define BYTE_ORDER	LITTLE_ENDIAN
-
-#endif
-
-#if defined(sel) || defined(pyr) || defined(mc68000) || defined(sparc) || \
-    defined(is68k) || defined(tahoe) || defined(ibm032) || defined(ibm370) || \
-    defined(MIPSEB) || defined(__hpux) || defined(__convex__) || \
-    defined(__pyr__) || defined(__mc68000__) || defined(__sparc__) ||\
-    defined(_IBMR2) || defined (BIT_ZERO_ON_LEFT)
-
-#define BYTE_ORDER	BIG_ENDIAN
-
-#endif
-
-#endif /* BYTE_ORDER */
-
-#ifndef BYTE_ORDER
-/* you must determine what the correct bit order is for your compiler */
-
-UNDEFINED_BIT_ORDER;
-
-#endif
-
 /*
  * Structure for query header, the order of the fields is machine and
  * compiler dependent, in our case, the bits within a byte are assignd
@@ -164,7 +131,7 @@ UNDEFINED_BIT_ORDER;
 typedef struct
 {
     u_short     id;		/* query identification number */
-#if BYTE_ORDER == BIG_ENDIAN    
+#ifdef WORDS_BIGENDIAN
     
     /* fields in third byte */
     
@@ -181,8 +148,7 @@ typedef struct
     u_char      unused:2;	/* unused bits */
     u_char      rcode:4;		/* response code */
     
-#endif
-#if BYTE_ORDER == LITTLE_ENDIAN || BYTE_ORDER == PDP_ENDIAN
+#else
     
     /* fields in third byte */
 

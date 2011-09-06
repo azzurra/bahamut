@@ -162,7 +162,7 @@ time_t      nextexpire = 1;	   /* next expire run on the dns cache */
 #ifdef AZZURRA
 char *cloak_key;
 char *cloak_host;
-unsigned short cloak_key_len;
+size_t cloak_key_len;
 
 extern int cloak_init(void);
 

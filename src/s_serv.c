@@ -130,7 +130,7 @@ time_t      pending_kline_time = 0;
 Spam *spam_list = NULL;
 extern unsigned char *cloak_key;
 extern unsigned char *cloak_host;
-extern unsigned short cloak_key_len;
+extern size_t cloak_key_len;
 int CONF_SERVER_LANGUAGE = LANG_IT;
 #ifdef DYNAMIC_CLOAKING
 #define CK_TEMPTPL	DPATH "/.cloak.XXXXXXXX"
@@ -3456,7 +3456,7 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	{
 	    if(parc > 2)
 	    {
-		int l = strlen(parv[2]);
+		size_t l = strlen(parv[2]);
 
 	        if (l < MIN_CLOAK_KEY_LEN)
 	        {
@@ -6641,7 +6641,7 @@ int m_unspam(aClient *cptr, aClient *sptr, int parc, char *parv[])
 
 int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[]) 
 {
-    int l; 
+    size_t l;
 
     if(!(IsServer(sptr) || IsULine(sptr)))
 	return 0;
