@@ -1439,9 +1439,6 @@ aClient *add_connection(aClient * cptr, int fd)
     aConfItem *tmpconf;
 #endif   
     int doident = YES;
-#ifdef INET6
-    size_t off = 0;
-#endif /* INET6 */
    
     acptr = make_client(NULL, &me);
     
