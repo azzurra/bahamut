@@ -336,7 +336,7 @@ extern FILE 	 *dumpfp;
 #ifndef INET6
 void        	  remove_one_ip(unsigned long);
 #else
-void		  remove_one_ip(char *);
+void		  remove_one_ip(uint8_t *);
 #endif
 void        	  clear_ip_hash_table(void);
 void        	  rehash_ip_hash(void);

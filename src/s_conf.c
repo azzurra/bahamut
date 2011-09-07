@@ -95,8 +95,8 @@ void        	 init_ip_hash(void);
 static int  	 hash_ip(unsigned long);
 static IP_ENTRY *find_or_add_ip(unsigned long);
 #else
-static int  	 hash_ip(char *);
-static IP_ENTRY *find_or_add_ip(char *);
+static int  	 hash_ip(uint8_t *);
+static IP_ENTRY *find_or_add_ip(uint8_t *);
 #endif
 
 
@@ -301,7 +301,7 @@ void clear_ip_hash_table()
 #ifndef INET6
 static IP_ENTRY *find_or_add_ip(unsigned long ip_in)
 #else
-static IP_ENTRY *find_or_add_ip(char *ip_in)
+static IP_ENTRY *find_or_add_ip(uint8_t *ip_in)
 #endif
 {
     int         hash_index;
@@ -386,7 +386,7 @@ static IP_ENTRY *find_or_add_ip(char *ip_in)
 #ifndef INET6
 void remove_one_ip(unsigned long ip_in)
 #else
-void remove_one_ip(char *ip_in)
+void remove_one_ip(uint8_t *ip_in)
 #endif
 {
     int         hash_index;
@@ -452,7 +452,7 @@ static int hash_ip(unsigned long ip)
     return (hash);
 }
 #else
-static int hash_ip(char *ip)
+static int hash_ip(uint8_t *ip)
 {
 	unsigned int hash = 0;
 	uint16_t *ipp = (uint16_t *)ip;
