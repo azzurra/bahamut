@@ -1409,7 +1409,7 @@ void set_tunnel_host(aClient *cptr)
         struct in_addr endpoint_addr;
         memcpy(&endpoint_addr.s_addr, cptr->ip.s6_addr + off, sizeof(endpoint_addr.s_addr));
         /* Flip all bits if this is a Teredo tunnel */
-        if (IsTeredo(acptr))
+        if (IsTeredo(cptr))
             endpoint_addr.s_addr ^= 0xFFFFFFFFU;
         if (inet_ntop(AF_INET, &endpoint_addr, cptr->tunnel_host, HOSTIPLEN + 1) == NULL)
         {
