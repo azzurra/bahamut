@@ -1125,7 +1125,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 	            memset(sptr->ip.S_ADDR, 0x0, sizeof(struct IN_ADDR));
 #endif
 		    strcpy(sptr->hostip, INADDRANY_STR);
-		    strncpy(sptr->sockhost, STAFF_ADDRESS, HOSTLEN + 1);
+		    strncpyzt(sptr->sockhost, global ? STAFF_ADDRESS : LOCALOP_ADDRESS, HOSTLEN + 1);
 		}
 
 		if(tmpptr)
