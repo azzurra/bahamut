@@ -27,7 +27,7 @@
 #define STABLE  3
 #define BETA    4
 
-#define BRANCHSTATUS CURRENT
+#define BRANCHSTATUS RELEASE
 #define BRANCH "enterprise"
 
 #define BASENAME "bahamut"
