@@ -476,11 +476,6 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	 * channel, send note of change to all clients on that channel.
 	 * Propagate notice to other servers.
 	 */
-	/* if the nickname is different, set the TS */
-	if (mycmp(parv[0], nick))
-	{
-	    sptr->tsinfo = newts ? newts : (ts_val) timeofday;
-	}
 #ifdef DONT_CHECK_QLINE_REMOTE
 	if (MyConnect(sptr))
 	{
@@ -562,6 +557,10 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    IsAnOper(sptr))
 		{
 #endif
+		    /* if the nickname is different, set the TS */
+		    if (mycmp(parv[0], nick))
+			sptr->tsinfo = newts ? newts : (ts_val) timeofday;
+
 		    sendto_common_channels(sptr, ":%s NICK :%s", parv[0], 
 					   nick);
 		    if (sptr->user)
@@ -586,6 +585,10 @@ int m_nick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	}
 	else
 	{
+	    /* if the nickname is different, set the TS */
+	    if (mycmp(parv[0], nick))
+		sptr->tsinfo = newts ? newts : (ts_val) timeofday;
+
 	    sendto_common_channels(sptr, ":%s NICK :%s", parv[0], nick);
 	    if (sptr->user)
 	    {
