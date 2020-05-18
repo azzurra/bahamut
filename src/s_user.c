@@ -2980,7 +2980,18 @@ int check_oper_can_mask(aClient *sptr, char *name, char *password,
 #else
     encr = password;
 #endif /* CRYPT_OPER_PASSWORD */
-    
+
+    /* crypt() may fail if the password is stored incorrectly (e.g. missing the initial $) */
+    /* warn the ops and fail the operation */
+
+    if (encr == NULL)
+    {
+    sendto_realops("Failed OPERMASK attempt by %s (%s@%s) [Bad password stored in ircd config file]",
+		   sptr->name, sptr->user->username, sptr->user->host);
+
+    return 0;
+    }
+
     if(StrEq(encr, aconf->passwd))
     {
 #ifdef USE_SYSLOG
@@ -3032,7 +3043,18 @@ int check_helper_can_mask(aClient *sptr, char *name, char *password,
 #else
     encr = password;
 #endif /* CRYPT_OPER_PASSWORD */
-    
+
+    /* crypt() may fail if the password is stored incorrectly (e.g. missing the initial $) */
+    /* warn the ops and fail the operation */
+
+    if (encr == NULL)
+    {
+    sendto_realops("Failed HELPERMASK attempt by %s (%s@%s) [Bad password stored in ircd config file]",
+		   sptr->name, sptr->user->username, sptr->user->host);
+
+    return 0;
+    }
+
     if(StrEq(encr, aconf->passwd))
     {
 #ifdef USE_SYSLOG
