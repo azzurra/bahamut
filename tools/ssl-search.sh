@@ -2,23 +2,31 @@
 
 #search for an openssl installation . . . 
 
-    for dir in /usr /usr/local/ssl /usr/local/openssl /usr/local /opt/ssl /opt/openssl; do
-        test -x "$dir/bin/openssl" &&
-	test -r "$dir/lib/libcrypto.so" -o -r "$dir/lib/libcrypto.dylib" &&
-	test -r "$dir/lib/libssl.so" -o -r "$dir/lib/libssl.dylib" && {
-	    openssl="${dir}/bin/openssl";
-	    test "$dir" != '/usr' && {
-	    	SSL_INCLUDE="-I${dir}/include";
-	        SSL_LIB="-L${dir}/lib";
-	    }
-	    SSL_LIB="$SSL_LIB -lcrypto -lssl"
+    # Debian 10
+    if [[ -x "/usr/bin/openssl" ]] && [[ -r "/lib/i386-linux-gnu/libcrypto.so" ]] && [[ -r "/lib/i386-linux-gnu/libssl.so" ]]; then
+        openssl="/usr/bin/openssl"
+        SSL_LIB="-lcrypto -lssl"
+    else
+        for dir in /usr /usr/local/ssl /usr/local/openssl /usr/local /opt/ssl /opt/openssl; do
+            test -x "$dir/bin/openssl" &&
+        		test -r "$dir/lib/libcrypto.so" -o -r "$dir/lib/libcrypto.dylib" &&
+		        test -r "$dir/lib/libssl.so" -o -r "$dir/lib/libssl.dylib" && {
+                openssl="${dir}/bin/openssl";
+                test "$dir" != '/usr' && {
+                  SSL_INCLUDE="-I${dir}/include";
+                    SSL_LIB="-L${dir}/lib";
+                }
+                SSL_LIB="$SSL_LIB -lcrypto -lssl"
 
-	    test -r "${dir}/include/openssl/kssl.h" -a -d "/usr/kerberos/include" && {
-	    	SSL_INCLUDE="$SSL_INCLUDE -I/usr/include/openssl -I/usr/kerberos/include"
-	    }
-	    break;
-        }
-    done
+                test -r "${dir}/include/openssl/kssl.h" -a -d "/usr/kerberos/include" && {
+                  SSL_INCLUDE="$SSL_INCLUDE -I/usr/include/openssl -I/usr/kerberos/include"
+                }
+
+                break;
+            }
+        done
+    fi
+
 
 #search for a random number generator . . .
 

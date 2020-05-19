@@ -140,3 +140,16 @@ else
   fi;
 fi;
 
+if [ -f /etc/ssl/openssl.cnf ]; then
+    grep "^CipherString\s=\sDEFAULT@SECLEVEL=2$" /etc/ssl/openssl.cnf
+    if [ $? -eq 0 ]; then
+      echo "\n\n==============================================================="
+      echo "|  Default SECLEVEL=2 detected in /etc/ssl/openssl.cnf        |"
+      echo "|  Comment the following line in your openssl configuration   |"
+      echo "|  before starting the ircd:                                  |"
+      echo "|                                                             |"
+      echo "|  \e[93m# CipherString = DEFAULT@SECLEVEL=2\e[0m                        |"
+      echo "|                                                             |"
+      echo "==============================================================="
+    fi
+fi
