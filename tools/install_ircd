@@ -17,6 +17,7 @@ MPATH=`grep '#define.MPATH' include/config.h|awk '{print $3}'|tr -d \"`;
 LPATH=`grep '#define.LPATH' include/config.h|awk '{print $3}'|tr -d \"`;
 PPATH=`grep '#define.PPATH' include/config.h|awk '{print $3}'|tr -d \"`;
 HPATH=`grep '#define.HPATH' include/config.h|awk '{print $3}'|tr -d \"`;
+SMPATH=`grep '#define.SMPATH' include/config.h|awk '{print $3}'|tr -d \"`;
 
 base_SPATH=`basename $SPATH`;
 base_CPATH=`basename $CPATH`;
@@ -25,11 +26,13 @@ base_MPATH=`basename $MPATH`;
 base_LPATH=`basename $LPATH`;
 base_PPATH=`basename $PPATH`;
 base_HPATH=`basename $HPATH`;
+base_SMPATH=`basename $SMPATH`;
 
 #   DPATH = directory,
 #   SPATH = server executable,
 #   CPATH = conf file,
 #   MPATH = MOTD
+#   SMPATH = Short MOTD
 #   KPATH = kline conf file
 #   leave KPATH undefined if you want klines in main conf file
 #   HPATH is the opers help file, seen by opers on /quote help
@@ -49,7 +52,7 @@ if [ $base_SPATH = $SPATH ] ; then
     mv ${DPATH}${SPATH} ${DPATH}${SPATH}.old;
     ./install-sh -c src/ircd ${DPATH};
   fi;
-else 
+else
   if [ ! -f $SPATH ] ; then
      echo installing ircd as ${SPATH};
      ./install-sh -c src/ircd `dirname $SPATH`;
@@ -59,7 +62,7 @@ else
      mv ${SPATH} ${SPATH}.old;
      ./install-sh -c src/ircd `dirname $SPATH`;
   fi;
-fi;  
+fi;
 
 # try to install their ircd.conf file, unless it already exists.
 
@@ -81,7 +84,7 @@ fi;
 
 
 # try to install their motd file, unless it already exists.
- 
+
 if [ $base_MPATH = $MPATH ] ; then
   if [ ! -f ${DPATH}${MPATH} ] ; then
     echo installing a sample ${DPATH}${MPATH};
@@ -95,6 +98,24 @@ else
     echo "This is ircd-hybrid MOTD replace it with something better" > ${MPATH};
   else
     echo You already have an $MPATH file ....;
+  fi;
+fi;
+
+# try to install their short motd file, unless it already exists.
+
+if [ $base_SMPATH = $SMPATH ] ; then
+  if [ ! -f ${DPATH}${SMPATH} ] ; then
+    echo installing a sample ${DPATH}${SMPATH};
+    echo "This is ircd-hybrid Short MOTD replace it with something better" > ${DPATH}${SMPATH};
+  else
+    echo You already have an ${DPATH}${SMPATH}.....;
+  fi;
+else
+  if [ ! -f $SMPATH ] ; then
+    echo installing a sample ${SMPATH};
+    echo "This is ircd-hybrid Short MOTD replace it with something better" > ${SMPATH};
+  else
+    echo You already have an $SMPATH file ....;
   fi;
 fi;
 
