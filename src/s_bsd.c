@@ -1555,10 +1555,12 @@ aClient *add_connection(aClient * cptr, int fd)
 		&addr.SIN_ADDR, mydummy, sizeof (mydummy))));
 
 	acptr->hostp = gethost_byaddr((char *) &acptr->ip, &lin);
+#ifdef DO_IDENTD
 	if (!acptr->hostp)
 	    SetDNS(acptr);
 
 	nextdnscheck = 1;
+#endif
     }
 
     if (aconf)
@@ -1631,6 +1633,10 @@ aClient *add_connection(aClient * cptr, int fd)
     /* ident lookup on W:lined IPs is pointless */
     if (doident && find_webirc_host(acptr->sockhost) != NULL)
         doident = NO;
+#endif
+
+#if !defined(DO_IDENTD)
+    doident = NO;
 #endif
 
     if (doident)
