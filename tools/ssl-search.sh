@@ -3,7 +3,7 @@
 #search for an openssl installation . . . 
 
     # Debian 10
-    if [[ -x "/usr/bin/openssl" ]] && [[ -r "/lib/i386-linux-gnu/libcrypto.so" ]] && [[ -r "/lib/i386-linux-gnu/libssl.so" ]]; then
+    if [ -x "/usr/bin/openssl" ] && [ -r "/lib/i386-linux-gnu/libcrypto.so" ] && [ -r "/lib/i386-linux-gnu/libssl.so" ]; then
         openssl="/usr/bin/openssl"
         SSL_LIB="-lcrypto -lssl"
     else
