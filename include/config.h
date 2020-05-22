@@ -227,6 +227,13 @@
 
 #define THROTTLE_ENABLE /* enable throttling, see below */
 
+/*
+ * DO_IDENTD - check identd if you undefine this, ircd will never check
+ * identd regardless of @'s in I:lines.  You must still use @'s in your
+ * I: lines to get ircd to do ident lookup even if you define this.
+ */
+#define DO_IDENTD
+
 /*******************************************************/
 
 #endif /** OPTIONS_H **/
@@ -468,13 +475,6 @@
  * to see usernames in /trace.
  */
 #define USERNAMES_IN_TRACE
-
-/*
- * DO_IDENTD - check identd if you undefine this, ircd will never check
- * identd regardless of @'s in I:lines.  You must still use @'s in your
- * I: lines to get ircd to do ident lookup even if you define this.
- */
-#define DO_IDENTD
 
 /*
  * NON_REDUNDANT_KLINES - If you want the server to flag and not apply

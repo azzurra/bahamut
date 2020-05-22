@@ -52,6 +52,7 @@ IRCDCONF_DELIMITER="`grep 'IRCDCONF_DELIMITER' $OPTIONS_H | sed s/'.define IRCDC
 STAFF_ADDRESS="`grep 'STAFF_ADDRESS' $OPTIONS_H | sed s/'.define STAFF_ADDRESS'// | xargs $ECHO`"
 LOCALOP_ADDRESS="`grep 'LOCALOP_ADDRESS' $OPTIONS_H | sed s/'.define LOCALOP_ADDRESS'// | xargs $ECHO`"
 HELPER_ADDRESS="`grep 'HELPER_ADDRESS' $OPTIONS_H | sed s/'.define HELPER_ADDRESS'// | xargs $ECHO`"
+DOIDENTD="`grep 'DO_IDENTD' $OPTIONS_H | sed s/'.define DO_IDENTD  '// | xargs $ECHO`"
 #
 # Now to pull yucky defaults out.
 #
@@ -157,6 +158,12 @@ if [ -n "$ADMINSERV" ] ; then
 else
    ADMINSERV="1"
 fi
+DOIDENTD="`grep 'DO_IDENTD' $OPTIONS_H | sed s/'.define DO_IDENTD'// | xargs $ECHO`"
+if [ "$DOIDENTD" ] ; then
+   DOIDENTD="1"
+else
+   DOIDENTD=""
+fi
 
 
 ### Thats the end of grabbing there.
@@ -188,7 +195,7 @@ SERVICES_NAME="services.azzurra.org" # Default setting, no question asked.
 MHOST="cybcop.azzurra.org" # Default setting, no question asked.
 LOCALKLINE="kline@azzurra.org" # Default setting, no question asked.
 NETWORKKLINE="kline@azzurra.org" # Default setting, no question asked.
-CRYPTPASS=""
+CRYPTPASS="1"
 DOTHROTTLE="1" # Default setting, no question asked.
 INET6=""
 IRCDCONF_DELIMITER=':'
@@ -197,6 +204,7 @@ ADMINSERV="1" # Default setting, no question asked.
 STAFF_ADDRESS="staff.azzurra.org" # Default setting, no question asked.
 LOCALOP_ADDRESS="localop.azzurra.org" # Default setting, no question asked.
 HELPER_ADDRESS="helper.azzurra.org" # Default setting, no question asked.
+DOIDENTD=""
 
 fi # ENDIF $OPTIONS_H
 ###############################
@@ -514,6 +522,43 @@ while [ -z "$FOO" ] ; do
     esac
 done
 
+FOO=""
+runonce=""
+while [ -z "$FOO" ] ; do
+    if [ "$DOIDENTD" ] ; then
+       FOO="Yes"
+    else
+       FOO="No"
+    fi
+    echo ""
+    echo "Would you like to enable identd support?"
+    $ECHO "[$FOO] -> $c"
+    if [ -z "$AUTO_CONFIG" -o -n "$runonce" ] ; then
+       read cc
+       runonce=Yes
+    else
+       cc=""
+    fi
+    if [ -z "$cc" ] ; then
+       cc=$FOO
+    fi
+    case "$cc" in
+       [Yy]*)
+           DOIDENTD="1"
+           ;;
+       [Nn]*)
+           DOIDENTD=""
+           ;;
+       *)
+           echo ""
+           echo "You need to enter either Yes or No here..."
+           echo ""
+           FOO=""
+           ;;
+    esac
+done
+
+
 if [ -n "$USE_SSL" ] ; then
 
 . tools/ssl-search.sh
@@ -628,6 +673,12 @@ if [ -n "$DOTHROTTLE" ] ; then
 else
     echo "#undef THROTTLE_ENABLE" >> $OPTIONS_H
 fi
+if [ -n "$DOIDENTD" ] ; then
+    echo "#define DO_IDENTD" >> $OPTIONS_H
+else
+    echo "#undef DO_IDENTD" >> $OPTIONS_H
+fi
+
 cat >> $OPTIONS_H << EOF
 
 /* Now that the simple stuff is done, we have to add some ifdef's */
