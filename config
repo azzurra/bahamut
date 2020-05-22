@@ -347,7 +347,7 @@ if [ -n "$INET6" ] ; then
      FOO="" 
      runonce="" 
      if [ "$IRCDCONF_DELIMITER" = ":" ] ; then
-     	 IRCDCONF_DELIMITER='%';
+     	 IRCDCONF_DELIMITER='|';
      fi
      while [ -z "$FOO" ] ; do 
          FOO="$IRCDCONF_DELIMITER" 
