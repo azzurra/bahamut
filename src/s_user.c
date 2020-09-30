@@ -929,9 +929,9 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     else
 	strncpyzt(user->username, username, USERLEN + 1);
 
-    if(!cloakhost(user->host, user->virthost))
+    if (IsIPv6(sptr) || !cloakhost(user->host, user->virthost))
 	strncpyzt(user->virthost, user->host, HOSTLEN);
- 
+
     SetClient(sptr);
     /* Increment our total user count here */
     if (++Count.total > Count.max_tot)
@@ -2451,7 +2451,7 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 #endif
 
 #ifndef NO_DEFAULT_UMODEX
-	if(!(sptr->user->real_oper_host))
+	if(!(sptr->user->real_oper_host) && !(IsIPv6(sptr)))
 	    SetCloak(sptr);
 #endif
 #ifdef USE_SSL
@@ -3559,6 +3559,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				case 'a': /* users can`t set themselves +a ! */
 				case 'S': /* users can`t set themselves +S ! */
 				case 'r': /* users can't set themselves +r! */
+				case 'x':
 					break;
 
 				case 'A':
