@@ -3559,8 +3559,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				case 'a': /* users can`t set themselves +a ! */
 				case 'S': /* users can`t set themselves +S ! */
 				case 'r': /* users can't set themselves +r! */
-				case 'x':
-					break;
+				    break;
 
 				case 'A':
 					// fall...
@@ -3573,6 +3572,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 					for (s = user_modes; (flag = *s); s += 2) {
 
 						if (*m == (char) (*(s + 1))) {
+
+						    // Forbids +x / -x on IPv6 clients
+                            if (IsIPv6(sptr) && *m == 'x') {
+                                break;
+                            }
 
 							if (what == MODE_ADD)
 								sptr->umode |= flag;
