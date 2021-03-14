@@ -50,7 +50,7 @@ int initssl(void)
 
     SSL_load_error_strings();
     SSLeay_add_ssl_algorithms();
-    ircdssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    ircdssl_ctx = SSL_CTX_new(TLS_server_method());
     if (!ircdssl_ctx) {
 	ERR_print_errors_fp(stderr);
 	return 0;
@@ -134,7 +134,7 @@ int rehash_ssl(void)
 	SSL_CTX_free(ircdssl_ctx);
     }
 
-    if(!(ircdssl_ctx = SSL_CTX_new(SSLv23_server_method())))
+    if(!(ircdssl_ctx = SSL_CTX_new(TLS_server_method())))
     {
 	disable_ssl(1);
 	return 0;
