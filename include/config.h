@@ -277,7 +277,7 @@
 
 
 /* Services Definitions */
-#define STATS_NAME "stats.azzurra.org"
+#define STATS_NAME "services.azzurra.org"
 #define CHANSERV "ChanServ"
 #define NICKSERV "NickServ"
 #define MEMOSERV "MemoServ"
