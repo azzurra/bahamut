@@ -21,15 +21,15 @@
 #define HARD_FDLIMIT_  1024
 #define INIT_MAXCLIENTS 1000
 #define MAX_BUFFER 24
-#define SERVICES_NAME "services.azzurra.org"
+#define SERVICES_NAME "services.azzurra.chat"
 #define MAXCHANNELSPERUSER 20
 #define IRCDCONF_DELIMITER ':'
 #define DYNAMIC_CLOAKING
 #define HIDEULINEDSERVS 1
 #undef NO_DEFAULT_INVISIBLE
-#define STAFF_ADDRESS "staff.azzurra.org"
-#define LOCALOP_ADDRESS "localop.azzurra.org"
-#define HELPER_ADDRESS "helper.azzurra.org"
+#define STAFF_ADDRESS "staff.azzurra.chat"
+#define LOCALOP_ADDRESS "localop.azzurra.chat"
+#define HELPER_ADDRESS "helper.azzurra.chat"
 #define UNKNOWN_LISTS 1
 #undef INET6
 #define RECV(fd, buf, size) recv(fd, buf, size, 0)
@@ -49,11 +49,11 @@
 /* Now that the simple stuff is done, we have to add some ifdef's */
 
 #ifdef WINGATE_NOTICE
-#define MONITOR_HOST "cybcop.azzurra.org"
+#define MONITOR_HOST "cybcop.azzurra.chat"
 #endif
 
-#define SERVER_KLINE_ADDRESS "kline@azzurra.org"
-#define NETWORK_KLINE_ADDRESS "kline@azzurra.org"
+#define SERVER_KLINE_ADDRESS "irc@azzurra.chat"
+#define NETWORK_KLINE_ADDRESS "irc@azzurra.chat"
 
 #ifdef USE_SYSLOG
 #undef SYSLOG_USERS

@@ -191,19 +191,19 @@ SOPER="" # Default setting, no question asked.
 SSHU="" # Default setting, no question asked.
 MAXSENDQ="5050000" # Default setting, no question asked.
 BUFPOOL="(4 * MAXSENDQLENGTH)" # Default setting, no question asked.
-SERVICES_NAME="services.azzurra.org" # Default setting, no question asked.
-MHOST="cybcop.azzurra.org" # Default setting, no question asked.
-LOCALKLINE="kline@azzurra.org" # Default setting, no question asked.
-NETWORKKLINE="kline@azzurra.org" # Default setting, no question asked.
+SERVICES_NAME="services.azzurra.chat" # Default setting, no question asked.
+MHOST="cybcop.azzurra.chat" # Default setting, no question asked.
+LOCALKLINE="irc@azzurra.chat" # Default setting, no question asked.
+NETWORKKLINE="irc@azzurra.chat" # Default setting, no question asked.
 CRYPTPASS="1"
 DOTHROTTLE="1" # Default setting, no question asked.
 INET6=""
 IRCDCONF_DELIMITER=':'
 USE_SSL="1"
 ADMINSERV="1" # Default setting, no question asked.
-STAFF_ADDRESS="staff.azzurra.org" # Default setting, no question asked.
-LOCALOP_ADDRESS="localop.azzurra.org" # Default setting, no question asked.
-HELPER_ADDRESS="helper.azzurra.org" # Default setting, no question asked.
+STAFF_ADDRESS="staff.azzurra.chat" # Default setting, no question asked.
+LOCALOP_ADDRESS="localop.azzurra.chat" # Default setting, no question asked.
+HELPER_ADDRESS="helper.azzurra.chat" # Default setting, no question asked.
 DOIDENTD=""
 
 fi # ENDIF $OPTIONS_H

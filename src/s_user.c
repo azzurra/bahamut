@@ -512,9 +512,9 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 				   "You are not authorized to use this "
 				   "server"
 #ifndef FASTWEB
-				   ", visit www.azzurra.org/access.html "
+				   ", visit www.azzurra.chat/access.html "
 #else
-				   ", visit www.azzurra.org/fastweb.html "
+				   ", visit www.azzurra.chat/fastweb.html "
 #endif
 				   "for more info"
 				   );
