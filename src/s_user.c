@@ -4795,7 +4795,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)
 {
     static char nick[NICKLEN + 1];
-    static char *user = "JAVA", *realname = "JavaUser";
+    static char *user = "GUEST", *realname = "Guest User";
     static char *prv[6];
 
     if (!MyConnect(sptr))
