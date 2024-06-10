@@ -55,7 +55,19 @@ void start_auth(aClient *cptr)
     struct SOCKADDR_IN localaddr;
     socklen_t          locallen;
 
-    Debug((DEBUG_NOTICE, "start_auth(%x) fd %d status %d",
+#ifndef DO_IDENTD
+    if (cptr->authfd > 0)
+        close(cptr->authfd);
+
+	cptr->authfd = -1;
+
+	if(!DoingDNS(cptr))
+	    SetAccess(cptr);
+
+	return;
+#endif
+
+  Debug((DEBUG_NOTICE, "start_auth(%x) fd %d status %d",
 	   cptr, cptr->fd, cptr->status));
     if ((cptr->authfd = socket(AFINET, SOCK_STREAM, 0)) == -1)
     {

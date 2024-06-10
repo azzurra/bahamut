@@ -227,6 +227,13 @@
 
 #define THROTTLE_ENABLE /* enable throttling, see below */
 
+/*
+ * DO_IDENTD - check identd if you undefine this, ircd will never check
+ * identd regardless of @'s in I:lines.  You must still use @'s in your
+ * I: lines to get ircd to do ident lookup even if you define this.
+ */
+#define DO_IDENTD
+
 /*******************************************************/
 
 #endif /** OPTIONS_H **/
@@ -270,7 +277,7 @@
 
 
 /* Services Definitions */
-#define STATS_NAME "stats.azzurra.org"
+#define STATS_NAME "services.azzurra.chat"
 #define CHANSERV "ChanServ"
 #define NICKSERV "NickServ"
 #define MEMOSERV "MemoServ"
@@ -468,13 +475,6 @@
  * to see usernames in /trace.
  */
 #define USERNAMES_IN_TRACE
-
-/*
- * DO_IDENTD - check identd if you undefine this, ircd will never check
- * identd regardless of @'s in I:lines.  You must still use @'s in your
- * I: lines to get ircd to do ident lookup even if you define this.
- */
-#define DO_IDENTD
 
 /*
  * NON_REDUNDANT_KLINES - If you want the server to flag and not apply
@@ -696,7 +696,7 @@
  * Rather self explanitory. If not specified in T: line,
  * we tell clients to go to "http://<this>"
  */
-#define DEFAULT_PROXY_INFO_URL "kline.azzurra.org"
+#define DEFAULT_PROXY_INFO_URL "www.azzurra.chat"
 
 /*
  * STAFF_ADDRESS
@@ -706,10 +706,10 @@
  * The idea is to make it universal for the entire network.
  */
 #ifndef STAFF_ADDRESS
-#define STAFF_ADDRESS "staff.azzurra.org" /*AZZURRA*/
+#define STAFF_ADDRESS "staff.azzurra.chat" /*AZZURRA*/
 #endif
 #ifndef HELPER_ADDRESS
-#define HELPER_ADDRESS "helper.azzurra.org"
+#define HELPER_ADDRESS "helper.azzurra.chat"
 #endif
 #ifndef LOCALOP_ADDRESS
 #define LOCALOP_ADDRESS STAFF_ADDRESS
@@ -1163,7 +1163,7 @@
 /* RESTRICT_USERS_URL
  * URL used to display more information about users restrictions.
  */
-#define RESTRICT_USERS_URL "http://www.azzurra.org/restrict.html"
+#define RESTRICT_USERS_URL "https://www.azzurra.chat/restrict.html"
 
 /* Configure SECURITY notification for RESTRICT_USERS when they try to join channels.
  * Note: all of these can be changed via /set!

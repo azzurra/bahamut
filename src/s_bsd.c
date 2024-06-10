@@ -1555,6 +1555,7 @@ aClient *add_connection(aClient * cptr, int fd)
 		&addr.SIN_ADDR, mydummy, sizeof (mydummy))));
 
 	acptr->hostp = gethost_byaddr((char *) &acptr->ip, &lin);
+
 	if (!acptr->hostp)
 	    SetDNS(acptr);
 

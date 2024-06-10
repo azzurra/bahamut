@@ -272,17 +272,21 @@ char *dh_get_s_public(char *buf, int maxlen, void *session)
     struct session_info *si = (struct session_info *) session;
     char *tmp;
 
-    if(!si || !si->dh || !si->dh->pub_key)
-	return NULL;  
+    if(!si || !si->dh)
+	    return NULL;
 
-    tmp = BN_bn2hex(si->dh->pub_key);
+    const BIGNUM* pubkey = DH_get0_pub_key(si->dh);
+    if (!pubkey)
+        return NULL;
+
+    tmp = BN_bn2hex(pubkey);
     if(!tmp)
-	return NULL;
+	    return NULL;
 
     if(strlen(tmp) + 1 > maxlen)
     {
-	OPENSSL_free(tmp);
-	return NULL;
+	    OPENSSL_free(tmp);
+	    return NULL;
     }
 
     strcpy(buf, tmp);
@@ -328,13 +332,17 @@ DH *get_dh1024(void)
     if (dh == NULL)
         return NULL;
 
-    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+    BIGNUM *p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+    BIGNUM *g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+    //dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+    //dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
 
-    if (dh->p == NULL || dh->g == NULL)
+    if (p == NULL || g == NULL)
     {
         DH_free(dh);
         return NULL;
+    } else {
+        DH_set0_pqg(dh, p, NULL, g);
     }
     return dh;
 }

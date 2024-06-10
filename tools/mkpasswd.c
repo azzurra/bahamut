@@ -17,6 +17,8 @@
 #define USE_MD5
 #endif
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
 extern char *getpass();
 extern char *crypt();
 /* extern long random(); */
@@ -28,6 +30,7 @@ char *argv[];
 {
   static char saltChars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
   char salt[13];
+  char user_salt[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
   char * plaintext;
 #ifdef USE_MD5
   int i;
@@ -59,10 +62,13 @@ char *argv[];
 #ifdef USE_MD5
     /* Salt for MD5 -INT */
     strcpy(salt, "$1$");
-    for (i=0; i<strlen(argv[1]); i++)
-	if (strchr(saltChars, argv[1][i]) == NULL)
-	    fprintf(stderr, "illegal salt %s\n", argv[1]), exit(1);
-    strncat(salt, argv[1], i>8 ? 8 : i);
+    for (i=0; i<MIN(strlen(argv[1]), 8); i++) {
+        if (strchr(saltChars, argv[1][i]) == NULL)
+	        fprintf(stderr, "illegal salt %s\n", argv[1]), exit(1);
+        user_salt[i] = argv[1][i];
+    }
+
+    strncat(salt, user_salt, i);
     strcat(salt, "$");
 #else
     /* Salt for DES -INT */

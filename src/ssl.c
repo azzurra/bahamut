@@ -15,7 +15,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *   
+ *
  *   SSL functions . . .
  */
 
@@ -50,7 +50,7 @@ int initssl(void)
 
     SSL_load_error_strings();
     SSLeay_add_ssl_algorithms();
-    ircdssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    ircdssl_ctx = SSL_CTX_new(TLS_server_method());
     if (!ircdssl_ctx) {
 	ERR_print_errors_fp(stderr);
 	return 0;
@@ -59,8 +59,8 @@ int initssl(void)
     /* Kill SSLv2 support */
     SSL_CTX_set_options(ircdssl_ctx, SSL_OP_NO_SSLv2);
 
-    if (SSL_CTX_use_certificate_file(ircdssl_ctx,
-		IRCDSSL_CPATH, SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_certificate_chain_file(ircdssl_ctx,
+		IRCDSSL_CPATH) <= 0) {
 	ERR_print_errors_fp(stderr);
 	SSL_CTX_free(ircdssl_ctx);
 	return 0;
@@ -121,7 +121,7 @@ static void disable_ssl(int do_errors)
 
     sendto_ops("Disabling SSL support due to unrecoverable SSL errors. /REHASH again to retry.");
     ssl_capable = 0;
-    
+
     return;
 }
 
@@ -134,7 +134,7 @@ int rehash_ssl(void)
 	SSL_CTX_free(ircdssl_ctx);
     }
 
-    if(!(ircdssl_ctx = SSL_CTX_new(SSLv23_server_method())))
+    if(!(ircdssl_ctx = SSL_CTX_new(TLS_server_method())))
     {
 	disable_ssl(1);
 	return 0;
@@ -143,8 +143,8 @@ int rehash_ssl(void)
     /* Kill SSLv2 support */
     SSL_CTX_set_options(ircdssl_ctx, SSL_OP_NO_SSLv2);
 
-    if (SSL_CTX_use_certificate_file(ircdssl_ctx,
-		IRCDSSL_CPATH, SSL_FILETYPE_PEM) <= 0)
+    if (SSL_CTX_use_certificate_chain_file(ircdssl_ctx,
+		IRCDSSL_CPATH) <= 0)
     {
 	disable_ssl(1);
 
@@ -159,7 +159,7 @@ int rehash_ssl(void)
 	return 0;
     }
 
-    if (!SSL_CTX_check_private_key(ircdssl_ctx)) 
+    if (!SSL_CTX_check_private_key(ircdssl_ctx))
     {
 	sendto_realops("SSL ERROR: Server certificate does not match server key");
 	disable_ssl(0);
@@ -257,7 +257,7 @@ int safe_SSL_accept(aClient *acptr, int fd) {
 		    return 1;
 	    default:
 		return fatal_ssl_error(ssl_err, SAFE_SSL_ACCEPT, acptr);
-		
+
 	}
 	/* NOTREACHED */
 	return -1;
@@ -332,7 +332,7 @@ static int fatal_ssl_error(int ssl_error, int where, aClient *sptr)
 
 #ifdef SSL_DEBUG
     sendto_realops_lev(DEBUG_LEV, "%s to "
-		"%s!%s@%s aborted with%serror (%s). [%s]", 
+		"%s!%s@%s aborted with%serror (%s). [%s]",
 		ssl_func, *sptr->name ? sptr->name : "<unknown>",
 		(sptr->user && sptr->user->username) ? sptr->user->
 		username : "<unregistered>", sptr->sockhost,
@@ -344,7 +344,7 @@ static int fatal_ssl_error(int ssl_error, int where, aClient *sptr)
 #endif
 
     /* if we reply() something here, we might just trigger another
-     * fatal_ssl_error() call and loop until a stack overflow... 
+     * fatal_ssl_error() call and loop until a stack overflow...
      * the client won`t get the ERROR : ... string, but this is
      * the only way to do it.
      * IRC protocol wasn`t SSL enabled .. --vjt
