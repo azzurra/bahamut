@@ -26,7 +26,7 @@ FDLIMIT=@DFDSS@
 # openssl related flags.
 SSLFLAGS=
 # Default CFLAGS
-CFLAGS= -Wall -Werror -g -O2 ${FDLIMIT} ${XFLAGS} ${SSLFLAGS}
+CFLAGS= -fgnu89-inline -m32 -O2 ${FDLIMIT} ${XFLAGS} ${SSLFLAGS}
 # linker flags.
 LDFLAGS=
 #

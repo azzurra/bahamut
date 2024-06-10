@@ -512,9 +512,9 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 				   "You are not authorized to use this "
 				   "server"
 #ifndef FASTWEB
-				   ", visit www.azzurra.org/access.html "
+				   ", visit www.azzurra.chat/access.html "
 #else
-				   ", visit www.azzurra.org/fastweb.html "
+				   ", visit www.azzurra.chat/fastweb.html "
 #endif
 				   "for more info"
 				   );
@@ -929,9 +929,9 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     else
 	strncpyzt(user->username, username, USERLEN + 1);
 
-    if(!cloakhost(user->host, user->virthost))
+    if (IsIPv6(sptr) || !cloakhost(user->host, user->virthost))
 	strncpyzt(user->virthost, user->host, HOSTLEN);
- 
+
     SetClient(sptr);
     /* Increment our total user count here */
     if (++Count.total > Count.max_tot)
@@ -2451,7 +2451,7 @@ int do_user(char *nick, aClient *cptr, aClient *sptr, char *username,
 #endif
 
 #ifndef NO_DEFAULT_UMODEX
-	if(!(sptr->user->real_oper_host))
+	if(!(sptr->user->real_oper_host) && !(IsIPv6(sptr)))
 	    SetCloak(sptr);
 #endif
 #ifdef USE_SSL
@@ -2980,7 +2980,18 @@ int check_oper_can_mask(aClient *sptr, char *name, char *password,
 #else
     encr = password;
 #endif /* CRYPT_OPER_PASSWORD */
-    
+
+    /* crypt() may fail if the password is stored incorrectly (e.g. missing the initial $) */
+    /* warn the ops and fail the operation */
+
+    if (encr == NULL)
+    {
+    sendto_realops("Failed OPERMASK attempt by %s (%s@%s) [Bad password stored in ircd config file]",
+		   sptr->name, sptr->user->username, sptr->user->host);
+
+    return 0;
+    }
+
     if(StrEq(encr, aconf->passwd))
     {
 #ifdef USE_SYSLOG
@@ -3032,7 +3043,18 @@ int check_helper_can_mask(aClient *sptr, char *name, char *password,
 #else
     encr = password;
 #endif /* CRYPT_OPER_PASSWORD */
-    
+
+    /* crypt() may fail if the password is stored incorrectly (e.g. missing the initial $) */
+    /* warn the ops and fail the operation */
+
+    if (encr == NULL)
+    {
+    sendto_realops("Failed HELPERMASK attempt by %s (%s@%s) [Bad password stored in ircd config file]",
+		   sptr->name, sptr->user->username, sptr->user->host);
+
+    return 0;
+    }
+
     if(StrEq(encr, aconf->passwd))
     {
 #ifdef USE_SYSLOG
@@ -3537,7 +3559,7 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 				case 'a': /* users can`t set themselves +a ! */
 				case 'S': /* users can`t set themselves +S ! */
 				case 'r': /* users can't set themselves +r! */
-					break;
+				    break;
 
 				case 'A':
 					// fall...
@@ -3550,6 +3572,11 @@ int m_umode(aClient *cptr, aClient *sptr, int parc, char *parv[])
 					for (s = user_modes; (flag = *s); s += 2) {
 
 						if (*m == (char) (*(s + 1))) {
+
+						    // Forbids +x / -x on IPv6 clients
+                            if (IsIPv6(sptr) && *m == 'x') {
+                                break;
+                            }
 
 							if (what == MODE_ADD)
 								sptr->umode |= flag;
@@ -4768,7 +4795,7 @@ int m_proxy(aClient *cptr, aClient *sptr, int parc, char **parv)
 int m_guest(aClient *cptr, aClient *sptr, int parc, char **parv)
 {
     static char nick[NICKLEN + 1];
-    static char *user = "JAVA", *realname = "JavaUser";
+    static char *user = "GUEST", *realname = "Guest User";
     static char *prv[6];
 
     if (!MyConnect(sptr))

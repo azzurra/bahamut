@@ -557,7 +557,7 @@ static char *replies[] =
     /* 486 ERR_NONONREG */	":%s 486 %s :You must identify to a "
                                 "registered nick to private message %s",
     /* 487 ERR_MSGSERVICES */	":%s 487 %s :Error! \"/msg %s\" is no longer supported. "
-    				"Use \"/msg %s@services.azzurra.org\" or \"/%s\" instead.",
+    				"Use \"/msg %s@services.azzurra.chat\" or \"/%s\" instead.",
     /* 488 ERR_CANNOTKICKMODEZ*/":%s 488 %s :You cannot kick a services agent!",
     /* 489 ERR_CANNOTKILLMODEZ*/":%s 489 %s :You cannot kill a services agent!",
     /* 490 */	                NULL,
