@@ -97,8 +97,6 @@ static struct SOCKADDR *connect_inet(aConfItem *, aClient *, int *);
 static int completed_connection(aClient *);
 static int check_init(aClient *, char *);
 static void do_dns_async(void), set_sock_opts(int, aClient *);
-struct SOCKADDR_IN vserv;
-char specific_virtual_host;
 
 #if defined(MAXBUFFERS)
 static char *readbuf;

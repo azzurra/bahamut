@@ -620,8 +620,8 @@ typedef struct MotdItem aMotd;
  *  IPv4 or IPv6 structures?
  */
 
-char mydummy[64];
-char mydummy2[64];
+extern char mydummy[64];
+extern char mydummy2[64];
 
 #ifdef INET6
 

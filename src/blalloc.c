@@ -15,6 +15,9 @@
 #include "numeric.h"
 #include "blalloc.h"
 
+char mydummy[64];
+char mydummy2[64];
+
 /* FUNCTION PROTOTYPES (LOCAL FUNCTIONS ONLY) */
 static int  newblock(BlockHeap *bh);
 
