@@ -21,13 +21,13 @@ all: viconf chkconf mkpasswd fixklines mkcloak
 build: all
 
 chkconf: $(chkconf_OBJECTS)
-	$(CC) -m32 -o chkconf $(chkconf_OBJECTS) ${IRCDLIBS}
+	$(CC) -m32 -o chkconf chkconf.o -L/usr/lib/i386-linux-gnu -lssl -lcrypto -lcrypt -lresolv -lz
 
 mkpasswd: $(mkpasswd_OBJECTS)
-	$(CC) -m32 -o mkpasswd $(mkpasswd_OBJECTS) $(IRCDLIBS)
+	$(CC) -m32 -o mkpasswd mkpasswd.o -L/usr/lib/i386-linux-gnu -lssl -lcrypto -lcrypt -lresolv -lz
 
 viconf: viconf.o
-	$(CC) -m32 -o viconf viconf.o ${IRCDLIBS}
+	$(CC) -m32 -o viconf viconf.o -L/usr/lib/i386-linux-gnu -lssl -lcrypto -lcrypt -lresolv -lz
 
 fixklines: fixklines.o
 	$(CC) -m32 -o fixklines fixklines.o

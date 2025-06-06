@@ -36,7 +36,7 @@ distclean: clean
 	$(CC) $(INCLUDEDIR) $(CFLAGS) -c $<
 
 ircd: $(OBJECTS)
-	$(CC) ${LDFLAGS} -m32 -o ircd $(OBJECTS) $(IRCDLIBS)
+	$(CC) -m32 -o ircd $(OBJECTS) -L/usr/lib/i386-linux-gnu -lssl -lcrypto -lcrypt -lresolv -lz
 	mv version.c version.c.last
 
 install: build
