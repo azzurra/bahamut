@@ -195,13 +195,20 @@ struct rrec
     char       *r_data;		/* pointer to data */
 };
 
-extern u_short _getshort();
+static inline u_short _getshort(const u_char *p)
+{
+    return ((u_short)p[0] << 8) | (u_short)p[1];
+}
 
 #ifdef __alpha
-extern u_int _getlong();
+static inline u_int _getlong(const u_char *p)
 #else
-extern u_long _getlong();
+static inline u_long _getlong(const u_char *p)
 #endif
+{
+    return ((u_long)p[0] << 24) | ((u_long)p[1] << 16)
+         | ((u_long)p[2] << 8)  |  (u_long)p[3];
+}
 
 /*
  * Inline versions of get/put short/long. Pointer is advanced; we

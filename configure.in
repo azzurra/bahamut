@@ -5,7 +5,7 @@ VERSION="4.7"
 AC_INIT([bahamut-azzurra], [4.7], [devel@ml.azzurra.org], [bahamut-azzurra])
 AC_CANONICAL_TARGET
 
-AC_CONFIG_HEADER(include/setup.h)
+AC_CONFIG_HEADERS([include/setup.h])
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -13,8 +13,6 @@ AC_ARG_ENABLE(encryption, [  --disable-encryption    disable rc4 link encryption
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_ISC_POSIX
-AC_AIX
 AC_PROG_MAKE_SET
 AC_PATH_PROG(RM,rm)
 AC_PATH_PROG(CP,cp)
@@ -30,7 +28,6 @@ AC_CHECK_FUNC(res_mkquery, AC_DEFINE(HAVE_RES_MKQUERY, [1], [Define if you have 
 AC_CHECK_FUNC(socket,, AC_CHECK_LIB(socket, socket))
 
 dnl Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/param.h unistd.h string.h strings.h sys/syslog.h sys/uio.h stdlib.h stddef.h stropts.h limits.h malloc.h)
 AC_MSG_CHECKING(MIN and MAX definition)
 AC_EGREP_CPP(yes,
@@ -75,7 +72,7 @@ AC_CHECK_TYPES([uint, u_char, u_short, u_long, u_int, ssize_t])
 
 dnl Check time_t signedness
 AC_CACHE_CHECK([whether time_t is signed], baha_cv_time_t_signed, [
-AC_RUN_IFELSE(AC_LANG_SOURCE([
+AC_RUN_IFELSE([AC_LANG_SOURCE([
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -85,8 +82,8 @@ AC_RUN_IFELSE(AC_LANG_SOURCE([
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
-int main(int c, char**v) { if (((time_t)-1)<0) return 1; else return 0; }]),
-  baha_cv_time_t_signed=no, baha_cv_time_t_signed=yes, baha_cv_time_t_signed=cross)
+int main(void) { if (((time_t)-1)<0) return 1; else return 0; }])],
+  [baha_cv_time_t_signed=no], [baha_cv_time_t_signed=yes], [baha_cv_time_t_signed=cross])
 ])
 
 if test "$baha_cv_time_t_signed" = cross; then
@@ -99,7 +96,6 @@ if test "$baha_cv_time_t_signed" != no; then
 fi
 
 dnl Checks for library functions.
-AC_PROG_GCC_TRADITIONAL
 AC_CHECK_FUNCS(index strerror strtoken strtok inet_addr inet_ntoa inet_netof inet_aton inet_ntop inet_pton)
 AC_CHECK_FUNCS(gettimeofday lrand48 sigaction bzero bcmp bcopy dn_expand __dn_expand poll writev mkstemp)
 AC_CHECK_FUNCS(dn_skipname __dn_skipname getrusage times, break)
@@ -109,110 +105,71 @@ dnl taken from ircd's Config script
 nonblock=no
 
 AC_MSG_CHECKING(for POSIX (O_NONBLOCK) nonblocking sockets)
-AC_TRY_RUN(
-[
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <signal.h>
-alarmed()
+int main(void)
 {
-	exit(1);
-}
-int main()
-{
-#if defined(O_NONBLOCK)
-	char b[12], x[32];
-	int f, l = sizeof(x);
-	f = socket(AF_INET, SOCK_DGRAM, 0);
-	if (f >= 0 && !(fcntl(f, F_SETFL, O_NONBLOCK))) {
-		signal(SIGALRM, alarmed);
-		alarm(3);
-		recvfrom(f, b, 12, 0, (struct sockaddr *)x, &l);
-		alarm(0);
-		exit(0);
-	}
+#if !defined(O_NONBLOCK)
+#error O_NONBLOCK not defined
 #endif
-	exit(1);
+    int f = socket(AF_INET, SOCK_DGRAM, 0);
+    int r = fcntl(f, F_SETFL, O_NONBLOCK);
+    (void)r;
+    return 0;
 }
-], AC_DEFINE(NBLOCK_POSIX, [1], [Define if you have posix non-blocking sockets (O_NONBLOCK)])
+])],
+[AC_DEFINE(NBLOCK_POSIX, [1], [Define if you have posix non-blocking sockets (O_NONBLOCK)])
 nonblock=yes
-AC_MSG_RESULT(O_NONBLOCK),
-AC_MSG_RESULT(no), AC_MSG_RESULT(can't tell))
+AC_MSG_RESULT(O_NONBLOCK)],
+[AC_MSG_RESULT(no)])
 
 if test $nonblock = no; then
 AC_MSG_CHECKING(for BSD (O_NDELAY) nonblocking sockets)
-AC_TRY_RUN(
-[
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <signal.h>
-alarmed()
+int main(void)
 {
-	exit(1);
-}
-int main()
-{
-#if defined( O_NDELAY ) && !defined( NBLOCK_POSIX )
-	char b[12], x[32];
-	int f, l = sizeof(x);
-	f = socket(AF_INET, SOCK_DGRAM, 0);
-	if (f >= 0 && !(fcntl(f, F_SETFL, O_NDELAY))) {
-		signal(SIGALRM, alarmed);
-		alarm(3);
-		recvfrom(f, b, 12, 0, (struct sockaddr *)x, &l);
-		alarm(0);
-		exit(0);
-	}
+#if !defined(O_NDELAY) || defined(NBLOCK_POSIX)
+#error O_NDELAY not usable
 #endif
-	exit(1);
+    int f = socket(AF_INET, SOCK_DGRAM, 0);
+    int r = fcntl(f, F_SETFL, O_NDELAY);
+    (void)r;
+    return 0;
 }
-], AC_DEFINE(NBLOCK_BSD, [1], [Define if you have BSD non-blocking sockets (O_NDELAY)])
+])],
+[AC_DEFINE(NBLOCK_BSD, [1], [Define if you have BSD non-blocking sockets (O_NDELAY)])
 nonblock=yes
-AC_MSG_RESULT(O_NDELAY),
-AC_MSG_RESULT(no), AC_MSG_RESULT(can't tell))
+AC_MSG_RESULT(O_NDELAY)],
+[AC_MSG_RESULT(no)])
 fi
 
 if test $nonblock = no; then
 AC_MSG_CHECKING(for SysV (FIONBIO) nonblocking sockets)
-AC_TRY_RUN(
-[
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
-#include <signal.h>
-alarmed()
+int main(void)
 {
-	exit(1);
+#if !defined(FIONBIO) || defined(NBLOCK_POSIX) || defined(NBLOCK_BSD)
+#error FIONBIO not usable
+#endif
+    int f = socket(AF_INET, SOCK_DGRAM, 0);
+    int r = ioctl(f, FIONBIO, &(int){1});
+    (void)r;
+    return 0;
 }
-int main()
-{
-#if !defined(NBLOCK_BSD) && !defined(NBLOCK_POSIX) && defined(FIONBIO)
-	char b[12], x[32];
-	int f, l = sizeof(x);
-	f = socket(AF_INET, SOCK_DGRAM, 0);
-	if (f >= 0 && !(fcntl(f, F_SETFL, FIONBIO))) {
-		signal(SIGALRM, alarmed);
-		alarm(3);
-		recvfrom(f, b, 12, 0, (struct sockaddr *)x, &l);
-		alarm(0);
-		exit(0);
-	}
-#endif /* !NBLOCK_POSIX && !NBLOCK_BSD && FIONBIO */
-	exit(1);
-}
-], AC_DEFINE(NBLOCK_SYSV, [1], [Define if you have SysV non-blocking sockets (FIONBIO)])
+])],
+[AC_DEFINE(NBLOCK_SYSV, [1], [Define if you have SysV non-blocking sockets (FIONBIO)])
 nonblock=yes
-AC_MSG_RESULT(FIONBIO),
-AC_MSG_RESULT(no),
-AC_MSG_RESULT(unable to test))
+AC_MSG_RESULT(FIONBIO)],
+[AC_MSG_RESULT(no)])
 fi
 
 if test $nonblock = no; then
@@ -221,8 +178,7 @@ fi
 
 dnl taken from ircd's Config script
 AC_MSG_CHECKING(signal implementation)
-AC_TRY_RUN(
-[
+AC_RUN_IFELSE([AC_LANG_SOURCE([
 int main()
 {
 #if defined(HAVE_SIGACTION)
@@ -231,15 +187,15 @@ int main()
 	exit(1);
 #endif
 }
-], AC_DEFINE(POSIX_SIGNALS, [1], [Define if you have reliable POSIX signals]) AC_MSG_RESULT(POSIX),
-    AC_TRY_RUN(
-[
+])],
+[AC_DEFINE(POSIX_SIGNALS, [1], [Define if you have reliable POSIX signals]) AC_MSG_RESULT(POSIX)],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <signal.h>
 int calls = 0;
-void handler()
+static void handler(int sig)
 {
 	if (calls) return;
- 	calls++;
+	calls++;
 	kill(getpid(), SIGTERM);
 	sleep(1);
 }
@@ -247,62 +203,63 @@ int main()
 {
 	signal(SIGTERM, handler);
 	kill(getpid(), SIGTERM);
-	exit (0);
+	exit(0);
 }
-], AC_DEFINE(BSD_RELIABLE_SIGNALS, [1], [Define if you have reliable BSD signals]) AC_MSG_RESULT(BSD),
-    AC_DEFINE(SYSV_UNRELIABLE_SIGNALS, [1], [Define if you have unreliable SysV signals]) AC_MSG_RESULT(SysV), AC_MSG_RESULT(uknown)),
-AC_MSG_RESULT(unknown))
+])],
+[AC_DEFINE(BSD_RELIABLE_SIGNALS, [1], [Define if you have reliable BSD signals]) AC_MSG_RESULT(BSD)],
+[AC_DEFINE(SYSV_UNRELIABLE_SIGNALS, [1], [Define if you have unreliable SysV signals]) AC_MSG_RESULT(SysV)],
+[AC_MSG_RESULT(unknown)])],
+[AC_MSG_RESULT(unknown)])
 dnl Check for sys_errlist
 dnl Stolen from BitchX
 AC_MSG_CHECKING(for sys_errlist declaration)
-AC_TRY_RUN([
+AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <sys/types.h>
 #include <stdio.h>
 #include <errno.h>
-main()
+int main()
 {
   char *s = sys_errlist[0];
-	  exit(0);
+  (void)s;
+  exit(0);
 }
-],
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(SYS_ERRLIST_DECLARED, [1], [Define this if we have a sys_errlist]),
-  AC_MSG_RESULT(no), AC_MSG_RESULT(cross compiling))
+])],
+  [AC_MSG_RESULT(yes)
+  AC_DEFINE(SYS_ERRLIST_DECLARED, [1], [Define this if we have a sys_errlist])],
+  [AC_MSG_RESULT(no)], [AC_MSG_RESULT(cross compiling)])
 
 dnl Check to see if we should set USE_FAST_FD_ISSET
 AC_MSG_CHECKING(to see if we should enable fast FD_ISSET code)
-AC_TRY_COMPILE(, [
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <sys/types.h>
-
 int main()
 {
   fd_set read_set;
-  read_set.fds_bits;
-  exit(0);
+  (void)read_set.fds_bits;
+  return 0;
 }
-], 
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(USE_FAST_FD_ISSET, [1], [Define this if we have (fd_set *)->read_bits]),
-  AC_MSG_RESULT(no))
+])],
+  [AC_MSG_RESULT(yes)
+  AC_DEFINE(USE_FAST_FD_ISSET, [1], [Define this if we have (fd_set *)->read_bits])],
+  [AC_MSG_RESULT(no)])
 
 dnl Check to see if we have a broken FD_SETSIZE
 
 DFDSS='-DFD_SETSIZE=1024'
 
 AC_MSG_CHECKING(to see if FD_SETSIZE is broken)
-AC_TRY_RUN([
+AC_RUN_IFELSE([AC_LANG_SOURCE([
 #define FD_SETSIZE 666
 #include <sys/types.h>
 #include <sys/time.h>
-
 int main()
 {
   if(FD_SETSIZE != 666)
      exit(1);
   exit(0);
 }
-], 
-AC_MSG_RESULT(no),
+])],
+[AC_MSG_RESULT(no)],
 [
 AC_MSG_RESULT(YES)
 AC_MSG_WARN(FD_SETSIZE is hard set by your operating system)
@@ -310,7 +267,7 @@ AC_MSG_WARN(MAXCONNECTIONS must be no higher than the hardwired FD_SETSIZE)
 AC_MSG_WARN(If you're using a system that supports it use the poll call instead of select.)
 DFDSS=' # FD_SETSIZE is broken on this machine!'
 ],
-AC_MSG_RESULT(can't tell))
+[AC_MSG_RESULT(can't tell)])
 
 AC_SUBST(DFDSS)
 
@@ -338,9 +295,12 @@ AC_C_BIGENDIAN
 
 dnl Check basic IPv6 support (AF_INET6, struct in6_addr et al.) - required by host cloaking code
 AC_CACHE_CHECK([for basic IPv6 support], baha_cv_ipv6_support,
-[AC_TRY_LINK([ #include <sys/types.h>
+[AC_LINK_IFELSE([AC_LANG_SOURCE([
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>], [struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; t.s6_addr[0] = 0; ],
+#include <netinet/in.h>
+int main(void) { struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; (void)s; (void)t; (void)i; return 0; }
+])],
     [baha_cv_ipv6_support=yes], [baha_cv_ipv6_support=no])])
 
 if test "$baha_cv_ipv6_support" = no; then
@@ -379,11 +339,10 @@ if test "$ZLIB_HOME" != "/usr" ; then
   CPPFLAGS="$CPPFLAGS -I$ZLIB_HOME/include"
 fi
 
-AC_LANG_SAVE
-AC_LANG_C
+AC_LANG_PUSH(C)
 AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
 AC_CHECK_HEADER(zlib.h, [zlib_cv_zlib_h=yes], [zlib_cv_zlib_h=no])
-AC_LANG_RESTORE
+AC_LANG_POP
 if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes" ; then
   LIBS="$LIBS -lz"
   AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
@@ -425,7 +384,7 @@ found_openssl=""
    for ssldir in $tryssl "" /usr/local/openssl /usr/lib/openssl \
        /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt \
        /opt/openssl ; do
-      LIBS="$save_LIBS -lcrypto"
+      LIBS="$save_LIBS -lssl -lcrypto"
       SSLINC="$save_SSLINC"
 
       # if the directory isn't null, but doesn't exist, skip it
@@ -437,9 +396,9 @@ found_openssl=""
       if test ! -z "$ssldir" -a "z$ssldir" != "z/usr"; then
          # try to use ssldir/lib for libraries, if it exists
          if test -d "$ssldir/lib" ; then
-            LIBS="-L$ssldir/lib -lcrypto $save_LIBS"
+            LIBS="-L$ssldir/lib -lssl -lcrypto $save_LIBS"
          else
-            LIBS="-L$ssldir -lcrypto $save_LIBS"
+            LIBS="-L$ssldir -lssl -lcrypto $save_LIBS"
          fi
 
          if test -d "$ssldir/include" ; then
@@ -451,42 +410,23 @@ found_openssl=""
          fi
       fi
 
-      AC_TRY_RUN(
-                 [
-#include <stdio.h>
-#include <string.h>
+      AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <openssl/rand.h>
 #include <openssl/opensslv.h>
-#include <openssl/crypto.h>
+#if OPENSSL_VERSION_NUMBER < 0x0090500fL
+#error OpenSSL version too old
+#endif
 int main(void)
 {
-   FILE *fp;
-   char a[2048];
-
-   fp = fopen(".openssl_h_version", "w");
-   if(fp)
-   {
-      fprintf(fp, "%s\n", OPENSSL_VERSION_TEXT);
-      fclose(fp);
-   }
-
-   fp = fopen(".openssl_l_version", "w");
-   if(fp)
-   {
-      fprintf(fp, "%s\n", SSLeay_version(SSLEAY_VERSION));
-      fclose(fp);
-   }
-
-   memset(a, 0, 2048);
-   RAND_add(a, 2048, 2048);
+   RAND_add("", 0, 0);
    if(RAND_status() <= 0)
       return 1;
    return 0;
 }
-                 ],
+      ])],
                  [
                     found_openssl=1;
-                 ], [], AC_MSG_RESULT(cross compiler)
+                 ]
       )
       if test ! -z "$found_openssl" ; then
          break;
@@ -520,9 +460,7 @@ fi
 AC_SUBST(SSLINC)
 CPPFLAGS="$save_CPPFLAGS"
 CFLAGS="$save_CFLAGS"
-echo " - openssl library version: `cat .openssl_l_version`"
-echo " - openssl header version : `cat .openssl_h_version`"
-$RM -f .openssl_l_version .openssl_h_version
+echo " - openssl found in: $ssldir"
 fi
 
 dnl end of openssl library test
@@ -540,7 +478,8 @@ case "$target" in
 *) AC_MSG_RESULT(nothing special required) ;;
 esac
 
-AC_OUTPUT(Makefile src/Makefile tools/Makefile)
+AC_CONFIG_FILES([Makefile src/Makefile tools/Makefile])
+AC_OUTPUT
 
 if test ! -f include/options.h; then
 	echo running ./config...
