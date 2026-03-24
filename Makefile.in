@@ -26,7 +26,7 @@ FDLIMIT=@DFDSS@
 # openssl related flags.
 SSLFLAGS=
 # Default CFLAGS
-CFLAGS= -fgnu89-inline -fcommon -m32 -O2 ${FDLIMIT} ${XFLAGS} ${SSLFLAGS}
+CFLAGS= -fgnu89-inline -fcommon -O2 ${FDLIMIT} ${XFLAGS} ${SSLFLAGS}
 # linker flags.
 LDFLAGS=
 #
@@ -87,6 +87,8 @@ SUBDIRS=src tools
 
 MAKE=make 'CFLAGS=${CFLAGS}' 'INSTALL=${INSTALL}' 'LDFLAGS=${LDFLAGS}'
 MAKEPROFILE=make 'CFLAGS=${CFLAGS} -pg -DPROFILING' 'INSTALL=${INSTALL}' 'LDFLAGS=${LDFLAGS} -pg'
+
+.PHONY: all build profile clean distclean install
 
 all:	build
 
