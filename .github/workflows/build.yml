@@ -1,0 +1,60 @@
+name: Bahamut CI Build
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie-slim
+
+    strategy:
+      matrix:
+        role: [hub, leaf]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Build Dependencies
+        run: |
+          apt-get update
+          apt-get install -y build-essential libssl-dev libc6-dev zlib1g-dev file
+
+      - name: Configure and Patch
+        run: |
+          ./configure
+          
+          # Patching the config header in the include directory
+          CONFIG_H="include/config.h"
+          
+          if [ "${{ matrix.role }}" = "hub" ]; then
+            echo "Building as HUB..."
+            sed -i 's/#undef HUB/#define HUB/g' "$CONFIG_H"
+          else
+            echo "Building as LEAF..."
+          fi
+          
+          echo "Enabling SSL..."
+          sed -i 's/#undef USE_SSL/#define USE_SSL/g' "$CONFIG_H"
+
+      - name: Compile and Install
+        run: |
+          make -j$(nproc)
+          make install
+
+      - name: Verify ircd ELF
+        run: |
+          TARGET="./src/ircd" 
+          
+          if [ -f "$TARGET" ] && file "$TARGET" | grep -q "ELF"; then
+            echo "Success: ${{ matrix.role }} 'ircd' is a valid ELF."
+          else
+            echo "Error: 'ircd' binary not found in src/ or is invalid."
+            ls -R
+            exit 1
+          fi
