@@ -568,11 +568,12 @@ static void resend_query(ResRQ * rptr)
 	break;
     case T_A:
 	(void) do_query_name(NULL, rptr->name, rptr, T_A);
+	break;
 #ifdef INET6
     case T_AAAA:
 	(void) do_query_name(NULL, rptr->name, rptr, T_AAAA);
-#endif
 	break;
+#endif
     default:
 	break;
     }
