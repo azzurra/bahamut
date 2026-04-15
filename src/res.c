@@ -1847,7 +1847,7 @@ find_cache_number(ResRQ * rptr, char *numb)
 #else
 	    if(!memcmp(((struct IN_ADDR *)cp->he.h_addr_list[i])->S_ADDR,
 				    ((struct IN_ADDR *)ip)->S_ADDR,
-				    sizeof(struct IN_ADDR)));
+				    sizeof(struct IN_ADDR)))
 #endif
 	    {
 		cainfo.ca_nu_hits++;
