@@ -1198,10 +1198,6 @@
  */
 #define WEBIRC
 
-/* Disable WEBIRC support if we're running on INET6 */
-#if defined(INET6) && defined(WEBIRC)
-#undef WEBIRC
-#endif
 
 /* IPV6_BIND_V6_ONLY
  * Define this if you want your ipv6 server to bind only ipv6 addresses
