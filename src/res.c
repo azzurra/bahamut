@@ -893,7 +893,7 @@ static int proc_answer(ResRQ * rptr, HEADER *hptr, char *buf, char *eob)
 	cp += sizeof(short);
 	
 	rptr->ttl = _getlong(cp);
-	cp += sizeof(rptr->ttl);
+	cp += 4; /* DNS wire TTL is always 32-bit, not sizeof(time_t) */
 	dlen = (int) _getshort(cp);
 	cp += sizeof(short);
 	
