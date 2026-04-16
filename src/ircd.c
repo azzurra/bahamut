@@ -150,6 +150,7 @@ int         bootopt = 0;	   /* Server boot option flags */
 char       *debugmode = "";	   /* -"-    -"-   -"-  */
 void       *sbrk0;		   /* initial sbrk(0) */ /*AZZURRA void*/
 static int  dorehash = 0;
+static int  dorehash_ssl_throttle = 0;
 static char *dpath = DPATH;
 int         rehashed = 1;
 int         zline_in_progress = 0; /* killing off matching D lines */
@@ -210,6 +211,25 @@ VOIDSIG s_die()
     exit(0);
 }
 
+#ifdef USE_SSL
+static VOIDSIG s_rehash_throttle_and_ssl() {
+#ifdef	POSIX_SIGNALS
+	struct sigaction act;
+#endif
+	dorehash_ssl_throttle = 1;
+#ifdef	POSIX_SIGNALS
+	act.sa_handler = s_rehash_throttle_and_ssl;
+	act.sa_flags = 0;
+	(void) sigemptyset(&act.sa_mask);
+	(void) sigaddset(&act.sa_mask, SIGUSR2);
+	(void) sigaction(SIGUSR2, &act, NULL);
+#else
+	(void) signal(SIGUSR2, s_rehash_throttle_and_ssl);	/* sysV -argv */
+#endif
+}
+#endif //#ifdef USE_SSL
+
+
 static  VOIDSIG s_rehash() 
 {
 #ifdef	POSIX_SIGNALS
@@ -223,7 +243,7 @@ static  VOIDSIG s_rehash()
     (void) sigaddset(&act.sa_mask, SIGHUP);
     (void) sigaction(SIGHUP, &act, NULL);
 #else
-    (void) signal(SIGHUP, s_rehash);	/* sysV -argv */
+    (void) signal(SIGHUP,  s_rehash);	/* sysV -argv */
 #endif
 }
 
@@ -1351,6 +1371,20 @@ void io_loop()
 	    (void) rehash(&me, &me, 1);
 	    dorehash = 0;
 	}
+#ifdef USE_SSL
+	if (dorehash_ssl_throttle && !lifesux)
+	{
+		sendto_security(NULL, "Got SIGUSR2 signal reloading SSL support.");
+		sendto_ops("Got SIGUSR2 reloading SSL support");
+		rehash_ssl();
+
+		sendto_security(NULL, "Got SIGUSR2 signal rehashing throttles.");
+		sendto_ops("Got SIGUSR2 rehashing throttles");
+		throttle_rehash();
+
+	    dorehash_ssl_throttle = 0;
+	}
+#endif //#ifdef USE_SSL
 	/*
 	 * 
 	 * Flush output buffers on all connections now if they 
@@ -1512,6 +1546,13 @@ static void setup_signals()
     (void) sigaddset(&act.sa_mask, SIGTERM);
     (void) sigaction(SIGTERM, &act, NULL);
 
+#ifdef USE_SSL
+	act.sa_handler = s_rehash_throttle_and_ssl;
+	(void) sigemptyset(&act.sa_mask);
+	(void) sigaddset(&act.sa_mask, SIGUSR2);
+	(void) sigaction(SIGUSR2, &act, NULL);
+#endif /* USE_SSL */
+
 #else
 # ifndef	HAVE_RELIABLE_SIGNALS
     (void) signal(SIGPIPE, dummy);
@@ -1526,6 +1567,9 @@ static void setup_signals()
 # endif
     (void) signal(SIGALRM, dummy);
     (void) signal(SIGHUP, s_rehash);
+#ifdef USE_SSL
+	(void) signal(SIGUSR2, s_rehash_throttle_and_ssl);
+#endif /* USE_SSL */
     (void) signal(SIGTERM, s_die);
     (void) signal(SIGINT, s_restart);
 #endif 

@@ -36,7 +36,7 @@ distclean: clean
 	$(CC) $(INCLUDEDIR) $(CFLAGS) -c $<
 
 ircd: $(OBJECTS)
-	$(CC) ${LDFLAGS} -m32 -o ircd $(OBJECTS) $(IRCDLIBS)
+	$(CC) ${LDFLAGS} -o ircd $(OBJECTS) $(IRCDLIBS)
 	mv version.c version.c.last
 
 install: build

@@ -30,7 +30,7 @@
 #include <openssl/dh.h>
 
 /* from dh.c */
-extern DH *get_dh1024(void);
+extern DH *get_dh2048(void);
 
 #define SAFE_SSL_READ	1
 #define SAFE_SSL_WRITE	2
@@ -82,7 +82,7 @@ int initssl(void)
 	SSL_CTX_free(ircdssl_ctx);
 	return 0;
     }
-    if ((dh_tmp = get_dh1024()) == NULL)
+    if ((dh_tmp = get_dh2048()) == NULL)
     {
 	ERR_print_errors_fp(stderr);
 	SSL_CTX_free(ircdssl_ctx);
@@ -173,7 +173,7 @@ int rehash_ssl(void)
 	return 0;
     }
 
-    if ((dh_tmp = get_dh1024()) == NULL)
+    if ((dh_tmp = get_dh2048()) == NULL)
     {
 	disable_ssl(1);
 	return 0;

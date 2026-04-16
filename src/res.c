@@ -346,6 +346,10 @@ static int send_res_msg(char *msg, int len, int rcount)
     for (i = 0; i < max; i++)
     {
 	_res.nsaddr_list[i].sin_family = AF_INET;
+	sendto_ops_lev(DEBUG_LEV, "DNS sendto: server=%s:%d fd=%d len=%d",
+		       inet_ntoa(_res.nsaddr_list[i].sin_addr),
+		       ntohs(_res.nsaddr_list[i].sin_port),
+		       resfd, len);
 	if (sendto(resfd, msg, len, 0,
 		   (struct sockaddr *) &(_res.nsaddr_list[i]),
 		   sizeof(struct sockaddr)) == len)
@@ -545,6 +549,17 @@ static int query_name(char *name, int class, int type, ResRQ * rptr)
     } while (find_id(ntohs(hptr->id)));
     rptr->id = ntohs(hptr->id);
     rptr->sends++;
+    {
+	char hexbuf[MAXPACKET * 3 + 1];
+	int i;
+	for (i = 0; i < r && i * 3 < sizeof(hexbuf) - 3; i++)
+	    ircsprintf(hexbuf + i * 3, "%02x ", (unsigned char)buf[i]);
+	hexbuf[i * 3] = '\0';
+	sendto_ops_lev(DEBUG_LEV, "DNS UDP query: type=%s(%d) name=%s (%d bytes) hex=[%s]",
+		       type == T_PTR ? "PTR" : type == T_AAAA ? "AAAA" :
+		       type == T_A ? "A" : "?",
+		       type, name, r, hexbuf);
+    }
     s = send_res_msg(buf, r, rptr->sends);
     if (s == -1)
     {
@@ -568,11 +583,12 @@ static void resend_query(ResRQ * rptr)
 	break;
     case T_A:
 	(void) do_query_name(NULL, rptr->name, rptr, T_A);
+	break;
 #ifdef INET6
     case T_AAAA:
 	(void) do_query_name(NULL, rptr->name, rptr, T_AAAA);
-#endif
 	break;
+#endif
     default:
 	break;
     }
@@ -892,7 +908,7 @@ static int proc_answer(ResRQ * rptr, HEADER *hptr, char *buf, char *eob)
 	cp += sizeof(short);
 	
 	rptr->ttl = _getlong(cp);
-	cp += sizeof(rptr->ttl);
+	cp += 4; /* DNS wire TTL is always 32-bit, not sizeof(time_t) */
 	dlen = (int) _getshort(cp);
 	cp += sizeof(short);
 	
@@ -1045,23 +1061,26 @@ static int proc_answer(ResRQ * rptr, HEADER *hptr, char *buf, char *eob)
 				   "DNS_PTR from an acceptable (%s)", acc);
 #endif
 	    
-	    if ((n = dn_expand(buf, eob, cp, hostbuf, HOSTLEN - 1)) < 0) 
+	    if ((n = dn_expand(buf, eob, cp, hostbuf, HOSTLEN - 1)) < 0)
 	    {
 		cp = NULL;
 		break;
 	    }
-	    
+
 	    /*
 	     * This comment is based on analysis by Shadowfax,
 	     * Jolo and johan, not me. (Dianora) I am only
 	     * commenting it.
-	     * 
+	     *
 	     * dn_expand is guaranteed to not return more than
 	     * sizeof(hostbuf) but do all implementations of
 	     * dn_expand also guarantee buffer is terminated with
 	     * null byte? Lets not take chances. -Dianora
 	     */
 	    hostbuf[HOSTLEN] = '\0';
+	    sendto_ops_lev(DEBUG_LEV,
+			   "DNS PTR RDATA dn_expand: n=%d hostbuf=%s (HOSTLEN=%d)",
+			   n, hostbuf, HOSTLEN);
 	    cp += n;
 	    len = strlen(hostbuf);
 	    
@@ -1226,7 +1245,19 @@ struct hostent *get_res(char *lp)
     rc = recvfrom(resfd, buf, sizeof(buf), 0, (struct sockaddr *) &sin, &len);
     if (rc <= sizeof(HEADER))
 	return getres_err(rptr, lp);
-    
+
+    {
+	unsigned char *raw = (unsigned char *)buf;
+	char hexbuf[MAXPACKET * 3 + 1];
+	int i;
+	for (i = 0; i < rc && i * 3 < sizeof(hexbuf) - 3; i++)
+	    ircsprintf(hexbuf + i * 3, "%02x ", raw[i]);
+	hexbuf[i * 3] = '\0';
+	sendto_ops_lev(DEBUG_LEV,
+		       "DNS UDP raw reply (%d bytes): [%s]",
+		       rc, hexbuf);
+    }
+
     /*
      * convert DNS reply reader from Network byte order to CPU byte
      * order.
@@ -1247,8 +1278,11 @@ struct hostent *get_res(char *lp)
      * just ignore this response.
      */
     rptr = find_id(hptr->id);
-    if (!rptr)
+    if (!rptr) {
+	sendto_ops_lev(DEBUG_LEV, "DNS orphaned reply: id=%d rcode=%d ancount=%d",
+		       hptr->id, hptr->rcode, hptr->ancount);
 	return getres_err(rptr, lp);
+    }
     /*
      * check against possibly fake replies
      */
@@ -1271,6 +1305,20 @@ struct hostent *get_res(char *lp)
 
     if ((hptr->rcode != NOERROR) || (hptr->ancount == 0))
     {
+	sendto_ops_lev(DEBUG_LEV,
+		       "DNS UDP reply: rcode=%d(%s) ancount=%d nscount=%d arcount=%d tc=%d type=%s(%d) name=%s",
+		       hptr->rcode,
+		       hptr->rcode == NXDOMAIN ? "NXDOMAIN" :
+		       hptr->rcode == SERVFAIL ? "SERVFAIL" :
+		       hptr->rcode == FORMERR ? "FORMERR" :
+		       hptr->rcode == REFUSED ? "REFUSED" :
+		       hptr->rcode == NOERROR ? "NOERROR" : "?",
+		       hptr->ancount, hptr->nscount, hptr->arcount, hptr->tc,
+		       rptr->type == T_PTR ? "PTR" :
+		       rptr->type == T_AAAA ? "AAAA" :
+		       rptr->type == T_A ? "A" : "?",
+		       rptr->type,
+		       rptr->name ? rptr->name : inet_ntop(AFINET, &rptr->addr, mydummy, sizeof(mydummy)));
 	switch (hptr->rcode)
 	{
 	case NXDOMAIN:
@@ -1303,8 +1351,17 @@ struct hostent *get_res(char *lp)
 	}
 	return getres_err(rptr, lp);
     }
+    sendto_ops_lev(DEBUG_LEV,
+		   "DNS UDP reply OK: ancount=%d tc=%d type=%s(%d) name=%s (%d bytes)",
+		   hptr->ancount, hptr->tc,
+		   rptr->type == T_PTR ? "PTR" :
+		   rptr->type == T_AAAA ? "AAAA" :
+		   rptr->type == T_A ? "A" : "?",
+		   rptr->type,
+		   rptr->name ? rptr->name : inet_ntop(AFINET, &rptr->addr, mydummy, sizeof(mydummy)),
+		   rc);
     a = proc_answer(rptr, hptr, buf, buf + rc);
-    
+
 #ifdef DEBUG
     Debug((DEBUG_INFO, "get_res:Proc answer = %d", a));
 #endif
@@ -1353,12 +1410,21 @@ struct hostent *get_res(char *lp)
 	else
 		type = T_AAAA;
 #endif
+	sendto_ops_lev(DEBUG_LEV,
+		       "DNS forward verify: %s -> %s(%d) (v4mapped=%d)",
+		       rptr->he.h_name,
+		       type == T_AAAA ? "AAAA" : "A", type,
+		       IN6_IS_ADDR_V4MAPPED(&rptr->he.h_addr));
 	if ((hp2 = gethost_byname_type(rptr->he.h_name, &rptr->cinfo, type)))
 	    if (lp)
 		memcpy(lp, (char *) &rptr->cinfo, sizeof(Link));
-	
+
 	if(!hp2)
 	{
+	    sendto_ops_lev(DEBUG_LEV,
+			   "DNS forward verify FAILED: %s has no %s record, falling back to reverse-only",
+			   rptr->he.h_name,
+			   type == T_AAAA ? "AAAA" : "A");
 	    memcpy(&last->he_rev, &rptr->he, sizeof(struct hent));
 	    memset(&rptr->he, 0, sizeof(struct hent));
 	    last->has_rev = 1;
@@ -1847,7 +1913,7 @@ find_cache_number(ResRQ * rptr, char *numb)
 #else
 	    if(!memcmp(((struct IN_ADDR *)cp->he.h_addr_list[i])->S_ADDR,
 				    ((struct IN_ADDR *)ip)->S_ADDR,
-				    sizeof(struct IN_ADDR)));
+				    sizeof(struct IN_ADDR)))
 #endif
 	    {
 		cainfo.ca_nu_hits++;
