@@ -85,22 +85,14 @@ signed cert (Let's Encrypt works fine).
 
 ## 7. Runtime configuration
 
-Edit `ircd.conf` in `DPATH`.  See `doc/example.conf` for a fully
-commented template, and `doc/Configure.doc` for per-directive
-reference.  Minimum set of lines:
+Edit `ircd.conf` in `DPATH`.  The repository ships `doc/example.conf`
+as a fully commented, working template — start from a copy of that
+rather than writing `ircd.conf` from scratch.  `doc/Configure.doc`
+has the per-directive reference for everything the example does not
+already spell out.
 
-    M:<server name>:*:<description>:
-    A:<description>:<admin nick>:<contact>:
-    Y:<class>:<pingfreq>:<connfreq>:<maxlinks>:<sendq>
-    I:<client mask>:<password>:<host mask>:<port>:<class>     # client auth
-    O:<user@host>:<pass>:<nick>:<flags>:<class>
-    P:<allowed addr>:<bind addr>:<flags>:<port>
-
-Field counts and field meanings are pinned by `doc/example.conf` —
-keep that as the canonical reference, not this list.
-
-For details of cloaking (`+x`), vhosts, spamfilters, kline/akill, see
-`doc/Configure.doc`.
+Topics to read up on once the server is up: cloaking (`+x`), vhosts,
+spamfilters, kline/akill — see `doc/Configure.doc`.
 
 ## 8. Running
 
