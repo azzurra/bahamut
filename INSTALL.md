@@ -71,10 +71,14 @@ at runtime.
 
 See [`SSL`](./SSL) for the full FAQ.  Short version: if you enabled
 encryption at configure time, drop a PEM certificate and private key
-into `DPATH` and add a `P:` line with the SSL port (commonly 9999) in
-`ircd.conf`:
+into `DPATH` and add a `P:` line with the `S` flag (SSL listener) on
+the desired port (commonly 9999) in `ircd.conf`:
 
-    P:*:<bind-ip>:SSL:9999
+    P:*:<bind-ip>:S:9999
+
+See the `P:` line header comment in `doc/example.conf` for the full
+flag set (`S` = SSL, `H` = HAProxy PROXY, both = cleartext behind a
+TLS-terminating proxy).
 
 A self-signed cert is enough for testing; production should use a CA
 signed cert (Let's Encrypt works fine).
@@ -85,12 +89,15 @@ Edit `ircd.conf` in `DPATH`.  See `doc/example.conf` for a fully
 commented template, and `doc/Configure.doc` for per-directive
 reference.  Minimum set of lines:
 
-    M:<server name>:<bind ip>:<description>::<sid>
-    A:<admin info lines>
-    Y:<class number>:...
-    I:*@*:<password>:*@*:<class>       # client auth
+    M:<server name>:*:<description>:
+    A:<description>:<admin nick>:<contact>:
+    Y:<class>:<pingfreq>:<connfreq>:<maxlinks>:<sendq>
+    I:<client mask>:<password>:<host mask>:<port>:<class>     # client auth
     O:<user@host>:<pass>:<nick>:<flags>:<class>
-    P:*:<bind ip>::<port>
+    P:<allowed addr>:<bind addr>:<flags>:<port>
+
+Field counts and field meanings are pinned by `doc/example.conf` —
+keep that as the canonical reference, not this list.
 
 For details of cloaking (`+x`), vhosts, spamfilters, kline/akill, see
 `doc/Configure.doc`.
@@ -107,7 +114,9 @@ Common flags:
     -t                  do not fork; run in foreground
     -v                  print version and exit
 
-Logs land in `log/ircd.log` (or as configured via the `L:` line).
+Logs land in `log/ircd.log` (path set at compile time via `LPATH` in
+`include/config.h`, default `ircd.log` — there is no runtime `L:`
+config line).
 
 ## 9. Upgrading
 
