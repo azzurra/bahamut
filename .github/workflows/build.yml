@@ -1,0 +1,67 @@
+name: build
+
+on:
+  push:
+    branches: [master, develop, 'features/**', 'feat/**', 'ci/**', 'bugfix/**']
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  build:
+    name: build (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [leaf, hub]
+
+    steps:
+      - name: install build deps
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            autoconf \
+            build-essential \
+            libssl-dev \
+            zlib1g-dev \
+            libcrypt-dev \
+            ca-certificates \
+            git
+
+      - uses: actions/checkout@v4
+
+      - name: seed options.h (${{ matrix.profile }})
+        run: cp buildbot/options.h_${{ matrix.profile }} include/options.h
+
+      - name: autoconf
+        run: autoconf
+
+      - name: configure
+        run: ./configure
+
+      - name: build
+        run: make
+
+      - name: verify binary
+        run: |
+          test -x ./src/ircd
+          ls -la ./src/ircd
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ircd-${{ matrix.profile }}
+          path: src/ircd
+          retention-days: 7
+
+  docker:
+    name: docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build image
+        run: docker build -t azzurra-bahamut:ci .
+      - name: smoke-check binary inside image
+        run: |
+          docker run --rm --entrypoint sh azzurra-bahamut:ci \
+            -c 'test -x /build/src/ircd'
