@@ -3189,8 +3189,22 @@ int m_list(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	return 0;
     }
 
-    if (check_restricted_user(sptr))
+    /*
+     * Issue #10: frame ERR_RESTRICTED with RPL_LISTSTART/LISTEND so that
+     * mIRC (and other clients gating on the list start/end numerics)
+     * don't hang waiting for list data. Inline the check here rather
+     * than calling check_restricted_user() — that helper would emit
+     * ERR_RESTRICTED before we get control back to interleave it.
+     */
+    if (restriction_enabled && MyClient(sptr) && !IsKnownNick(sptr) &&
+	(sptr->confs->value.aconf->flags & CONF_FLAGS_I_RESTRICTED) &&
+	!IsAnOper(sptr))
+    {
+	sendto_one(sptr, rpl_str(RPL_LISTSTART), me.name, parv[0]);
+	sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
+	sendto_one(sptr, err_str(ERR_RESTRICTED), me.name, sptr->name);
 	return 0;
+    }
 
     /* If a /list is in progress, then another one will cancel it */
     if ((lopt = sptr->user->lopt)!=NULL)
