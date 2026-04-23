@@ -1180,19 +1180,6 @@
  */
 #define FAILEDOPER_SHOWPASS
 
-/* FASTWEB
- * Define this if you want to enable workaround for fastweb's man lame addressing
- */
-#undef FASTWEB
-
-#ifdef FASTWEB
-/* FAST_RES
- * Domain for FastWeb hosts.
- */
-#define FAST_RES "fastweb.fw"
-#endif 
- 
-
 /* WEBIRC
  * Define this if you want to enable support for WEBIRC spoof.
  */
