@@ -35,52 +35,6 @@ LDFLAGS=
 # to match the kernel config --JRL
 #CFLAGS= -g -D"FD_SETSIZE=4096" -O2
 #
-# To compile on IRIX (tested 2/24/2000 on IRIX 6.4)
-#CFLAGS=-D_USE_BSD
-#IRCDLIBS=-lbsd
-#
-# NOTE: The rest of these definitions may or may not work, I haven't tested them --JRL
-#
-# use the following on MIPS:
-#CFLAGS= -systype bsd43 -DSYSTYPE_BSD43
-# For Irix 4.x (SGI), use the following:
-#CFLAGS= -g -cckr
-#
-# on NEXT use:
-#CFLAGS=-bsd
-#on NeXT other than 2.0:
-#IRCDLIBS=-lsys_s
-#
-# AIX 370 flags
-#CFLAGS=-D_BSD -Hxa
-#IRCDLIBS=-lbsd
-#
-# Dynix/ptx V2.0.x
-#CFLAGS= -O -Xo
-#IRCDLIBS= -lsocket -linet -lnsl -lseq
-# 
-# Dynix/ptx V1.x.x
-#IRCDLIBS= -lsocket -linet -lnsl -lseq
-#
-#use the following on SUN OS without nameserver libraries inside libc
-#IRCDLIBS=-lresolv
-#
-# ESIX
-#CFLAGS=-O -I/usr/ucbinclude
-#IRCDLIBS=-L/usr/ucblib -L/usr/lib -lsocket -lucb -lns -lnsl
-#
-# LDFLAGS - flags to send the loader (ld). SunOS users may want to add
-# -Bstatic here.
-#
-#LDFLAGS=-Bstatic
-#
-#Dell SVR4
-#CC=gcc
-#CFLAGS= -O2
-#IRCDLIBS=-lsocket -lnsl -lucb
-#IRCLIBS=-lcurses -lresolv -lsocket -lnsl -lucb
-
-
 
 SHELL=/bin/sh
 SUBDIRS=src tools

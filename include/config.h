@@ -55,14 +55,6 @@
  */
 #define MAX_BUFFER	48
 
-
-/* Also define this for SunOS 4.1.4_DBE */
-#undef SUNDBE
-#ifdef SUNDBE
-#define FD_SETSIZE HARD_FDLIMIT_
-#define NOFILE HARD_FDLIMIT_
-#endif /* SUNDBE */
-
 /*
  * DPATH SPATH CPATH MPATH KPATH - directoy and files locations Full
  * pathnames and defaults of irc system's support files. Please note
@@ -203,11 +195,7 @@
  * 
  * -Dianora
  */
-#ifdef OS_SOLARIS
-#define NO_PRIORITY
-#else
 #undef NO_PRIORITY
-#endif
 
 /* Services Name */
 #define SERVICES_NAME "services.dal.net"	/* DALnet services */
@@ -254,17 +242,7 @@
 #endif
 
 /* OS Depentant ifdefs */
-
-#ifdef SUNDBE
-#define FD_SETSIZE HARD_FDLIMIT_
-#define NOFILE HARD_FDLIMIT_
-#endif /* SUNDBE */
-
-#ifdef OS_SOLARIS
-#define NO_PRIORITY
-#else
 #undef NO_PRIORITY
-#endif
 
 /* File names */
 #define	CPATH	"ircd.conf"
@@ -964,8 +942,7 @@
 
 /*
  * If the OS has SOMAXCONN use that value, otherwise Use the value in
- * HYBRID_SOMAXCONN for the listen(); backlog try 5 or 25. 5 for AIX
- * and SUNOS, 25 should work better for other OS's
+ * HYBRID_SOMAXCONN for the listen()
  */
 #define HYBRID_SOMAXCONN 25
 

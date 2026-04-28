@@ -180,27 +180,6 @@
 /* Define if you have SysV non-blocking sockets (FIONBIO) */
 #undef NBLOCK_SYSV
 
-/* Define for AIX. */
-#undef OS_AIX
-
-/* Define for Sequent Dynix/PTX. */
-#undef OS_DYNIXPTX
-
-/* Define for ESIX. */
-#undef OS_ESIX
-
-/* Define if using HPUX. */
-#undef OS_HPUX
-
-/* Define for a MIPS machine. */
-#undef OS_MIPS
-
-/* Define for a NeXT OS. */
-#undef OS_NEXT
-
-/* Define for Solaris 2.x. */
-#undef OS_SOLARIS2
-
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 

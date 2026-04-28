@@ -74,17 +74,7 @@
 #define   rindex  strrchr
 #endif
 
-#ifdef AIX
-#include <sys/select.h>
-#endif
-#if defined(AIX)
-#include <time.h>
-#ifdef AIX
 #include <sys/time.h>
-#endif
-#else
-#include <sys/time.h>
-#endif
 
 #if ((__GNU_LIBRARY__ == 6) && (__GLIBC__ >=2) && (__GLIBC_MINOR__ >= 2))
 #include <time.h>
@@ -92,11 +82,7 @@
 
 #define MyFree(x)       if ((x) != NULL) free(x)
 
-#ifdef NEXT
-#define VOIDSIG int		/* whether signal() returns int of void */
-#else
 #define VOIDSIG void		/* whether signal() returns int of void */
-#endif
 
 extern VOIDSIG dummy();
 

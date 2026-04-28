@@ -35,9 +35,6 @@
 #include "zlink.h"
 #include "info.h"
 
-#if defined(AIX) || defined(DYNIXPTX) || defined(SVR3)
-#include <time.h>
-#endif
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <utmp.h>
@@ -1321,8 +1318,8 @@ int m_info(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    sendto_one(sptr, ":%s %d %s :SHORT_MOTD=%d, SHOW_INVISIBLE_LUSERS=%d", /* one position empty */
 		    me.name, RPL_INFO, parv[0], SHORT_MOTD_VAL, SHOW_INVISIBLE_LUSERS_VAL);
 
-	    sendto_one(sptr, ":%s %d %s :SHOW_UH=%d, STATS_NOTICE=%d, SUNDBE=%d",
-		    me.name, RPL_INFO, parv[0], SHOW_UH_VAL, STATS_NOTICE_VAL, SUNDBE_VAL);
+	    sendto_one(sptr, ":%s %d %s :SHOW_UH=%d, STATS_NOTICE=%d",
+		    me.name, RPL_INFO, parv[0], SHOW_UH_VAL, STATS_NOTICE_VAL);
 
 	    sendto_one(sptr, ":%s %d %s :UNKLINE=%d, USERNAMES_IN_TRACE=%d, USE_FAST_FD_ISSET=%d",
 		    me.name, RPL_INFO, parv[0], UNKLINE_VAL, USERNAMES_IN_TRACE_VAL, USE_FAST_FD_ISSET_VAL);

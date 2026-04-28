@@ -208,12 +208,6 @@
 #define STATS_NOTICE_VAL 0
 #endif
 
-#ifdef SUNDBE
-#define SUNDBE_VAL 1
-#else
-#define SUNDBE_VAL 0
-#endif
-
 #ifdef UNKLINE
 #define UNKLINE_VAL 1
 #else

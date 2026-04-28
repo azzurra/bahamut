@@ -6654,41 +6654,6 @@ echo " - openssl found in: $ssldir"
 fi
 
 
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking operating system" >&5
-printf %s "checking operating system... " >&6; }
-case "$target" in
-*-solaris2*)
-printf "%s\n" "#define OS_SOLARIS2 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: Solaris 2.x" >&5
-printf "%s\n" "Solaris 2.x" >&6; } ;;
-*-aix*)
-printf "%s\n" "#define OS_AIX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: AIX" >&5
-printf "%s\n" "AIX" >&6; } ;;
-*-esix*)
-printf "%s\n" "#define OS_ESIX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ESIX" >&5
-printf "%s\n" "ESIX" >&6; } ;;
-*-next*)
-printf "%s\n" "#define OS_NEXT 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: NeXT something" >&5
-printf "%s\n" "NeXT something" >&6; } ;;
-*-mips*)
-printf "%s\n" "#define OS_MIPS 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: MIPS something" >&5
-printf "%s\n" "MIPS something" >&6; } ;;
-*-sequent-ptx*)
-printf "%s\n" "#define OS_DYNIXPTX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: Dynix PTX" >&5
-printf "%s\n" "Dynix PTX" >&6; } ;;
-*-hpux*)
-printf "%s\n" "#define OS_HPUX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: HP-UX" >&5
-printf "%s\n" "HP-UX" >&6; } ;;
-*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: nothing special required" >&5
-printf "%s\n" "nothing special required" >&6; } ;;
-esac
-
 ac_config_files="$ac_config_files Makefile src/Makefile tools/Makefile"
 
 cat >confcache <<\_ACEOF

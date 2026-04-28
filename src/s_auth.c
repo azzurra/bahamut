@@ -29,7 +29,7 @@
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#if defined(__hpux) || defined ( DEBUGMODE ) /* AZZURRA debugmode */
+#if defined ( DEBUGMODE ) /* AZZURRA debugmode */
 #include "inet.h"
 #endif
 #include <fcntl.h>
