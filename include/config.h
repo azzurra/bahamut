@@ -55,14 +55,6 @@
  */
 #define MAX_BUFFER	48
 
-
-/* Also define this for SunOS 4.1.4_DBE */
-#undef SUNDBE
-#ifdef SUNDBE
-#define FD_SETSIZE HARD_FDLIMIT_
-#define NOFILE HARD_FDLIMIT_
-#endif /* SUNDBE */
-
 /*
  * DPATH SPATH CPATH MPATH KPATH - directoy and files locations Full
  * pathnames and defaults of irc system's support files. Please note
@@ -254,12 +246,6 @@
 #endif
 
 /* OS Depentant ifdefs */
-
-#ifdef SUNDBE
-#define FD_SETSIZE HARD_FDLIMIT_
-#define NOFILE HARD_FDLIMIT_
-#endif /* SUNDBE */
-
 #ifdef OS_SOLARIS
 #define NO_PRIORITY
 #else
