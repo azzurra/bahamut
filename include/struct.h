@@ -810,11 +810,7 @@ struct User
     char        host[HOSTLEN + 1];
     char	virthost[HOSTLEN + 1];
     char       *server;        /* pointer to scached server name */
-#ifdef OS_SOLARIS
-    uint_t    servicestamp;    /* solaris is gay -epi */
-#else
     u_int32_t servicestamp;    /* Services id - Raistlin */
-#endif
     /*
      * In a perfect world the 'server' name should not be needed, a
      * pointer to the client describing the server is enough. 

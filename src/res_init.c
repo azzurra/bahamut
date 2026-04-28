@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
-#include "config.h"		/* To get #define SOL20 */
 #include "sys.h"
 #include "nameser.h"
 #include "resolv.h"

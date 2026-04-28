@@ -33,11 +33,6 @@
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#if defined(SOL20)
-#include <sys/filio.h>
-#include <sys/select.h>
-#include <unistd.h>
-#endif
 #include "inet.h"
 #include <stdio.h>
 #include <signal.h>
@@ -51,12 +46,7 @@
 #include <poll.h>
 #endif /* USE_POLL */
 
-#ifdef	AIX
-#include <time.h>
-#include <arpa/nameser.h>
-#else
 #include "nameser.h"
-#endif
 #include "resolv.h"
 
 #ifdef USE_SSL
@@ -550,9 +540,7 @@ void init_sys()
 
     printf("Ircd is now becoming a daemon.\n");
 
-#if !defined(SOL20)
     (void) setlinebuf(stderr);
-#endif
 
     for (fd = 3; fd < MAXCONNECTIONS; fd++)
     {
@@ -591,8 +579,7 @@ void init_sys()
 	    (void) close(fd);
 	}
 #endif
-#if defined(SOL20) || defined(DYNIXPTX) || \
-    defined(_POSIX_SOURCE) || defined(SVR4)
+#if defined(_POSIX_SOURCE)
 	(void) setsid();
 #else
 	(void) setpgrp(0, (int) getpid());
@@ -1217,12 +1204,9 @@ static void set_sock_opts(int fd, aClient * cptr)
 	silent_report_error("setsockopt(SO_REUSEADDR) %s:%s", cptr);
 #endif
 #if  defined(SO_DEBUG) && defined(DEBUGMODE) && 0
-    /* Solaris with SO_DEBUG writes to syslog by default */
-#if !defined(SOL20) || defined(USE_SYSLOG)
     opt = 1;
     if (setsockopt(fd, SOL_SOCKET, SO_DEBUG, (char *) &opt, sizeof(opt)) < 0)
 	silent_report_error("setsockopt(SO_DEBUG) %s:%s", cptr);
-#endif				/* SOL20 */
 #endif
 #ifdef	SO_USELOOPBACK
     opt = 1;
@@ -2219,9 +2203,6 @@ int read_message(time_t delay, fdlist * listp)
 
 #else   /* USE_POLL */
 
-#ifdef AIX
-#define POLLREADFLAGS (POLLIN|POLLMSG)
-#endif
 #if defined(POLLMSG) && defined(POLLIN) && defined(POLLRDNORM)
 #define POLLREADFLAGS (POLLMSG|POLLIN|POLLRDNORM)
 #endif
@@ -2324,9 +2305,6 @@ int read_message(time_t delay, fdlist * listp)
 		continue;
 	    if (IsMe(cptr) && IsListening(cptr)) 
 	    {
-# if defined(SOL20) || defined(AIX)
-#  define CONNECTFAST
-# endif
 		
 # ifdef CONNECTFAST
 		/* 

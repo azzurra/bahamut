@@ -56,12 +56,6 @@ DOIDENTD="`grep 'DO_IDENTD' $OPTIONS_H | sed s/'.define DO_IDENTD  '// | xargs $
 #
 # Now to pull yucky defaults out.
 #
-SOLARIS="`grep 'OS_SOLARIS' $OPTIONS_H | sed s/'.define OS_SOLARIS'// | xargs $ECHO`"
-if [ -n "$SOLARIS" ] ; then
-   SOLARIS=""
-else
-   SOLARIS="1"
-fi
 STATSN="`grep 'STATS_NOTICE' $OPTIONS_H | sed s/'.define STATS_NOTICE'// | xargs $ECHO`"
 if [ -n "$STATSN" ] ; then
    STATSN=""
@@ -170,7 +164,6 @@ if [ ! -f $OPTIONS_H ] ; then
 FDLIMIT="1024"
 MAXUSERS="1000"
 MAXBUF="24" 
-SOLARIS=""
 DPATH="`pwd`/"
 STATSN="1" # Default setting, no question asked.
 SMOTD="1" # Default setting, no question asked.
@@ -410,14 +403,6 @@ while [ -z "$FOO" ] ; do
     esac
 done
 
-OS=`uname -a`
-case "$OS" in
-    *SunOS*5.*)
-	SOLARIS="1"
-	echo "You are using Sun/Solaris, Compatibility code loaded..."
-	;;
-esac
-
 FOO=""
 runonce=""
 while [ -z "$FOO" ] ; do
@@ -641,11 +626,6 @@ if [ -n "$SYSLOG" ] ; then
     echo "#define USE_SYSLOG" >> $OPTIONS_H
 else
     echo "#undef USE_SYSLOG" >> $OPTIONS_H
-fi
-if [ -n "$SOLARIS" ] ; then
-    echo "#define OS_SOLARIS" >> $OPTIONS_H
-else
-    echo "#undef OS_SOLARIS" >> $OPTIONS_H
 fi
 if [ -n "$CRYPTPASS" ] ; then
     echo "#define CRYPT_OPER_PASSWORD" >> $OPTIONS_H

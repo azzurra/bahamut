@@ -195,11 +195,7 @@
  * 
  * -Dianora
  */
-#ifdef OS_SOLARIS
-#define NO_PRIORITY
-#else
 #undef NO_PRIORITY
-#endif
 
 /* Services Name */
 #define SERVICES_NAME "services.dal.net"	/* DALnet services */
@@ -246,11 +242,7 @@
 #endif
 
 /* OS Depentant ifdefs */
-#ifdef OS_SOLARIS
-#define NO_PRIORITY
-#else
 #undef NO_PRIORITY
-#endif
 
 /* File names */
 #define	CPATH	"ircd.conf"
@@ -950,8 +942,7 @@
 
 /*
  * If the OS has SOMAXCONN use that value, otherwise Use the value in
- * HYBRID_SOMAXCONN for the listen(); backlog try 5 or 25. 5 for AIX
- * and SUNOS, 25 should work better for other OS's
+ * HYBRID_SOMAXCONN for the listen()
  */
 #define HYBRID_SOMAXCONN 25
 

@@ -465,19 +465,6 @@ fi
 
 dnl end of openssl library test
 
-dnl don't add more of these unless it's critical.  Trying to get rid of them.
-AC_MSG_CHECKING(operating system)
-case "$target" in
-*-solaris2*) AC_DEFINE(OS_SOLARIS2, [1], [Define for Solaris 2.x.]) AC_MSG_RESULT(Solaris 2.x) ;;
-*-aix*) AC_DEFINE(OS_AIX, [1], [Define for AIX.]) AC_MSG_RESULT(AIX) ;;
-*-esix*) AC_DEFINE(OS_ESIX, [1], [Define for ESIX.]) AC_MSG_RESULT(ESIX) ;;
-*-next*) AC_DEFINE(OS_NEXT, [1], [Define for a NeXT OS.]) AC_MSG_RESULT(NeXT something) ;;
-*-mips*) AC_DEFINE(OS_MIPS, [1], [Define for a MIPS machine.]) AC_MSG_RESULT(MIPS something) ;;
-*-sequent-ptx*) AC_DEFINE(OS_DYNIXPTX, [1], [Define for Sequent Dynix/PTX.]) AC_MSG_RESULT(Dynix PTX) ;;
-*-hpux*) AC_DEFINE(OS_HPUX, [1], [Define if using HPUX.]) AC_MSG_RESULT(HP-UX) ;;
-*) AC_MSG_RESULT(nothing special required) ;;
-esac
-
 AC_CONFIG_FILES([Makefile src/Makefile tools/Makefile])
 AC_OUTPUT
 

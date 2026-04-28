@@ -35,9 +35,6 @@
 #include "zlink.h"
 #include "info.h"
 
-#if defined(AIX) || defined(DYNIXPTX) || defined(SVR3)
-#include <time.h>
-#endif
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <utmp.h>
