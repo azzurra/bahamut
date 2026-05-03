@@ -5,10 +5,6 @@ INCLUDEDIR=-I../include
 OPENSSLINC=@SSLINC@
 
 CONF_SRC = @ENCRYPT_SRC@
-RES_SRC =
-
-#This is only for very old systems that NEED this
-#RES_SRC = res_mkquery.c res_init.c res_comp.c
 
 SOURCES = blalloc.c bsd.c channel.c class.c dbuf.c dich_conf.c fdlist.c \
           hash.c inet_addr.c ircd.c ircsprintf.c list.c match.c packet.c \
@@ -141,7 +137,7 @@ s_auth.o: s_auth.c ../include/struct.h ../include/config.h \
  ../include/setup.h ../include/defs.h ../include/hash.h \
  ../include/class.h ../include/dbuf.h ../include/common.h \
  ../include/sys.h ../include/res.h ../include/numeric.h \
- ../include/patchlevel.h ../include/sock.h ../include/h.h \
+ ../include/patchlevel.h ../include/h.h \
  ../include/dich_conf.h ../include/fdlist.h \
  ../include/patchlevel.h ../include/options.h
 s_bsd.o: s_bsd.c ../include/struct.h ../include/config.h \

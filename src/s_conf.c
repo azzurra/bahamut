@@ -28,12 +28,6 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#ifdef __hpux
-#include "inet.h"
-#endif
-#if defined(AIX) || defined(SVR3)
-#include <time.h>
-#endif
 
 #include <signal.h>
 #include "h.h"
@@ -1032,11 +1026,6 @@ int rehash(aClient *cptr, aClient *sptr, int sig)
 			"Server %s got signal SIGHUP, reloading config file.",
 			me.name, me.name);
 	sendto_ops("Got signal SIGHUP, reloading ircd conf. file");
-#ifdef	ULTRIX
-	if (fork() > 0)
-	    exit(0);
-	write_pidfile();
-#endif
 	do_rehash_akills();
     }
 

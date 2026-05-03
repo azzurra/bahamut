@@ -11,11 +11,7 @@
    probably we should have an #ifdef SYSV?
   -Dianora
 */
-#ifdef SOL20
-#include <wait.h>
-#else
 #include <sys/wait.h>
-#endif
 
 #ifndef lint
 /* static char *rcs_version="$Id$"; */

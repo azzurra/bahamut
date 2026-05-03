@@ -62,51 +62,15 @@
 /*
  * The following OS specific stuff is a compatibility kludge it would
  * be nice to get rid of all of this eventually.
+ *
+ * Guess what? 30 or so years later we did exactly that!
  */
-#if defined(OS_SOLARIS2) && !defined( SOL20 )
-# define SOL20 1
-# define USE_POLL 1		/* Get around stupid select() limitations */
-#endif
-
-#if defined( OS_ESIX ) && !defined( ESIX )
-# define ESIX 1
-#endif
-
-#if defined( OS_NEXT ) && !defined( NEXT )
-# define NEXT 1
-#endif
-
-#if defined( ultrix ) && !defined( ULTRIX )
-# define ULTRIX 1
-#endif
-
-#if (defined( sgi ) || defined( __sgi )) && !defined( SGI )
-# define SGI 1
-#endif
-
-#if defined( aix ) || defined( OS_AIX )
-# include <sys/machine.h>
-# define BSD_INCLUDES
-# if !defined( AIX )
-#	define AIX 1
-# endif
-# define USE_POLL 1		/* KLUGE - only define on AIX 4.x!! -cab */
-#endif
-
-#if defined( OS_MIPS )
-# undef SYSV
-# undef BSD
-# define BSD 1			/* mips only works in a bsd43 environment */
-# if !defined( MIPS )
-#	define MIPS 1
-# endif
-#endif
 
 #if defined( BSD_RELIABLE_SIGNALS ) \
     && (defined( SYSV_UNRELIABLE_SIGNALS ) || defined( POSIX_SIGNALS ))
-error You defined too many signal types in setup.h
+#error You defined too many signal types in setup.h
 #elif defined( SYSV_UNRELIABLE_SIGNALS ) && defined( POSIX_SIGNALS )
-error You defined too many signal types in setup.h
+#error You defined too many signal types in setup.h
 #endif
 
 #if defined( BSD_RELIABLE_SIGNALS ) || defined( POSIX_SIGNALS )
@@ -115,6 +79,8 @@ error You defined too many signal types in setup.h
 
 #ifdef HAVE_POLL
 #define USE_POLL 1
+#else
+#error Your platform does not support poll (how did you even get here?!?)
 #endif
 
 #endif				/* DEFS_H_INCLUDED */

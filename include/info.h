@@ -208,12 +208,6 @@
 #define STATS_NOTICE_VAL 0
 #endif
 
-#ifdef SUNDBE
-#define SUNDBE_VAL 1
-#else
-#define SUNDBE_VAL 0
-#endif
-
 #ifdef UNKLINE
 #define UNKLINE_VAL 1
 #else
@@ -224,12 +218,6 @@
 #define USERNAMES_IN_TRACE_VAL 1
 #else
 #define USERNAMES_IN_TRACE_VAL 0
-#endif
-
-#ifdef USE_FAST_FD_ISSET
-#define USE_FAST_FD_ISSET_VAL 1
-#else
-#define USE_FAST_FD_ISSET_VAL 0
 #endif
 
 #ifdef USE_SYSLOG
