@@ -35,6 +35,8 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		{
 		case 's': /* most popular ;) */
 		    s=va_arg(ap, char *);
+		    if(s==NULL)
+			s=nullstring;
 		    while(*s)
 			buf[len++]=*s++;
 		    format++;
