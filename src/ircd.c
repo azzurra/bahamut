@@ -112,6 +112,9 @@ int		activity_fd;
 int		activity_open();
 void		activity_close();
 void		activity_log(char *, ...);
+#ifdef ACTIVITY_LOG_ROTATE
+void		activity_rotate_check(time_t);
+#endif
 #endif
 
 void        	server_reboot();
@@ -1365,7 +1368,11 @@ void io_loop()
 	
 	if ((timeofday >= nextping))
 	    nextping = check_pings(timeofday);
-	
+
+#if defined(USE_ACTIVITY_LOG) && defined(ACTIVITY_LOG_ROTATE)
+	activity_rotate_check(timeofday);
+#endif
+
 	if (dorehash && !lifesux) 
 	{
 	    (void) rehash(&me, &me, 1);
@@ -1650,6 +1657,50 @@ void build_version(void)
 
 
 #ifdef USE_ACTIVITY_LOG
+#ifdef ACTIVITY_LOG_ROTATE
+static time_t activity_nextrotate = 0;
+
+/* Compute the next rotation boundary.
+ * The boundary is anchored on local midnight and stepped by
+ * ACTIVITY_LOG_ROTATE minutes, so an interval of 1440 cuts exactly at
+ * 00:00 local time. The previous code used now + interval, which drifted
+ * away from the wall clock by however long the ircd took to notice the
+ * expiry. Recomputed from localtime() at every rotation, so a DST change
+ * re-anchors the boundary instead of carrying the offset forever.
+ */
+static time_t activity_next_rotate(time_t now)
+{
+    struct tm *t;
+    time_t boundary;
+    time_t step = 60 * (time_t) ACTIVITY_LOG_ROTATE;
+
+    if (step <= 0)		/* misconfigured: never rotate */
+	return now + (time_t) 0x7fffffff;
+
+    t = localtime(&now);
+    boundary = now - (t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec);
+
+    while (boundary <= now)
+	boundary += step;
+
+    return boundary;
+}
+
+/* Rotate the activity log if the boundary has passed.
+ * Called from io_loop() so rotation follows the clock rather than the
+ * traffic: the check used to live inside activity_log(), so a quiet
+ * server kept writing to the same file until something happened.
+ */
+void activity_rotate_check(time_t now)
+{
+    if (activity_fd < 0 || activity_nextrotate == 0 || now < activity_nextrotate)
+	return;
+
+    activity_close();
+    activity_open();
+}
+#endif
+
 /* Open activity file. Return 0 on success, 1 on error. */
 int activity_open()
 {
@@ -1660,7 +1711,7 @@ int activity_open()
 
     timenow = time(NULL);
     t=localtime(&timenow);
-    sprintf(filename,"%s.%04d%02d%02d-%02d%02d", ACTIVITY_LOG_FILE, 
+    sprintf(filename,"%s.%04d%02d%02d-%02d%02d", ACTIVITY_LOG_FILE,
 		     t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min);
     if ((activity_fd = open(filename,
 #else
@@ -1668,8 +1719,13 @@ int activity_open()
 #endif
                             (O_CREAT|O_APPEND|O_NONBLOCK|O_RDWR),
 		            (S_IRUSR|S_IWUSR))) >= 0)
+    {
+#ifdef ACTIVITY_LOG_ROTATE
+	activity_nextrotate = activity_next_rotate(timenow);
+#endif
 	activity_log("(STARTING ACTIVITY LOG)");
-    
+    }
+
     return (activity_fd >= 0) ? 0 : 1;
 }
 
@@ -1690,26 +1746,14 @@ void activity_log(char *pattern, ...)
     va_list vl;
     int len;
     char *s;
-#ifdef ACTIVITY_LOG_ROTATE
-    static time_t nextrotate = 0;
 
-    if (nextrotate == 0)
-        nextrotate = 60 * ACTIVITY_LOG_ROTATE + time(NULL);
+    /* NOTE: rotation is no longer decided here. It used to be, which made
+     * it depend on there being something to log; it now lives in
+     * activity_rotate_check(), called from io_loop(). Keeping it out of
+     * this function also removes the close/open -> activity_log()
+     * recursion the old code had to reason about.
+     */
 
-    if (time(NULL)>nextrotate)
-    {
-	nextrotate = 60 * ACTIVITY_LOG_ROTATE + time(NULL);
-	
-	/* NOTE: these two functions call this one!
-	 * Anyway recursive calls are safe because we have
-	 * incremented nextrotate.
-	 */
-	activity_close();
-	activity_open();
-    }
-
-#endif
-       
     if (activity_fd>=0)
     {
 	struct iovec iov[3];
