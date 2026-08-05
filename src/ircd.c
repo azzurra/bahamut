@@ -1551,6 +1551,11 @@ static void setup_signals()
 	(void) sigemptyset(&act.sa_mask);
 	(void) sigaddset(&act.sa_mask, SIGUSR2);
 	(void) sigaction(SIGUSR2, &act, NULL);
+#else
+	act.sa_handler = SIG_IGN;
+	(void) sigemptyset(&act.sa_mask);
+	(void) sigaddset(&act.sa_mask, SIGUSR2);
+	(void) sigaction(SIGUSR2, &act, NULL);
 #endif /* USE_SSL */
 
 #else
@@ -1569,6 +1574,8 @@ static void setup_signals()
     (void) signal(SIGHUP, s_rehash);
 #ifdef USE_SSL
 	(void) signal(SIGUSR2, s_rehash_throttle_and_ssl);
+#else
+	(void) signal(SIGUSR2, SIG_IGN);
 #endif /* USE_SSL */
     (void) signal(SIGTERM, s_die);
     (void) signal(SIGINT, s_restart);
