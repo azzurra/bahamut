@@ -5228,7 +5228,8 @@ int m_trace(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		       link_u[i], name, 
 		       *(acptr->serv->bynick) ? acptr->serv->bynick : "*", 
 		       *(acptr->serv->byuser) ? acptr->serv->byuser : "*", 
-		       *(acptr->serv->byhost) ? acptr->serv->byhost : me.name);
+		       *(acptr->serv->byhost) ? acptr->serv->byhost : me.name,
+		       timeofday - acptr->lasttime);
 	    cnt++;
 	    break;
 	case STAT_LOG:
