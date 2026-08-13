@@ -47,7 +47,10 @@ build:
 	@for i in $(SUBDIRS); do \
 		echo "Building $$i";\
 		cd $$i;\
-		${MAKE} build; cd ..;\
+		${MAKE} build; \
+		rc=$$?; \
+		[ $$rc != 0 ] && exit $$rc; \
+		cd ..;\
 	done
 	@echo "******************************************************************************"
 	@echo "* Note: Please do not send bug reports or feature inquiries to the mailing   *"
