@@ -283,7 +283,7 @@ void server_reboot()
 {
     int     i;
     FILE *err;
-    sendto_ops("Aieeeee!!!  Restarting server... sbrk(0)-etext: %d",
+    sendto_ops("Aieeeee!!!  Restarting server... sbrk(0)-etext: %ld",
 	       (void*)sbrk((size_t) 0) - (void*)sbrk0);
 	
     Debug((DEBUG_NOTICE, "Restarting server..."));
@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
 	exit(-1);
     }
     else
-	fprintf(stderr, "Cloaking subsystem succesfully initialized (%d bits key).\n",
+	fprintf(stderr, "Cloaking subsystem succesfully initialized (%ld bits key).\n",
 		cloak_key_len * 8);
     
     {
