@@ -24,7 +24,7 @@ XFLAGS=
 # openssl related flags.
 SSLFLAGS=
 # Default CFLAGS
-CFLAGS= -fgnu89-inline -fcommon -O2 ${XFLAGS} ${SSLFLAGS}
+CFLAGS= -Wformat -Werror=format -fgnu89-inline -fcommon -O2 ${XFLAGS} ${SSLFLAGS}
 # linker flags.
 LDFLAGS=
 
