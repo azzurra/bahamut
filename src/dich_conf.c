@@ -73,7 +73,7 @@
 #include "h.h"
 #include "dich_conf.h"
 
-#if !defined(SYSV) && !defined(SOL20)
+#if !defined(SYSV)
 #define memmove(x,y,N) bcopy(y,x,N)
 #endif
 

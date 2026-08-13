@@ -33,11 +33,6 @@
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#if defined(SOL20)
-#include <sys/filio.h>
-#include <sys/select.h>
-#include <unistd.h>
-#endif
 #include "inet.h"
 #include <stdio.h>
 #include <signal.h>
@@ -51,12 +46,7 @@
 #include <poll.h>
 #endif /* USE_POLL */
 
-#ifdef	AIX
-#include <time.h>
-#include <arpa/nameser.h>
-#else
 #include "nameser.h"
-#endif
 #include "resolv.h"
 
 #ifdef USE_SSL
@@ -492,11 +482,6 @@ void close_listeners()
     }
 }
 
-#ifdef HAVE_FD_ALLOC
-fd_set *write_set, *read_set;
-
-#endif
-
 /* init_sys */
 void init_sys()
 {
@@ -522,37 +507,13 @@ void init_sys()
 			   (long) limit.rlim_cur);
 	    exit(-1);
 	}
-#ifndef USE_POLL
-	if (MAXCONNECTIONS > FD_SETSIZE)
-	{
-	    (void) fprintf(stderr,
-			   "FD_SETSIZE = %d MAXCONNECTIONS = %d\n",
-			   FD_SETSIZE, MAXCONNECTIONS);
-	    (void) fprintf(stderr,
-			   "Make sure your kernel supports a larger "
-			   "FD_SETSIZE then recompile with -DFD_SETSIZE=%d\n",
-			   MAXCONNECTIONS);
-	    exit(-1);
-	}
-#endif
-
-#ifndef HAVE_FD_ALLOC
-	printf("Value of FD_SETSIZE is %d\n", FD_SETSIZE);
-#else
-	read_set = FD_ALLOC(MAXCONNECTIONS);
-	write_set = FD_ALLOC(MAXCONNECTIONS);
-	printf("Value of read_set is %lX\n", read_set);
-	printf("Value of write_set is %lX\n", write_set);
-#endif
 	printf("Value of NOFILE is %d\n", NOFILE);
     }
 #endif
 
     printf("Ircd is now becoming a daemon.\n");
 
-#if !defined(SOL20)
     (void) setlinebuf(stderr);
-#endif
 
     for (fd = 3; fd < MAXCONNECTIONS; fd++)
     {
@@ -591,8 +552,7 @@ void init_sys()
 	    (void) close(fd);
 	}
 #endif
-#if defined(SOL20) || defined(DYNIXPTX) || \
-    defined(_POSIX_SOURCE) || defined(SVR4)
+#if defined(_POSIX_SOURCE)
 	(void) setsid();
 #else
 	(void) setpgrp(0, (int) getpid());
@@ -1217,12 +1177,9 @@ static void set_sock_opts(int fd, aClient * cptr)
 	silent_report_error("setsockopt(SO_REUSEADDR) %s:%s", cptr);
 #endif
 #if  defined(SO_DEBUG) && defined(DEBUGMODE) && 0
-    /* Solaris with SO_DEBUG writes to syslog by default */
-#if !defined(SOL20) || defined(USE_SYSLOG)
     opt = 1;
     if (setsockopt(fd, SOL_SOCKET, SO_DEBUG, (char *) &opt, sizeof(opt)) < 0)
 	silent_report_error("setsockopt(SO_DEBUG) %s:%s", cptr);
-#endif				/* SOL20 */
 #endif
 #ifdef	SO_USELOOPBACK
     opt = 1;
@@ -1915,313 +1872,12 @@ void accept_connection(aClient *cptr)
 }
 
 /*
- * USE_FAST_FD_ISSET
- *
- * The idea with this, is to save the compute over and over again of
- * nearly the same thing.
- *
- * In SUNOS and BSD the following is done for a FD_ISSET
- *
- * (p)->fd_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
- *
- *
- * Thats one divide, one left shift, and one AND for every case of
- * FD_ISSET used. What I have done here, is saved the last value of
- * offset, and mask and increment them for use on the next fd.
- * hopefully adding up to some CPU savings.
- *
- * The caveats are the following:
- *
- * 1) sizeof(NFDBITS) != sizeof(int)
- *
- * 2) structure element fd_bits might not be, i.e. its linux or some
- * variant.
- *
- * i.e. basically, we now have carnal knowledge of the internals of what
- * happens in an FD_ISSET()
- *
- * 3) the fd list has to be scanned in a linear order, not as it was using
- * the fdlist.
- *
- * -Dianora
- */
-
-#ifdef FAST_FD_ISSET
-#define MYFD_ISSET_READ (read_set->fds_bits[fd_read_offset] & fd_read_mask)
-#define MYFD_ISSET_WRITE (write_set->fds_bits[fd_write_offset] & \
-                           fd_write_mask)
-#define MYFD_CLR_READ read_set->fds_bits[fd_read_offset] &= ~fd_read_mask;
-#define FAST_FD_INC fd_read_mask <<= 1; if (!fd_read_mask) {\
-                     fd_read_offset++; fd_read_mask = 1; }\
-                     fd_write_mask <<= 1; if (!fd_write_mask) {\
-		     fd_write_offset++;	fd_write_mask = 1; }
-#else
-#define MYFD_ISSET_READ (FD_ISSET(i, read_set))
-#define MYFD_ISSET_WRITE (FD_ISSET(i, write_set))
-#define MYFD_CLR_READ FD_CLR(i, read_set);
-#define FAST_FD_INC
-#endif
-
-/*
  * Check all connections for new connections and input data that is to
  * be processed. Also check for connections with data queued and
  * whether we can write it out.
  */
-#ifndef USE_POLL
-int read_message(time_t delay, fdlist * listp)
-{                        
-    aClient *cptr;
-    int nfds;
-    struct timeval wait;
+#ifdef USE_POLL
 
-#ifndef HAVE_FD_ALLOC
-    fd_set readset, writeset;
-    fd_set *read_set, *write_set;
-#endif
-    time_t delay2 = delay, now;
-    int res, length;
-    int auth = 0;
-    int i, j;
-    char errmsg[256];
-
-#ifdef USE_FAST_FD_ISSET
-    int fd_read_mask;
-    int fd_read_offset;
-    int fd_write_mask;
-    int fd_write_offset;
-#endif
-
-#ifndef HAVE_FD_ALLOC
-    read_set = &readset;
-    write_set = &writeset;
-#endif
-
-    /* if it is called with NULL we check all active fd's */
-    if (!listp) 
-    {
-	listp = &default_fdlist;
-	listp->last_entry = highest_fd + 1;
-    }
-
-    now = timeofday;
-
-    for (res = 0;;) 
-    {
-	FD_ZERO(read_set);
-	FD_ZERO(write_set);
-	for (i = listp->entry[j = 1]; j <= listp->last_entry;
-	     i = listp->entry[++j]) 
-	{
-	    if (!(cptr = local[i]))
-		continue;
-	    if (IsLog(cptr))
-		continue;
-#ifdef USE_SSL
-	    if (cptr->ssl != NULL && IsSSL(cptr) &&
-		    !SSL_is_init_finished(cptr->ssl))
-	    {
-		if(IsDead(cptr) || (!safe_SSL_accept(cptr, cptr->fd)))
-		    close_connection(cptr);
-		continue;
-	    }
-#endif
-	    if (DoingAuth(cptr)) 
-	    {
-		auth++;
-		Debug((DEBUG_NOTICE, "auth on %x %d", cptr, i));
-		FD_SET(cptr->authfd, read_set);
-		if (cptr->flags & FLAGS_WRAUTH)
-		    FD_SET(cptr->authfd, write_set);
-	    }
-	    if (DoingDNS(cptr) || DoingAuth(cptr))
-		continue;
-	    if ((IsMe(cptr) && IsListening(cptr)) || IsConnecting(cptr))
-	    {
-		FD_SET(i, read_set);
-	    } 
-	    else if (!IsMe(cptr)) 
-	    {
-		if (DBufLength(&cptr->recvQ) && delay2 > 2)
-		    delay2 = 1;
-		FD_SET(i, read_set);
-	    }
-
-	    length = DBufLength(&cptr->sendQ);
-
-	    if (DoList(cptr) && IsSendable(cptr)) 
-	    {
-		send_list(cptr, 64);
-		length = DBufLength(&cptr->sendQ);
-	    }
-
-	    if (length || IsConnecting(cptr) ||
-		(ZipOut(cptr) && zip_is_data_out(cptr->serv->zip_out)) ) 
-		FD_SET(i, write_set);
-	}
-
-	if (resfd >= 0) {
-	    FD_SET(resfd, read_set);
-	}
-	wait.tv_sec = MIN(delay2, delay);
-	wait.tv_usec = 0;
-	nfds = select(MAXCONNECTIONS, read_set, write_set, 0, &wait);
-	if ((timeofday = time(NULL)) == -1)
-	{
-#ifdef USE_SYSLOG
-	    syslog(LOG_WARNING, "Clock Failure (%d), TS can be corrupted", errno);
-#endif
-	    sendto_ops("Clock Failure (%d), TS can be corrupted", errno);
-	}
-
-	if (nfds == -1 && errno == EINTR)
-	{
-	    return -1;
-	} 
-	else if (nfds >= 0)
-	    break;
-	report_error("select %s:%s", &me);
-	res++;
-	if (res > 5)
-	    restart("too many select errors");
-	sleep(10);
-    }
-    
-    if (resfd >= 0 && FD_ISSET(resfd, read_set)) 
-    {
-	do_dns_async();
-	nfds--;
-	FD_CLR(resfd, read_set);
-    }
-
-#ifdef USE_FAST_FD_ISSET
-    fd_read_mask = 1;
-    fd_read_offset = 0;
-    fd_write_mask = 1;
-    fd_write_offset = 0;
-
-    for (i = 0; i <= highest_fd; i++)
-#else
-    for (i = listp->entry[j = 1]; j <= listp->last_entry; 
-	 i = listp->entry[++j])
-#endif
-    { 
-	if (!(cptr = local[i])) 
-	{
-	    FAST_FD_INC
-		continue;
-	}
-	
-	/* Check the auth fd's first... */
-	if ((auth > 0) && (cptr->authfd >= 0))        
-	{
-	    auth--;
-	    if ((nfds > 0) && FD_ISSET(cptr->authfd, write_set)) 
-	    {
-		nfds--;
-		send_authports(cptr);
-	    }
-	    else if ((nfds > 0) && FD_ISSET(cptr->authfd, read_set)) 
-	    {
-		nfds--;
-		read_authports(cptr);
-	    }
-	}
-	
-	/* Now see if there's a connection pending... */
-	if (IsListening(cptr) && MYFD_ISSET_READ)
-	{
-	    MYFD_CLR_READ
-		
-	    nfds--;
-	    accept_connection(cptr);
-	    
-	    FAST_FD_INC
-
-		continue;
-	}
-
-	if (IsMe(cptr))
-	{
-	    FAST_FD_INC
-	    continue;
-	}
-	
-	/* See if we can write... */
-	if(MYFD_ISSET_WRITE)
-	{
-	    int write_err = 0;
-	    
-	    nfds--;
-	    
-	    if (IsConnecting(cptr))
-		write_err = completed_connection(cptr);
-	    if (!write_err)
-		send_queued(cptr);
-	    
-	    if (IsDead(cptr) || write_err) 
-	    {
-		if(MYFD_ISSET_READ)
-		{
-		    MYFD_CLR_READ
-		}
-		ircsprintf(errmsg, "Write Error: %s", 
-			  (cptr->flags & FLAGS_SENDQEX) ?
-			  "SendQ Exceeded" : irc_get_sockerr(cptr));
-		exit_client(cptr, cptr, &me, errmsg);
-		FAST_FD_INC
-		continue;
-	    }
-	}
-	
-	length = 1;                /* for fall through case */
-	
-	if(MYFD_ISSET_READ)
-	    length = read_packet(cptr);
-	else if(DBufLength(&cptr->recvQ) && IsPerson(cptr) && !NoNewLine(cptr))
-	    length = do_client_queue(cptr);
-	
-#ifdef DEBUGMODE
-	readcalls++;
-#endif
-	
-	if ((length != FLUSH_BUFFER) && IsDead(cptr)) 
-	{
-	    if(MYFD_ISSET_READ)
-	    {
-		MYFD_CLR_READ
-	    }
-	    ircsprintf(errmsg, "Read/Dead Error: %s",
-		       (cptr->flags & FLAGS_SENDQEX) ?
-		       "SendQ Exceeded" : irc_get_sockerr(cptr));
-	    exit_client(cptr, cptr, &me, errmsg);
-	    FAST_FD_INC
-	    continue;
-	}
-	
-	if(length > 0)
-	{
-	    if(MYFD_ISSET_READ)
-		nfds--;
-	    FAST_FD_INC
-	    continue;
-	}
-	
-	if(length != FLUSH_BUFFER)
-	{
-	    Debug((DEBUG_ERROR, "READ ERROR: fd = %d %d %d", i, errno,
-		   length));
-	    read_error_exit(cptr, length, cptr->sockerr);
-	}
-	FAST_FD_INC
-    }
-    return 0;
-}
-
-#else   /* USE_POLL */
-
-#ifdef AIX
-#define POLLREADFLAGS (POLLIN|POLLMSG)
-#endif
 #if defined(POLLMSG) && defined(POLLIN) && defined(POLLRDNORM)
 #define POLLREADFLAGS (POLLMSG|POLLIN|POLLRDNORM)
 #endif
@@ -2324,9 +1980,6 @@ int read_message(time_t delay, fdlist * listp)
 		continue;
 	    if (IsMe(cptr) && IsListening(cptr)) 
 	    {
-# if defined(SOL20) || defined(AIX)
-#  define CONNECTFAST
-# endif
 		
 # ifdef CONNECTFAST
 		/* 

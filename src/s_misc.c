@@ -33,14 +33,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#if !defined(ULTRIX) && !defined(SGI) && !defined(sequent) && \
-    !defined(__convex__)
 #include <sys/param.h>
-#endif
-#if defined(AIX) || defined(SVR3) || \
-   ((__GNU_LIBRARY__ == 6) && (__GLIBC__ >=2) && (__GLIBC_MINOR__ >= 2))
 #include <time.h>
-#endif
 #include "h.h"
 #include "inet.h" /*AZZURRA*/
 #include "fdlist.h"

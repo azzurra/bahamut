@@ -97,8 +97,16 @@ fi
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(index strerror strtoken strtok inet_addr inet_ntoa inet_netof inet_aton inet_ntop inet_pton)
-AC_CHECK_FUNCS(gettimeofday lrand48 sigaction bzero bcmp bcopy dn_expand __dn_expand poll writev mkstemp)
+AC_CHECK_FUNCS(gettimeofday lrand48 sigaction bzero bcmp bcopy dn_expand __dn_expand writev mkstemp)
 AC_CHECK_FUNCS(dn_skipname __dn_skipname getrusage times, break)
+
+dnl Checks for ioloop primitives
+dnl Right now there's only support for poll.
+dnl TODO: add support for epoll on linux, kqueue on various *BSDs/Darwin
+dnl       and keep poll as a last resort fallback.
+AC_CHECK_FUNCS(poll,,
+    [AC_MSG_FAILURE([ERROR: poll() required but not found.],[1])]
+)
 
 dnl taken from ircd's Config script
 
@@ -227,49 +235,6 @@ int main()
   [AC_MSG_RESULT(yes)
   AC_DEFINE(SYS_ERRLIST_DECLARED, [1], [Define this if we have a sys_errlist])],
   [AC_MSG_RESULT(no)], [AC_MSG_RESULT(cross compiling)])
-
-dnl Check to see if we should set USE_FAST_FD_ISSET
-AC_MSG_CHECKING(to see if we should enable fast FD_ISSET code)
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#include <sys/types.h>
-int main()
-{
-  fd_set read_set;
-  (void)read_set.fds_bits;
-  return 0;
-}
-])],
-  [AC_MSG_RESULT(yes)
-  AC_DEFINE(USE_FAST_FD_ISSET, [1], [Define this if we have (fd_set *)->read_bits])],
-  [AC_MSG_RESULT(no)])
-
-dnl Check to see if we have a broken FD_SETSIZE
-
-DFDSS='-DFD_SETSIZE=1024'
-
-AC_MSG_CHECKING(to see if FD_SETSIZE is broken)
-AC_RUN_IFELSE([AC_LANG_SOURCE([
-#define FD_SETSIZE 666
-#include <sys/types.h>
-#include <sys/time.h>
-int main()
-{
-  if(FD_SETSIZE != 666)
-     exit(1);
-  exit(0);
-}
-])],
-[AC_MSG_RESULT(no)],
-[
-AC_MSG_RESULT(YES)
-AC_MSG_WARN(FD_SETSIZE is hard set by your operating system)
-AC_MSG_WARN(MAXCONNECTIONS must be no higher than the hardwired FD_SETSIZE)
-AC_MSG_WARN(If you're using a system that supports it use the poll call instead of select.)
-DFDSS=' # FD_SETSIZE is broken on this machine!'
-],
-[AC_MSG_RESULT(can't tell)])
-
-AC_SUBST(DFDSS)
 
 dnl Check if we're living in a 2s-complement world
 AC_CACHE_CHECK([whether we are living in a 2s-complement world], baha_cv_twos_complement,
@@ -464,19 +429,6 @@ echo " - openssl found in: $ssldir"
 fi
 
 dnl end of openssl library test
-
-dnl don't add more of these unless it's critical.  Trying to get rid of them.
-AC_MSG_CHECKING(operating system)
-case "$target" in
-*-solaris2*) AC_DEFINE(OS_SOLARIS2, [1], [Define for Solaris 2.x.]) AC_MSG_RESULT(Solaris 2.x) ;;
-*-aix*) AC_DEFINE(OS_AIX, [1], [Define for AIX.]) AC_MSG_RESULT(AIX) ;;
-*-esix*) AC_DEFINE(OS_ESIX, [1], [Define for ESIX.]) AC_MSG_RESULT(ESIX) ;;
-*-next*) AC_DEFINE(OS_NEXT, [1], [Define for a NeXT OS.]) AC_MSG_RESULT(NeXT something) ;;
-*-mips*) AC_DEFINE(OS_MIPS, [1], [Define for a MIPS machine.]) AC_MSG_RESULT(MIPS something) ;;
-*-sequent-ptx*) AC_DEFINE(OS_DYNIXPTX, [1], [Define for Sequent Dynix/PTX.]) AC_MSG_RESULT(Dynix PTX) ;;
-*-hpux*) AC_DEFINE(OS_HPUX, [1], [Define if using HPUX.]) AC_MSG_RESULT(HP-UX) ;;
-*) AC_MSG_RESULT(nothing special required) ;;
-esac
 
 AC_CONFIG_FILES([Makefile src/Makefile tools/Makefile])
 AC_OUTPUT

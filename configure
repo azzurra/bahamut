@@ -645,7 +645,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 SSLINC
 ENCRYPT_SRC
-DFDSS
 CPP
 INSTALL_DATA
 INSTALL_SCRIPT
@@ -5743,12 +5742,6 @@ then :
   printf "%s\n" "#define HAVE___DN_EXPAND 1" >>confdefs.h
 
 fi
-ac_fn_c_check_func "$LINENO" "poll" "ac_cv_func_poll"
-if test "x$ac_cv_func_poll" = xyes
-then :
-  printf "%s\n" "#define HAVE_POLL 1" >>confdefs.h
-
-fi
 ac_fn_c_check_func "$LINENO" "writev" "ac_cv_func_writev"
 if test "x$ac_cv_func_writev" = xyes
 then :
@@ -5773,6 +5766,25 @@ then :
 #define `printf "%s\n" "HAVE_$ac_func" | sed "$as_sed_cpp"` 1
 _ACEOF
  break
+fi
+
+done
+
+
+  for ac_func in poll
+do :
+  ac_fn_c_check_func "$LINENO" "poll" "ac_cv_func_poll"
+if test "x$ac_cv_func_poll" = xyes
+then :
+  printf "%s\n" "#define HAVE_POLL 1" >>confdefs.h
+
+else case e in #(
+  e) { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
+as_fn_error 1 "ERROR: poll() required but not found.
+See 'config.log' for more details" "$LINENO" 5; }
+ ;;
+esac
 fi
 
 done
@@ -6008,84 +6020,6 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking to see if we should enable fast FD_ISSET code" >&5
-printf %s "checking to see if we should enable fast FD_ISSET code... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-int main()
-{
-  fd_set read_set;
-  (void)read_set.fds_bits;
-  return 0;
-}
-
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-printf "%s\n" "yes" >&6; }
-
-printf "%s\n" "#define USE_FAST_FD_ISSET 1" >>confdefs.h
-
-else case e in #(
-  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; } ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-
-
-DFDSS='-DFD_SETSIZE=1024'
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking to see if FD_SETSIZE is broken" >&5
-printf %s "checking to see if FD_SETSIZE is broken... " >&6; }
-if test "$cross_compiling" = yes
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: can't tell" >&5
-printf "%s\n" "can't tell" >&6; }
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#define FD_SETSIZE 666
-#include <sys/types.h>
-#include <sys/time.h>
-int main()
-{
-  if(FD_SETSIZE != 666)
-     exit(1);
-  exit(0);
-}
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-else case e in #(
-  e)
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: YES" >&5
-printf "%s\n" "YES" >&6; }
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: FD_SETSIZE is hard set by your operating system" >&5
-printf "%s\n" "$as_me: WARNING: FD_SETSIZE is hard set by your operating system" >&2;}
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: MAXCONNECTIONS must be no higher than the hardwired FD_SETSIZE" >&5
-printf "%s\n" "$as_me: WARNING: MAXCONNECTIONS must be no higher than the hardwired FD_SETSIZE" >&2;}
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: If you're using a system that supports it use the poll call instead of select." >&5
-printf "%s\n" "$as_me: WARNING: If you're using a system that supports it use the poll call instead of select." >&2;}
-DFDSS=' # FD_SETSIZE is broken on this machine!'
- ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-
-
 
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we are living in a 2s-complement world" >&5
@@ -6653,41 +6587,6 @@ CFLAGS="$save_CFLAGS"
 echo " - openssl found in: $ssldir"
 fi
 
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking operating system" >&5
-printf %s "checking operating system... " >&6; }
-case "$target" in
-*-solaris2*)
-printf "%s\n" "#define OS_SOLARIS2 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: Solaris 2.x" >&5
-printf "%s\n" "Solaris 2.x" >&6; } ;;
-*-aix*)
-printf "%s\n" "#define OS_AIX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: AIX" >&5
-printf "%s\n" "AIX" >&6; } ;;
-*-esix*)
-printf "%s\n" "#define OS_ESIX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ESIX" >&5
-printf "%s\n" "ESIX" >&6; } ;;
-*-next*)
-printf "%s\n" "#define OS_NEXT 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: NeXT something" >&5
-printf "%s\n" "NeXT something" >&6; } ;;
-*-mips*)
-printf "%s\n" "#define OS_MIPS 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: MIPS something" >&5
-printf "%s\n" "MIPS something" >&6; } ;;
-*-sequent-ptx*)
-printf "%s\n" "#define OS_DYNIXPTX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: Dynix PTX" >&5
-printf "%s\n" "Dynix PTX" >&6; } ;;
-*-hpux*)
-printf "%s\n" "#define OS_HPUX 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: HP-UX" >&5
-printf "%s\n" "HP-UX" >&6; } ;;
-*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: nothing special required" >&5
-printf "%s\n" "nothing special required" >&6; } ;;
-esac
 
 ac_config_files="$ac_config_files Makefile src/Makefile tools/Makefile"
 

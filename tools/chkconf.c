@@ -27,19 +27,11 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef __hpux
-#include "inet.h"
-#endif
 #ifdef PCS
 #include <time.h>
 #endif
 #ifdef R_LINES
 #include <signal.h>
-#endif
-
-#ifdef DYNIXPTX
-#include <sys/types.h>
-#include <time.h>
 #endif
 
 #ifndef DOUGH_MALLOC

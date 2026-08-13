@@ -3,7 +3,7 @@
 #search for an openssl installation . . . 
 
     # Debian 10
-    if [ -x "/usr/bin/openssl" ] && [ -r "/lib/i386-linux-gnu/libcrypto.so" ] && [ -r "/lib/i386-linux-gnu/libssl.so" ]; then
+    if [ -x "/usr/bin/openssl" ] && [ -r "/lib/$(uname -m)-linux-gnu/libcrypto.so" ] && [ -r "/lib/$(uname -m)-linux-gnu/libssl.so" ]; then
         openssl="/usr/bin/openssl"
         SSL_LIB="-lcrypto -lssl"
     else
@@ -47,10 +47,6 @@
 	echo "and put into a file named \`.rnd' placed in your HOME or in";
 	echo "the current directory. This will seed the random"
 	echo "number generator."
-        test -n "$OS_SOLARIS" && { 
-          echo "For solaris, you might also install the SUNski package";
-          echo "from Sun patch 105710-01 (Sparc)."
-        }
         echo "Visit http://www.openssl.org/support/faq.html#USER1 for details."
         echo "";
 	openssl="";
