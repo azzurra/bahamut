@@ -1113,9 +1113,14 @@
 #define ACTIVITY_LOG_FILE "./log/activity.log"
 
 /* ACTIVITY_LOG_ROTATE
- * Number of minutes to wait before rotating log file.
+ * Rotation interval, in minutes.
  * Timestamp will be appended to the name of the activity log file.
  * Example values are: 1440 (1 day) 10080 (1 week) 43200 (1 month)
+ *
+ * Boundaries are anchored on local midnight and stepped by this
+ * interval, so 1440 rotates exactly at 00:00 local time, 60 rotates
+ * on the hour, and so on. Rotation is driven by the main loop, so it
+ * happens on schedule even on a server with no activity to log.
  *
  * #define ACTIVITY_LOG_ROTATE 1440
  */
