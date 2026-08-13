@@ -549,7 +549,7 @@ void sendto_security(char *chname, char *pattern, ...)
     chanMember *cm;
     aClient *acptr;
     int i;
-    va_list vl;
+    va_list vl, vl2;
     char nbuf[1024];
    
     if (!chname)
@@ -576,7 +576,9 @@ void sendto_security(char *chname, char *pattern, ...)
 	i = acptr->from->fd;
 	if (MyClient(acptr)) 
 	{
-	    vsendto_one(acptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(acptr, nbuf, vl2);
+	    va_end(vl2);
 	    sentalong[i] = sent_serial;
 	}
 	else 
@@ -587,7 +589,9 @@ void sendto_security(char *chname, char *pattern, ...)
 	     */	    
 	    if (sentalong[i] != sent_serial)
 	    {
-		vsendto_one(acptr, nbuf, vl);
+		VA_COPY(vl2, vl); /*AZZURRA*/
+		vsendto_one(acptr, nbuf, vl2);
+		va_end(vl2);
 		sentalong[i] = sent_serial;
 	    }
 	}
@@ -604,7 +608,7 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
     aClient *acptr;
     int i;
     int didlocal = 0, didremote = 0;
-    va_list vl;
+    va_list vl, vl2;
     char *pfix;
    
     va_start(vl, pattern);
@@ -628,7 +632,11 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
 	if (MyClient(acptr)) 
 	{
 	    if(!didlocal)
-		didlocal = prefix_buffer(0, from, pfix, sendbuf, pattern, vl);
+	    {
+		VA_COPY(vl2, vl); /*AZZURRA*/
+		didlocal = prefix_buffer(0, from, pfix, sendbuf, pattern, vl2);
+		va_end(vl2);
+	    }
 	    
 	    if(check_fake_direction(from, acptr))
 		continue;
@@ -643,8 +651,12 @@ void sendto_channel_butone(aClient *one, aClient *from, aChannel *chptr,
 	     * link already
 	     */
 	    if(!didremote)
+	    {
+		VA_COPY(vl2, vl); /*AZZURRA*/
 		didremote = prefix_buffer(1, from, pfix, remotebuf,
-					  pattern, vl);
+					  pattern, vl2);
+		va_end(vl2);
+	    }
 	    
 	    if(check_fake_direction(from, acptr))
 		continue;
@@ -950,7 +962,7 @@ void sendto_channel_butlocal(aClient *one, aClient *from, aChannel *chptr,
     chanMember *cm;
     aClient *acptr;
     int i;
-    va_list vl;
+    va_list vl, vl2;
 	  
     va_start(vl, pattern);
 
@@ -970,7 +982,9 @@ void sendto_channel_butlocal(aClient *one, aClient *from, aChannel *chptr,
 	     */
 	    if (sentalong[i] != sent_serial) 
 	    {
-		vsendto_prefix_one(acptr, from, pattern, vl);
+		VA_COPY(vl2, vl); /*AZZURRA*/
+		vsendto_prefix_one(acptr, from, pattern, vl2);
+		va_end(vl2);
 		sentalong[i] = sent_serial;
 	    }
 	}
@@ -1124,7 +1138,7 @@ void sendto_match_butone(aClient *one, aClient *from, char *mask, int what,
     int     i;
     aClient *cptr, *acptr;
     char cansendlocal, cansendglobal;
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
     if (MyConnect(from)) 
@@ -1160,7 +1174,9 @@ void sendto_match_butone(aClient *one, aClient *from, char *mask, int what,
 	else if (!cansendlocal || !(IsRegisteredUser(cptr) &&
 				    match_it(cptr, mask, what)))
 	    continue;
-	vsendto_prefix_one(cptr, from, pattern, vl);
+	VA_COPY(vl2, vl); /*AZZURRA*/
+	vsendto_prefix_one(cptr, from, pattern, vl2);
+	va_end(vl2);
     }
     va_end(vl);
     return;
@@ -1176,12 +1192,16 @@ void sendto_all_butone(aClient *one, aClient *from, char *pattern, ...)
 {
     int     i;
     aClient *cptr;
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
     for (i = 0; i <= highest_fd; i++)
 	if ((cptr = local[i]) && !IsMe(cptr) && one != cptr)
-	    vsendto_prefix_one(cptr, from, pattern, vl);
+	{
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_prefix_one(cptr, from, pattern, vl2);
+	    va_end(vl2);
+	}
     va_end(vl);
     return;
 }
@@ -1198,7 +1218,7 @@ void sendto_ops_lev(int lev, char *pattern, ...)
     aClient *cptr;
     int     i;
     char        nbuf[1024];
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl,pattern);
     for (i = 0; i <= highest_fd; i++)
@@ -1251,7 +1271,9 @@ void sendto_ops_lev(int lev, char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     va_end(vl);
     return;
@@ -1267,7 +1289,7 @@ void sendto_ops(char *pattern, ...)
     aClient *cptr;
     int     i;
     char        nbuf[1024];
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
     for (i = 0; i <= highest_fd; i++)
@@ -1278,7 +1300,9 @@ void sendto_ops(char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     va_end(vl);
     return;
@@ -1294,7 +1318,7 @@ void sendto_ops_butone(aClient *one, aClient *from, char *pattern, ...)
 {
     int     i;
     aClient *cptr;
-    va_list vl;
+    va_list vl, vl2;
 	   
     va_start(vl, pattern);
 
@@ -1314,7 +1338,9 @@ void sendto_ops_butone(aClient *one, aClient *from, char *pattern, ...)
 	if (cptr->from == one)
 	    continue;		/* ...was the one I should skip */
 	sentalong[i] = sent_serial;
-	vsendto_prefix_one(cptr->from, from, pattern, vl);
+	VA_COPY(vl2, vl); /*AZZURRA*/
+	vsendto_prefix_one(cptr->from, from, pattern, vl2);
+	va_end(vl2);
     }
     va_end(vl);
     return;
@@ -1329,7 +1355,7 @@ void sendto_wallops_butone(aClient *one, aClient *from, char *pattern, ...)
 {
     int     i;
     aClient *cptr;
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
     for(i=0;i<=highest_fd;i++)
@@ -1339,7 +1365,9 @@ void sendto_wallops_butone(aClient *one, aClient *from, char *pattern, ...)
 	    if(!(IsRegistered(cptr) && (SendWallops(cptr) ||
 					IsServer(cptr))) || cptr==one)
 		continue;
-	    vsendto_prefix_one(cptr, from, pattern, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_prefix_one(cptr, from, pattern, vl2);
+	    va_end(vl2);
 	}
     }
     va_end(vl);
@@ -1351,7 +1379,7 @@ void send_globops(char *pattern, ...)
     aClient    *cptr;
     int         i;
     char        nbuf[1024];
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
     for (i = 0; i <= highest_fd; i++)
@@ -1362,7 +1390,9 @@ void send_globops(char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     va_end(vl);
     return;
@@ -1373,7 +1403,7 @@ void send_chatops(char *pattern, ...)
     aClient    *cptr;
     int         i;
     char        nbuf[1024];
-    va_list vl;
+    va_list vl, vl2;
     
     va_start(vl, pattern);
     for (i = 0; i <= highest_fd; i++)
@@ -1384,7 +1414,9 @@ void send_chatops(char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     va_end(vl);
     return;
@@ -1664,7 +1696,7 @@ void sendto_realops(char *pattern, ...)
     char        nbuf[1024];
     fdlist     *l;
     int         fd;
-    va_list vl;
+    va_list vl, vl2;
 	  
     va_start(vl, pattern);
     l = &oper_fdlist;
@@ -1676,7 +1708,9 @@ void sendto_realops(char *pattern, ...)
 	{
 	    (void) ircsprintf(nbuf, ":%s NOTICE %s :*** Notice -- %s",
 			      me.name, cptr->name, pattern);
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     }
     va_end(vl);
@@ -1690,6 +1724,7 @@ void vsendto_realops(char *pattern, va_list vl)
     char        nbuf[1024];
     fdlist     *l;
     int         fd;
+    va_list vl2;
 
     l = &oper_fdlist;
     for (fd = l->entry[i = 1]; i <= l->last_entry; fd = l->entry[++i])
@@ -1700,7 +1735,9 @@ void vsendto_realops(char *pattern, va_list vl)
 	{
 	    (void) ircsprintf(nbuf, ":%s NOTICE %s :*** Notice -- %s",
 			      me.name, cptr->name, pattern);
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     }
     return;
@@ -1718,7 +1755,7 @@ void sendto_realops_lev(int lev, char *pattern, ...)
     char        nbuf[1024];
     fdlist     *l;
     int         fd;
-    va_list vl;
+    va_list vl, vl2;
 	
     l = &oper_fdlist;
     va_start(vl, pattern);
@@ -1769,7 +1806,9 @@ void sendto_realops_lev(int lev, char *pattern, ...)
 			  me.name, cptr->name);
 	(void) strncat(nbuf, pattern,
 		       sizeof(nbuf) - strlen(nbuf));
-	vsendto_one(cptr, nbuf, vl);
+	VA_COPY(vl2, vl); /*AZZURRA*/
+	vsendto_one(cptr, nbuf, vl2);
+	va_end(vl2);
     }
     va_end(vl);
     return;
@@ -1822,7 +1861,7 @@ void sendto_locops(char *pattern, ...)
     char        nbuf[1024];
     fdlist     *l;
     int         fd;
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
     l = &oper_fdlist;
@@ -1836,7 +1875,9 @@ void sendto_locops(char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     }
     va_end(vl);
@@ -1849,7 +1890,7 @@ void sendto_gnotice(char *pattern, ...)
     aClient *cptr;
     int     i;
     char        nbuf[1024];
-    va_list vl;
+    va_list vl, vl2;
 	
     va_start(vl, pattern);
 
@@ -1862,7 +1903,9 @@ void sendto_gnotice(char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     }
     va_end(vl);
@@ -1875,7 +1918,7 @@ void sendto_snotice(char *pattern, ...)
     aClient *cptr;
     int     i;
     char    nbuf[1024];
-    va_list vl;
+    va_list vl, vl2;
 
     va_start(vl, pattern);
 
@@ -1888,7 +1931,9 @@ void sendto_snotice(char *pattern, ...)
 			      me.name, cptr->name);
 	    (void) strncat(nbuf, pattern,
 			   sizeof(nbuf) - strlen(nbuf));
-	    vsendto_one(cptr, nbuf, vl);
+	    VA_COPY(vl2, vl); /*AZZURRA*/
+	    vsendto_one(cptr, nbuf, vl2);
+	    va_end(vl2);
 	}
     }
     va_end(vl);
@@ -1908,7 +1953,7 @@ void sendto_channelflag_butone(aClient *one, aClient *from, int typedest,
     aClient *acptr;
     int i;
     int didlocal = 0, didremote = 0;
-    va_list vl;
+    va_list vl, vl2;
     char *pfix;
    
     va_start(vl, pattern);
@@ -1938,7 +1983,11 @@ void sendto_channelflag_butone(aClient *one, aClient *from, int typedest,
 	if (MyClient(acptr)) 
 	{
 	    if(!didlocal)
-		didlocal = prefix_buffer(0, from, pfix, sendbuf, pattern, vl);
+	    {
+		VA_COPY(vl2, vl); /*AZZURRA*/
+		didlocal = prefix_buffer(0, from, pfix, sendbuf, pattern, vl2);
+		va_end(vl2);
+	    }
 	    
 	    if(check_fake_direction(from, acptr))
 		continue;
@@ -1953,8 +2002,12 @@ void sendto_channelflag_butone(aClient *one, aClient *from, int typedest,
 	     * link already
 	     */
 	    if(!didremote)
+	    {
+		VA_COPY(vl2, vl); /*AZZURRA*/
 		didremote = prefix_buffer(1, from, pfix, remotebuf,
-					  pattern, vl);
+					  pattern, vl2);
+		va_end(vl2);
+	    }
 	    
 	    if(check_fake_direction(from, acptr))
 		continue;
