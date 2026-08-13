@@ -61,7 +61,18 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    }
 		    else
 			u=0;
-		    i=va_arg(ap, unsigned long);
+		    /* Pull the argument at the type it was passed as: reading a
+		     * `long` through va_arg(ap, unsigned long) is only defined
+		     * when the value is representable in both types (C99
+		     * 7.15.1.1p2), which a negative TS or LONG_MIN is not. It
+		     * happens to work wherever the two share representation and
+		     * argument slot, but that is the ABI being kind, not a
+		     * guarantee. Convert after the read instead, where the
+		     * conversion is well defined. */
+		    if (u)
+			i=va_arg(ap, unsigned long);
+		    else
+			i=(unsigned long)va_arg(ap, long);
 		    goto emit_dec;
 		case 'u':
 		    /* %u is an unsigned int, NOT a long. Reading it as an
@@ -74,15 +85,25 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    goto emit_dec;
 		case 'd':
 		case 'i':
-		    /* %d/%i are int-width; same fix as %u. */
+		    /* %d/%i are int-width; same fix as %u. Sign-extend to
+		     * long width here so the test below needs to know
+		     * nothing about the width the argument came in at. */
 		    u=0;
-		    i=va_arg(ap, unsigned int);
+		    i=(unsigned long)(long)va_arg(ap, int);
 		  emit_dec:
+		    /* The sign lives in the top bit of `i`, which is a long:
+		     * bit 63 on LP64, not bit 31. The old `i & 0x80000000`
+		     * hardcoded bit 31, so a %ld/%li whose value merely had
+		     * bit 31 set printed as negative — and ts_val is a long
+		     * (include/struct.h), so from 2038-01-19 03:14:08 UTC
+		     * every timestamp on the wire (NICK/SJOIN bursts, TS
+		     * comparisons peers echo back) would have gone out with
+		     * an inverted sign. Test the whole width instead. */
 		    if(!u)
-			if(i&0x80000000)
+			if((long)i < 0)
 			{
 			    buf[len++]='-'; /* it's negative.. */
-			    i = 0x80000000 - (i & ~0x80000000);
+			    i = 0UL - i; /* magnitude; wraps LONG_MIN right */
 			}
 		    s=&num[sizeof(num)-1];
 		    do
@@ -164,7 +185,18 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    }
 		    else
 			u=0;
-		    i=va_arg(ap, unsigned long);
+		    /* Pull the argument at the type it was passed as: reading a
+		     * `long` through va_arg(ap, unsigned long) is only defined
+		     * when the value is representable in both types (C99
+		     * 7.15.1.1p2), which a negative TS or LONG_MIN is not. It
+		     * happens to work wherever the two share representation and
+		     * argument slot, but that is the ABI being kind, not a
+		     * guarantee. Convert after the read instead, where the
+		     * conversion is well defined. */
+		    if (u)
+			i=va_arg(ap, unsigned long);
+		    else
+			i=(unsigned long)va_arg(ap, long);
 		    goto emit_dec_n;
 		case 'u':
 		    /* %u is int-width, not long — see the matching comment
@@ -175,13 +207,15 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		case 'd':
 		case 'i':
 		    u=0;
-		    i=va_arg(ap, unsigned int);
+		    i=(unsigned long)(long)va_arg(ap, int);
 		  emit_dec_n:
+		    /* Width-independent sign test — see the matching comment
+		     * in the size==0 branch above. */
 		    if(!u)
-			if(i&0x80000000)
+			if((long)i < 0)
 			{
 			    buf[len++]='-'; /* it's negative.. */
-			    i = 0x80000000 - (i & ~0x80000000);
+			    i = 0UL - i; /* magnitude; wraps LONG_MIN right */
 			}
 		    s=&num[sizeof(num)-1];
 		    do
