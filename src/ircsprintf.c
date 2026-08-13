@@ -1,6 +1,14 @@
 #include "ircsprintf.h"
 
-char num[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+/* Scratch buffer for the backward itoa/xtoa conversions below. Must hold
+ * the widest possible output: a 64-bit unsigned long is up to 20 decimal
+ * digits (or 16 hex), and the conversion writes digits backward from the
+ * end (see `s = &num[sizeof(num)-1]`). The old size of 12 underflowed for
+ * any value needing more than 11 digits — reachable via %lu/%ld, and also
+ * via %d/%i/%u when the arg was pulled with the wrong width (fixed below) —
+ * and clobbered adjacent globals. Keep the last byte as the NUL terminator
+ * the forward `while(*s)` read relies on. */
+char num[24] = { 0 };
 char itoa_tab[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'  };
 char xtoa_tab[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
 		      'a', 'b', 'c', 'd', 'e', 'f'  };
@@ -39,9 +47,8 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 			buf[len++]=*s++;
 		    format++;
 		    break;
-		case 'u':
-		    format--; /* falls through and is caught below */
 		case 'l':
+		    /* long-width conversion: %l, %ld, %lu */
 		    if (*(format+1) == 'u')
 		    {
 			u=1;
@@ -54,17 +61,30 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    }
 		    else
 			u=0;
-		    /* fallthrough */
+		    i=va_arg(ap, unsigned long);
+		    goto emit_dec;
+		case 'u':
+		    /* %u is an unsigned int, NOT a long. Reading it as an
+		     * unsigned long (as the old `case 'u': format--` route into
+		     * the %l path did) pulls the undefined upper 32 bits of the
+		     * argument slot on LP64 ABIs, yielding a huge value that
+		     * overflowed the itoa buffer above. Read the correct width. */
+		    u=1;
+		    i=va_arg(ap, unsigned int);
+		    goto emit_dec;
 		case 'd':
 		case 'i':
-		    i=va_arg(ap, unsigned long);
+		    /* %d/%i are int-width; same fix as %u. */
+		    u=0;
+		    i=va_arg(ap, unsigned int);
+		  emit_dec:
 		    if(!u)
 			if(i&0x80000000)
 			{
 			    buf[len++]='-'; /* it's negative.. */
 			    i = 0x80000000 - (i & ~0x80000000);
 			}
-		    s=&num[11];
+		    s=&num[sizeof(num)-1];
 		    do
 		    {
 			*--s=itoa_tab[i%10];
@@ -81,7 +101,7 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    i=va_arg(ap, long);
 		    buf[len++]='0';
 		    buf[len++]='x';
-		    s=&num[11];
+		    s=&num[sizeof(num)-1];
 		    do
 		    {
 			*--s=xtoa_tab[i%16];
@@ -130,9 +150,8 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 			buf[len++]=*s++;
 		    format++;
 		    break;
-		case 'u':
-		    format--; /* now fall through and it's caught, cool */
 		case 'l':
+		    /* long-width conversion: %l, %ld, %lu */
 		    if (*(format+1) == 'u')
 		    {
 			u=1;
@@ -145,17 +164,26 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    }
 		    else
 			u=0;
-		    /* fallthrough */
+		    i=va_arg(ap, unsigned long);
+		    goto emit_dec_n;
+		case 'u':
+		    /* %u is int-width, not long — see the matching comment
+		     * in the size==0 branch above. */
+		    u=1;
+		    i=va_arg(ap, unsigned int);
+		    goto emit_dec_n;
 		case 'd':
 		case 'i':
-		    i=va_arg(ap, unsigned long);
+		    u=0;
+		    i=va_arg(ap, unsigned int);
+		  emit_dec_n:
 		    if(!u)
 			if(i&0x80000000)
 			{
 			    buf[len++]='-'; /* it's negative.. */
 			    i = 0x80000000 - (i & ~0x80000000);
 			}
-		    s=&num[11];
+		    s=&num[sizeof(num)-1];
 		    do
 		    {
 			*--s=itoa_tab[i%10];
@@ -173,9 +201,9 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    buf[len++]='0';
 		    if(len<size)
 			buf[len++]='x';
-		    else 
+		    else
 			break;
-		    s=&num[11];
+		    s=&num[sizeof(num)-1];
 		    do
 		    {
 			*--s=xtoa_tab[i%16];
