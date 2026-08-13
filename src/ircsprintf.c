@@ -61,7 +61,18 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    }
 		    else
 			u=0;
-		    i=va_arg(ap, unsigned long);
+		    /* Pull the argument at the type it was passed as: reading a
+		     * `long` through va_arg(ap, unsigned long) is only defined
+		     * when the value is representable in both types (C99
+		     * 7.15.1.1p2), which a negative TS or LONG_MIN is not. It
+		     * happens to work wherever the two share representation and
+		     * argument slot, but that is the ABI being kind, not a
+		     * guarantee. Convert after the read instead, where the
+		     * conversion is well defined. */
+		    if (u)
+			i=va_arg(ap, unsigned long);
+		    else
+			i=(unsigned long)va_arg(ap, long);
 		    goto emit_dec;
 		case 'u':
 		    /* %u is an unsigned int, NOT a long. Reading it as an
@@ -174,7 +185,18 @@ inline int irc_printf(char *str, const char *pattern, va_list vl)
 		    }
 		    else
 			u=0;
-		    i=va_arg(ap, unsigned long);
+		    /* Pull the argument at the type it was passed as: reading a
+		     * `long` through va_arg(ap, unsigned long) is only defined
+		     * when the value is representable in both types (C99
+		     * 7.15.1.1p2), which a negative TS or LONG_MIN is not. It
+		     * happens to work wherever the two share representation and
+		     * argument slot, but that is the ABI being kind, not a
+		     * guarantee. Convert after the read instead, where the
+		     * conversion is well defined. */
+		    if (u)
+			i=va_arg(ap, unsigned long);
+		    else
+			i=(unsigned long)va_arg(ap, long);
 		    goto emit_dec_n;
 		case 'u':
 		    /* %u is int-width, not long — see the matching comment
