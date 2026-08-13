@@ -940,8 +940,8 @@ int main(int argc, char *argv[])
     }
 
 #ifdef WINGATE_NOTICE
-    strcpy(ProxyMonURL, "http://");
-    strncpyzt((ProxyMonURL + 7), DEFAULT_PROXY_INFO_URL, (TOPICLEN + 1) - 7);
+    strcpy(ProxyMonURL, "https://");
+    strncpyzt((ProxyMonURL + 8), DEFAULT_PROXY_INFO_URL, (TOPICLEN + 1) - 8);
     strncpyzt(ProxyMonHost, MONITOR_HOST, (HOSTLEN + 1));
 #endif
 

@@ -661,7 +661,7 @@
  * Rather self explanitory. If not specified in T: line,
  * we tell clients to go to "http://<this>"
  */
-#define DEFAULT_PROXY_INFO_URL "www.azzurra.chat"
+#define DEFAULT_PROXY_INFO_URL "www.azzurra.chat/kline/"
 
 /*
  * STAFF_ADDRESS

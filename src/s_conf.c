@@ -1686,14 +1686,14 @@ initconf(int opt, int fd)
 	    else
 		strncpyzt(ProxyMonHost, aconf->host, sizeof(ProxyMonHost));
 	    
-	    strcpy(ProxyMonURL, "http://");
+	    strcpy(ProxyMonURL, "https://");
 
 	    if(!aconf->passwd || aconf->passwd[0] == '\0')
-		strncpyzt((ProxyMonURL + 7), DEFAULT_PROXY_INFO_URL,
-			  sizeof(ProxyMonURL) - 7);
+		strncpyzt((ProxyMonURL + 8), DEFAULT_PROXY_INFO_URL,
+			  sizeof(ProxyMonURL) - 8);
 	    else
-		strncpyzt((ProxyMonURL + 7), aconf->passwd,
-			  sizeof(ProxyMonURL) - 7);
+		strncpyzt((ProxyMonURL + 8), aconf->passwd,
+			  sizeof(ProxyMonURL) - 8);
 	    
 	    continue; /* no need to keep this as a conf entry.. */
 	} 
