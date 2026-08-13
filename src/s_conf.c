@@ -1599,22 +1599,6 @@ initconf(int opt, int fd)
 		}
 	    }
 #endif
-#ifdef FASTWEB
-	    if(myncmp(aconf->passwd, "fastweb", 7) == 0)
-	    {
-		if((aconf->passwd[7] == '.') || (aconf->passwd[7] == '\0'))
-		{
-		    char *tmpd = aconf->passwd;
-		    char *tmp = aconf->passwd + 7;
-
-		    aconf->flags |= CONF_FLAGS_I_FASTWEBPORT;
-		    if(*tmp)
-			tmp++;
-		    DupString(aconf->passwd, tmp);
-		    MyFree(tmpd);
-		}
-	    }
-#endif
 	}
 
 	if (aconf->status & (CONF_LISTEN_PORT | CONF_CLIENT)) 

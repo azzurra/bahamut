@@ -793,10 +793,8 @@ struct spam_
 #define CONF_FLAGS_I_HOST_HAS_AT   0x0008 
 /* did the password field specify HELPER? */
 #define CONF_FLAGS_I_HELPERPORT	   0x0010
-/* did the password field specify FASTWEB? */
-#define CONF_FLAGS_I_FASTWEBPORT   0x0020
 /* did the i-line specify a restricted connection? */
-#define CONF_FLAGS_I_RESTRICTED    0x0040
+#define CONF_FLAGS_I_RESTRICTED    0x0020
 
 /* Client structures */
 struct User

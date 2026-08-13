@@ -422,9 +422,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 #endif
     int         i, dots;
     int         bad_dns;		/* flag a bad dns name */
-#ifdef FASTWEB /* AZZURRA */
-	int			is_fastweb = 0;
-#endif
 #ifdef WEBIRC
     int webirc_spoof = 0;
 #endif
@@ -511,11 +508,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 				   "connection class (the server is full)" :
 				   "You are not authorized to use this "
 				   "server"
-#ifndef FASTWEB
 				   ", visit www.azzurra.chat/access.html "
-#else
-				   ", visit www.azzurra.chat/fastweb.html "
-#endif
 				   "for more info"
 				   );
 	    }
@@ -822,32 +815,6 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		       me.name, sptr->name);	   
 	}
 
-#ifdef FASTWEB
-	if(pwaconf->flags & CONF_FLAGS_I_FASTWEBPORT)
-	{ 
-	    /* workaround for fastweb`s MAN`s lame addressing :D */
-	    int ip[4];
-	    char isdns =0, *p;
-   		
-	    for (p =user->host, i = 0; *p; p++) /* sanity check to avoid mistakes. */
-	    {
-		if(isalpha(*p))
-		{
-		    isdns = 1;
-		    break;
-		}
-	    }
-
-	    if(!isdns)
-	    {
-		sscanf(sptr->user->host, "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]);
-		ircsprintf(sptr->user->host, "%d-%d.%d-%d.%s", ip[3], ip[2], ip[1], ip[0], FAST_RES);
-		strcpy(sptr->sockhost, sptr->user->host);
-		is_fastweb = 1;
-	    }
-	}
-#endif
-
 	/* following block for the benefit of time-dependent K:-lines */
 	if ((aconf = find_kill(sptr))) 
 	{
@@ -968,13 +935,8 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		    ":ConferenceRoom by WebMaster",
 		    me.name, nick);
 	} else {
-#ifdef FASTWEB
-		sendto_one(sptr, rpl_str(RPL_WELCOME), me.name, nick, nick, 
-			sptr->user->username, is_fastweb ? sptr->hostip : sptr->user->host);
-#else
 		sendto_one(sptr, rpl_str(RPL_WELCOME), me.name, nick, nick, 
 			sptr->user->username, sptr->user->host);
-#endif
 
 	    /*
 	     * This is a duplicate of the NOTICE but see below...
@@ -3385,11 +3347,9 @@ int m_userhost(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			      IsAnOper(acptr) ? "*" : "",
 			      (acptr->user->away) ? '-' : '+',
 			      acptr->user->username,
-			      (acptr == sptr) ?
-				  ((acptr->confs->value.aconf->flags & CONF_FLAGS_I_FASTWEBPORT) ? // thanks 2: G
-				  acptr->hostip : acptr->user->host) :
-			      (IsUmodex(acptr) ? acptr->user->virthost :
-			      acptr->user->host));
+				  (acptr != sptr && IsUmodex(acptr)) ?
+				  acptr->user->virthost :
+				  acptr->user->host);
 	    
 	}
     sendto_one(sptr, "%s", buf);
