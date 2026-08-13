@@ -277,7 +277,7 @@
 
 
 /* Services Definitions */
-#define STATS_NAME "stats.azzurra.chat"
+#define STATS_NAME "services.azzurra.chat"
 #define CHANSERV "ChanServ"
 #define NICKSERV "NickServ"
 #define MEMOSERV "MemoServ"
