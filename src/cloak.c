@@ -93,7 +93,7 @@ cloak_init(void)
 		syslog(LOG_ERR, "Key provided in "CKPATH" is too short. (%d < %d)",
 			sz, MIN_CLOAK_KEY_LEN);
 #endif
-		fprintf(stderr, "Key provided in "CKPATH" is too short. (%d < %d)\n",
+		fprintf(stderr, "Key provided in "CKPATH" is too short. (%ld < %d)\n",
 			sz, MIN_CLOAK_KEY_LEN);
 		return 0;
 	    }

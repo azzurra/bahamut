@@ -813,7 +813,7 @@ int check_server(aClient * cptr, struct hostent *hp, aConfItem * c_conf,
 	if (!hp->h_addr_list[i])
 	{ 
 	 sendto_realops_lev(DEBUG_LEV,
-			    "Server IP# Mismatch: %s != %s[%08x]",
+			    "Server IP# Mismatch: %s != %s[%08lx]",
 			    hp->h_name, inet_ntop(AFINET, (char *) &cptr->ip,
 			    mydummy, sizeof (mydummy)),
 			    *((unsigned long *) hp->h_addr));
@@ -1752,7 +1752,7 @@ static int read_packet(aClient * cptr)
 	    !IsUmodez(cptr) && DBufLength(&cptr->recvQ) > CLIENT_FLOOD)
 	{
 	    sendto_realops_lev(FLOOD_LEV,
-			       "Flood -- %s!%s@%s (%d) Exceeds %d RecvQ",
+			       "Flood -- %s!%s@%s (%lu) Exceeds %d RecvQ",
 			       cptr->name[0] ? cptr->name : "*",
 			       cptr->user ? cptr->user->username : "*",
 			       cptr->user ? cptr->user->host : "*",

@@ -1027,13 +1027,13 @@ void tstats(aClient *cptr, char *name)
 	       me.name, RPL_STATSDEBUG, name);
     sendto_one(cptr, ":%s %d %s :connected %u %u",
 	       me.name, RPL_STATSDEBUG, name, sp->is_cl, sp->is_sv);
-    sendto_one(cptr, ":%s %d %s :bytes sent %u.%uK %u.%uK",
+    sendto_one(cptr, ":%s %d %s :bytes sent %lu.%uK %lu.%uK",
 	       me.name, RPL_STATSDEBUG, name,
 	       sp->is_cks, sp->is_cbs, sp->is_sks, sp->is_sbs);
-    sendto_one(cptr, ":%s %d %s :bytes recv %u.%uK %u.%uK",
+    sendto_one(cptr, ":%s %d %s :bytes recv %lu.%uK %lu.%uK",
 	       me.name, RPL_STATSDEBUG, name,
 	       sp->is_ckr, sp->is_cbr, sp->is_skr, sp->is_sbr);
-    sendto_one(cptr, ":%s %d %s :time connected %u %u",
+    sendto_one(cptr, ":%s %d %s :time connected %lu %lu",
 	       me.name, RPL_STATSDEBUG, name, sp->is_cti, sp->is_sti);
 #ifdef FLUD
     sendto_one(cptr, ":%s %d %s :CTCP Floods Blocked %u",
@@ -1093,7 +1093,7 @@ void serv_info(aClient *cptr, char *name)
 	    zip_out_get_stats(acptr->serv->zip_out, &ib, &ob, &rat);
 	    if(ib)
 	    {
-		sendto_one(cptr, ":%s %d %s : - Zip inbytes %d, outbytes %d "
+		sendto_one(cptr, ":%s %d %s : - Zip inbytes %ld, outbytes %ld "
 			   "(%3.2f%%)",
 			   me.name, RPL_STATSDEBUG, name, ib, ob, rat);
 	    }
@@ -1146,7 +1146,7 @@ void show_opers(aClient *cptr, char *name)
 	{
 	    if (cptr2->umode & UMODE_h)
 	    {
-		sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %d",
+		sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %ld",
 			   me.name, RPL_STATSDEBUG, name, cptr2->name,
 			   cptr2->user->username, 
 			   IsUmodex(cptr2) ? cptr2->user->virthost : cptr2->user->host,
@@ -1156,7 +1156,7 @@ void show_opers(aClient *cptr, char *name)
 	} 
 	else
 	{
-	    sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %d",
+	    sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %ld",
 		       me.name, RPL_STATSDEBUG, name, cptr2->name,
 		       cptr2->user->username,
 		       IsUmodex(cptr2) ? cptr2->user->virthost : cptr2->user->host,
@@ -1191,7 +1191,7 @@ void show_servers(aClient *cptr, char *name)
 	    continue;
 #endif
 	j++;
-	sendto_one(cptr, ":%s %d %s :%s (%s!%s@%s) Idle: %d",
+	sendto_one(cptr, ":%s %d %s :%s (%s!%s@%s) Idle: %ld",
 		   me.name, RPL_STATSDEBUG, name, cptr2->name,
 		   (cptr2->serv->bynick[0] ? cptr2->serv->bynick : "Remote."),
 		   (cptr2->serv->byuser[0] ? cptr2->serv->byuser : "*"),

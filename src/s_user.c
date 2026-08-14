@@ -1207,7 +1207,7 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 #ifndef INET6
     if (sptr->ip.s_addr > 0)
 	sendto_server(cptr, NULL, CAP_NICKIP, NOCAPS,
-		      "NICK %s %d %ld %s %s %s %s %lu %lu :%s",
+		      "NICK %s %d %ld %s %s %s %s %u %u :%s",
 		       nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
 		       user->username, user->host, user->server,
 		       sptr->user->servicestamp, ntohl(sptr->ip.s_addr),
@@ -1215,14 +1215,14 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     else   
 #endif
     sendto_server(cptr, NULL, CAP_NICKIP, NOCAPS,
-		  "NICK %s %d %ld %s %s %s %s %lu %s :%s",
+		  "NICK %s %d %ld %s %s %s %s %u %s :%s",
 		  nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
 		  user->username, user->host, user->server,
 		  sptr->user->servicestamp,
 		  sptr->hostip ? sptr->hostip : "0.0.0.0",
 		  sptr->info);
     sendto_server(cptr, NULL, NOCAPS, CAP_NICKIP,
-		  "NICK %s %d %ld %s %s %s %s %lu :%s",
+		  "NICK %s %d %ld %s %s %s %s %u :%s",
 		  nick, sptr->hopcount + 1, sptr->tsinfo, ubuf,
 		  user->username, user->host, user->server,
 		  sptr->user->servicestamp, sptr->info);
@@ -1872,10 +1872,10 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 		break;
 
 	      case CTCP_BOGUS:
-		sendto_snotice("from %s: User %s (%s@%s) is trying to send a bogus DCC to %s (length: %d)",
+		sendto_snotice("from %s: User %s (%s@%s) is trying to send a bogus DCC to %s (length: %ld)",
 			       me.name, parv[0], sptr->user->username, sptr->user->host, nick, strlen(parv[2]));
 
-		sendto_serv_butone(NULL, ":%s SNOTICE :User %s (%s@%s) is trying to send a bogus DCC to %s (length: %d)",
+		sendto_serv_butone(NULL, ":%s SNOTICE :User %s (%s@%s) is trying to send a bogus DCC to %s (length: %ld)",
 				   me.name, parv[0], sptr->user->username, sptr->user->host, nick, strlen(parv[2]));
 
 		continue;
@@ -2239,6 +2239,13 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		break;
 
 	    chptr = lp->value.chptr;
+		/* This *REALLY* shouldn't happen, scream very loudly to +d opers and keep going */
+	    if (chptr == NULL) {
+			sendto_realops_lev(DEBUG_LEV, "NULL chptr in channel list entry [%p] for %s",
+				lp, get_client_name(acptr, HIDEME)
+			);
+			continue;
+		}
 	    showchan = ShowChannel(sptr,chptr);
 	    if (showchan || IsAdmin(sptr) || IsSAdmin(sptr))
 	    {
@@ -4855,7 +4862,7 @@ int m_shun(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			me.name, parv[0], nick);
 		continue;
 	    }
-	    sendto_one(sptr, ":%s NOTICE %S :SHUN changed from %s to %s",
+	    sendto_one(sptr, ":%s NOTICE %s :SHUN changed from %s to %s",
 		    me.name, parv[0], nick, acptr->name);
 	    chasing = 1;
 	}
@@ -4973,7 +4980,7 @@ int m_unshun(aClient *cptr, aClient *sptr, int parc, char *parv[])
 			me.name, parv[0], nick);
 		continue;
 	    }
-	    sendto_one(sptr, ":%s NOTICE %S :UNSHUN changed from %s to %s",
+	    sendto_one(sptr, ":%s NOTICE %s :UNSHUN changed from %s to %s",
 		    me.name, parv[0], nick, acptr->name);
 	    chasing = 1;
 	}

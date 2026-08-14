@@ -447,7 +447,7 @@ int throttle_check(char *host, int fd, time_t sotime) {
 
 	    /* let +c ops know */
 	    sendto_ops_lev(CCONN_LEV,
-		    "throttled connections from %s (%d in %d seconds) for %d minutes (offense %d)",
+		    "throttled connections from %s (%d in %ld seconds) for %d minutes (offense %d)",
 		    tp->addr, tp->conns, sotime - tp->first, zlength / 60, tp->stage + 1);
 
             elength = ircsnprintf(errbufr, 512, ":%s NOTICE ZUSR :You have been throttled for %d minutes for too "
@@ -554,7 +554,7 @@ void throttle_stats(aClient *cptr, char *name) {
         int ztime = throttle_get_zline_time(tp->stage);
 
 	if (tp->zline_start && tp->zline_start + ztime > NOW)
-	    sendto_one(cptr, ":%s %d %s :throttled: %s [stage %d, %d secs remain, %d futile retries]", me.name,
+	    sendto_one(cptr, ":%s %d %s :throttled: %s [stage %d, %ld secs remain, %d futile retries]", me.name,
 		    RPL_STATSDEBUG, name, tp->addr, tp->stage, 
 		    (tp->zline_start + ztime) - NOW, tp->re_zlines);
     }

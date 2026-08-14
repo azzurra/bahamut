@@ -1022,9 +1022,9 @@ int rehash(aClient *cptr, aClient *sptr, int sig)
 
     if (sig == SIGHUP) 
     {
-	sendto_security(NULL, 
+	sendto_security(NULL,
 			"Server %s got signal SIGHUP, reloading config file.",
-			me.name, me.name);
+			me.name);
 	sendto_ops("Got signal SIGHUP, reloading ircd conf. file");
 	do_rehash_akills();
     }
