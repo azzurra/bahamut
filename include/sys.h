@@ -379,4 +379,14 @@ typedef uint32_t uintptr_t;
 /* Any size_t larger than this amount is likely to be an underflow. */
 #define SIZE_T_CEILING (sizeof(char)<<(sizeof(size_t)*8 - 1))
 
+/* Abandon all hope, ye who enter here... */
+#ifndef ATTRIBUTE_PRINTF
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define ATTRIBUTE_PRINTF(fnum, anum) __attribute__((nonnull(fnum))) \
+    __attribute__((__format__(__printf__, fnum, anum)))
+#else
+#define ATTRIBUTE_PRINTF(format, arg)
+#endif /* defined(__GNUC__) && __GNUC__ >= 4 */
+#endif /* ATTRIBUTE_PRINTF */
+
 #endif /* __sys_include__ */

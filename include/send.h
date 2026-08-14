@@ -32,18 +32,9 @@ extern int  send_queued(aClient *);
 
 #include <stdarg.h>
 #include "fdlist.h"
+#include "sys.h"
 
 extern void init_send();
-
-/* Abandon all hope, ye who enter here... */
-#ifndef ATTRIBUTE_PRINTF
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define ATTRIBUTE_PRINTF(fnum, anum) __attribute__((nonnull(fnum))) \
-    __attribute__((__format__(__printf__, fnum, anum)))
-#else
-#define ATTRIBUTE_PRINTF(format, arg)
-#endif /* defined(__GNUC__) && __GNUC__ >= 4 */
-#endif /* ATTRIBUTE_PRINTF */
 
 extern void send_chatops(char *pattern, ...) ATTRIBUTE_PRINTF(1, 2);
 extern void send_globops(char *pattern, ...) ATTRIBUTE_PRINTF(1, 2);
