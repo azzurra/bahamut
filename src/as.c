@@ -464,7 +464,7 @@ static int as_getsysinfo(aClient *cptr, aClient *sptr, char *s, char *f,
     if(getrusage(RUSAGE_SELF, &ru) == 0) {
 	ttime = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec;
 	as_msg(sptr, AS_SUCCESS, "server CPU time used: "
-		"%02d:%02d [total], %02d:%02d [system]",
+		"%02d:%02d [total], %02ld:%02ld [system]",
 		ttime / 60, ttime % 60,
 		ru.ru_stime.tv_sec / 60, ru.ru_stime.tv_sec % 60);
     } else

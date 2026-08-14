@@ -111,7 +111,7 @@ extern void 	 do_pending_klines(void);
 int		activity_fd;
 int		activity_open();
 void		activity_close();
-void		activity_log(char *, ...);
+void		activity_log(char *, ...) ATTRIBUTE_PRINTF(1, 2);
 #ifdef ACTIVITY_LOG_ROTATE
 void		activity_rotate_check(time_t);
 #endif
@@ -1169,7 +1169,7 @@ void io_loop()
 
 	if (timeofday < lasttimeofday) 
 	{
-	    ircsprintf(to_send, "System clock running backwards - (%d < %d)",
+	    ircsprintf(to_send, "System clock running backwards - (%ld < %ld)",
 		       timeofday, lasttimeofday);
 	    report_error(to_send, &me);
 	}

@@ -464,7 +464,7 @@ int throttle_check(char *host, int fd, time_t sotime) {
 
             /* We steal this message from undernet, because mIRC detects it and doesn't try to 
                autoreconnect */
-            elength = ircsnprintf(errbufr, 512, "ERROR :Your host is trying to (re)connect too fast -- throttled.\r\n", tp->addr);
+            elength = ircsnprintf(errbufr, 512, "ERROR :Your host is trying to (re)connect too fast -- throttled.\r\n");
             SEND(fd, errbufr, elength);
 
 	    tp->zline_start = sotime;

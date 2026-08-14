@@ -59,7 +59,7 @@ extern void outofmemory(void);	/*
 				 */
 				 
 #ifdef USE_ACTIVITY_LOG
-extern void activity_log(char *, ...);
+extern void activity_log(char *, ...) ATTRIBUTE_PRINTF(1, 2);
 #endif 
 
 int check_helper_can_mask(aClient *, char *, char *, char **);
