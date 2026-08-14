@@ -45,10 +45,6 @@ extern int  server_was_split;
 extern time_t server_split_time;
 #endif
 
-#ifdef USE_ACTIVITY_LOG
-extern void activity_log(char *, ...);
-#endif
-
 #ifdef ALWAYS_SEND_DURING_SPLIT
 int currently_processing_netsplit = NO;
 #endif
@@ -644,7 +640,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 			       IsSSL(sptr) || IsStud(sptr) ? "SSL" : "");
 	    
 #ifdef USE_ACTIVITY_LOG
-		activity_log("(EXIT): %s (%s@%s) [%s] [%s] %lu %luKb %lu %luKb %s",
+		activity_log("(EXIT): %s (%s@%s) [%s] [%s] %ld %ldKb %ld %ldKb %s",
 			 sptr->name, sptr->user->username,
 			 sptr->user->host,
 			 (sptr->flags & FLAGS_NORMALEX) ?

@@ -376,4 +376,8 @@ extern char	* cloak_key_checksum(void);
 #include "ssl.h"
 #endif
 
+#ifdef USE_ACTIVITY_LOG
+extern void activity_log(char *, ...) ATTRIBUTE_PRINTF(1, 2);
+#endif
+
 #include "find.h"

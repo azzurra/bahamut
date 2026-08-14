@@ -111,7 +111,6 @@ extern void 	 do_pending_klines(void);
 int		activity_fd;
 int		activity_open();
 void		activity_close();
-void		activity_log(char *, ...) ATTRIBUTE_PRINTF(1, 2);
 #ifdef ACTIVITY_LOG_ROTATE
 void		activity_rotate_check(time_t);
 #endif

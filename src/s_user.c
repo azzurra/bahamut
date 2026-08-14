@@ -57,10 +57,6 @@ int check_oper_can_mask(aClient *, char *, char *, char **, int *);
 extern void outofmemory(void);	/*
 				 * defined in list.c 
 				 */
-				 
-#ifdef USE_ACTIVITY_LOG
-extern void activity_log(char *, ...) ATTRIBUTE_PRINTF(1, 2);
-#endif 
 
 int check_helper_can_mask(aClient *, char *, char *, char **);
 __inline__ int check_for_spam(aClient *, char *, char *, char *);
