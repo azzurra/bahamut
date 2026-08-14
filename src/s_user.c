@@ -1622,7 +1622,7 @@ int check_target_limit(aClient *sptr, aClient *acptr)
 
       if(sptr->last_target_complain + 60 <= NOW)
       {
-         sendto_realops_lev(SPAM_LEV, "Target limited: %s (%s@%s) [%d failed targets]", sptr->name,
+         sendto_realops_lev(SPAM_LEV, "Target limited: %s (%s@%s) [%u failed targets]", sptr->name,
                         sptr->user->username, sptr->user->host, sptr->num_target_errors);
          sptr->num_target_errors = 0;
          sptr->last_target_complain = NOW;
@@ -1872,10 +1872,10 @@ static inline int m_message(aClient *cptr, aClient *sptr, int parc,
 		break;
 
 	      case CTCP_BOGUS:
-		sendto_snotice("from %s: User %s (%s@%s) is trying to send a bogus DCC to %s (length: %ld)",
+		sendto_snotice("from %s: User %s (%s@%s) is trying to send a bogus DCC to %s (length: %lu)",
 			       me.name, parv[0], sptr->user->username, sptr->user->host, nick, strlen(parv[2]));
 
-		sendto_serv_butone(NULL, ":%s SNOTICE :User %s (%s@%s) is trying to send a bogus DCC to %s (length: %ld)",
+		sendto_serv_butone(NULL, ":%s SNOTICE :User %s (%s@%s) is trying to send a bogus DCC to %s (length: %lu)",
 				   me.name, parv[0], sptr->user->username, sptr->user->host, nick, strlen(parv[2]));
 
 		continue;

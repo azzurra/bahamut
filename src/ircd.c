@@ -199,7 +199,7 @@ VOIDSIG s_die()
     fp=fopen(DPATH "/.maxclients", "w");
     if(fp!=NULL) 
     {
-	fprintf(fp, "%d %d %li %li %li %ld %ld %ld %ld", Count.max_loc, 
+	fprintf(fp, "%d %d %lu %lu %lu %ld %ld %ld %ld", Count.max_loc,
 		Count.max_tot, Count.weekly, Count.monthly, 
 		Count.yearly, Count.start, Count.week, Count.month, 
 		Count.year);
@@ -742,7 +742,7 @@ int main(int argc, char *argv[])
     if(mcsfp!=NULL) 
     {
 	int rv;
-	rv = fscanf(mcsfp, "%d %d %li %li %li %ld %ld %ld %ld", &Count.max_loc,
+	rv = fscanf(mcsfp, "%d %d %lu %lu %lu %ld %ld %ld %ld", &Count.max_loc,
 	       &Count.max_tot, &Count.weekly, &Count.monthly, &Count.yearly, 
 	       &Count.start, &Count.week, &Count.month, &Count.year);
 	if (rv < 9)
@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
 	exit(-1);
     }
     else
-	fprintf(stderr, "Cloaking subsystem succesfully initialized (%ld bits key).\n",
+	fprintf(stderr, "Cloaking subsystem succesfully initialized (%lu bits key).\n",
 		cloak_key_len * 8);
     
     {

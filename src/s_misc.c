@@ -748,7 +748,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 	 */
 	if (IsServer(sptr)) 
 	{
-	    sendto_ops("%s was connected for %lu seconds.  %lu/%lu "
+	    sendto_ops("%s was connected for %ld seconds.  %ld/%ld "
 		       "sendK/recvK.", sptr->name, timeofday - sptr->firsttime,
 		       sptr->sendK, sptr->receiveK);
 #ifdef USE_SYSLOG
@@ -1033,7 +1033,7 @@ void tstats(aClient *cptr, char *name)
     sendto_one(cptr, ":%s %d %s :bytes recv %lu.%uK %lu.%uK",
 	       me.name, RPL_STATSDEBUG, name,
 	       sp->is_ckr, sp->is_cbr, sp->is_skr, sp->is_sbr);
-    sendto_one(cptr, ":%s %d %s :time connected %lu %lu",
+    sendto_one(cptr, ":%s %d %s :time connected %ld %ld",
 	       me.name, RPL_STATSDEBUG, name, sp->is_cti, sp->is_sti);
 #ifdef FLUD
     sendto_one(cptr, ":%s %d %s :CTCP Floods Blocked %u",
@@ -1093,14 +1093,14 @@ void serv_info(aClient *cptr, char *name)
 	    zip_out_get_stats(acptr->serv->zip_out, &ib, &ob, &rat);
 	    if(ib)
 	    {
-		sendto_one(cptr, ":%s %d %s : - Zip inbytes %ld, outbytes %ld "
+		sendto_one(cptr, ":%s %d %s : - Zip inbytes %lu, outbytes %lu "
 			   "(%3.2f%%)",
 			   me.name, RPL_STATSDEBUG, name, ib, ob, rat);
 	    }
 	}
 	i++;
     }
-    sendto_one(cptr, ":%s %d %s :%u total server%s",
+    sendto_one(cptr, ":%s %d %s :%d total server%s",
 	       me.name, RPL_STATSDEBUG, name, i, (i == 1) ? "" : "s");
     
     sendto_one(cptr, ":%s %d %s :Sent total : %7.2f %s",

@@ -2236,10 +2236,10 @@ u_long cres_mem(aClient *sptr)
 	    nm += strlen(h->h_name);
     }
     ts = ARES_CACSIZE * sizeof(CacheTable);
-    sendto_one(sptr, ":%s %d %s :RES table sz %ld",
+    sendto_one(sptr, ":%s %d %s :RES table sz %lu",
 	       me.name, RPL_STATSDEBUG, sptr->name, ts);
-    sendto_one(sptr, ":%s %d %s :RES Structs sz %ld IP storage sz %ld "
-	       "Name storage sz %ld", me.name, RPL_STATSDEBUG, sptr->name, sm,
+    sendto_one(sptr, ":%s %d %s :RES Structs sz %lu IP storage sz %lu "
+	       "Name storage sz %lu", me.name, RPL_STATSDEBUG, sptr->name, sm,
 	       im, nm);
     return ts + sm + im + nm;
 }

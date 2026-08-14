@@ -442,7 +442,7 @@ static int 	ckinitconf(int opt)
 
 void print_confline(aConfItem *aconf,char *maxsendq)
 {
-    (void)printf("(%d) (%s) (%s) (%s) (%d) (%s)\n",
+    (void)printf("(%u) (%s) (%s) (%s) (%d) (%s)\n",
 		 aconf->status, aconf->host, aconf->passwd,
 		 aconf->name, aconf->port, maxsendq);
     (void)fflush(stdout);

@@ -534,8 +534,8 @@ void throttle_stats(aClient *cptr, char *name) {
 
     sendto_one(cptr, ":%s %d %s :throttles: %d", me.name, RPL_STATSDEBUG, name,
 	    numthrottles);
-    sendto_one(cptr, ":%s %d %s :alloc memory: %d throttles (%d bytes), "
-            "%d hashents (%d bytes)", me.name, RPL_STATSDEBUG, name,
+    sendto_one(cptr, ":%s %d %s :alloc memory: %u throttles (%u bytes), "
+            "%u hashents (%u bytes)", me.name, RPL_STATSDEBUG, name,
             tcnt, tsz, hcnt, hsz);            
     sendto_one(cptr, ":%s %d %s :throttle hash table size: %d", me.name,
 	    RPL_STATSDEBUG, name, throttle_hash->size);

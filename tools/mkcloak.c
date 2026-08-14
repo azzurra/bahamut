@@ -11,14 +11,14 @@
 
 static void print_hex(FILE *out, char *k)
 {
-	short i, byte = NUM_BYTES_PER_ROW;
+	unsigned short i, byte = NUM_BYTES_PER_ROW;
 	char *p = k;
 	while(*p)
 	{
 		i = 0;
 		fprintf(out, "%#10.8x ", byte);
 		while(*p && i++ < NUM_BYTES_PER_ROW)
-			fprintf(out, "%x ", (int) *p++);
+			fprintf(out, "%x ", (unsigned int) *p++);
 		putc('\n', out);
 		byte += NUM_BYTES_PER_ROW;
 	}

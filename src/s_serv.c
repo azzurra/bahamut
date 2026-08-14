@@ -961,7 +961,7 @@ int do_server_estab(aClient *cptr)
 	    sendto_one(cptr, ":%s SQLINE %s :%s", me.name, 
 		       aconf->name, aconf->passwd);
 	if((aconf->status & CONF_GCOS) && (aconf->status & CONF_SGLINE))
-	    sendto_one(cptr, ":%s SGLINE %ld :%s:%s", me.name,
+	    sendto_one(cptr, ":%s SGLINE %lu :%s:%s", me.name,
 		       strlen(aconf->name), aconf->name, aconf->passwd);
     }
     
@@ -2246,7 +2246,7 @@ int send_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	fp=fopen(DPATH "/.maxclients", "w");
 	if (fp!=NULL)
 	{
-	    fprintf(fp, "%d %d %li %li %li %ld %ld %ld %ld", Count.max_loc,
+	    fprintf(fp, "%d %d %lu %lu %lu %ld %ld %ld %ld", Count.max_loc,
 		    Count.max_tot, Count.weekly, Count.monthly,
 		    Count.yearly, Count.start, Count.week, Count.month,
 		    Count.year);
@@ -3384,7 +3384,7 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
 
-		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%ld bits)",
+		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%lu bits)",
 			    parv[0], sptr->user->username, sptr->user->host, l * 8);
 
 		    strncpyzt(templ, CK_TEMPTPL, sizeof(templ));
@@ -6519,7 +6519,7 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	cloak_key[l] = '\0';
 	cloak_key_len = l;
 
-	sendto_locops("Cloak key changed with a new one (%ld bits), saved in memory", l * 8);
+	sendto_locops("Cloak key changed with a new one (%lu bits), saved in memory", l * 8);
 
 	strncpyzt(templ, CK_TEMPTPL, sizeof(templ));
 	if ((fd = mkstemp(templ)) != -1)
@@ -6528,7 +6528,7 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    if (rv == cloak_key_len)
 	    {
 		if (((rv = close(fd)) == 0) && ((rv = rename(templ, CKPATH)) == 0))
-		    sendto_locops("Cloak key changed with a new one (%ld bits), saved to "CKPATH, l * 8);
+		    sendto_locops("Cloak key changed with a new one (%lu bits), saved to "CKPATH, l * 8);
 		else
 		{
 		    oerrno = errno;

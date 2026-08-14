@@ -1252,7 +1252,7 @@ static void set_sock_opts(int fd, aClient * cptr)
 	else if (optlen > 0)
 	{
 	    for (*readbuf = '\0'; optlen > 0; optlen--, s += 3)
-		(void) ircsprintf(s, "%2.2x:", *t++);
+		(void) ircsprintf(s, "%2.2x:", (unsigned int)(*t++));
 	    *s = '\0';
 	    sendto_realops("Connection %s using IP opts: (%s)",
 			   get_client_name(cptr, HIDEME), readbuf);	}

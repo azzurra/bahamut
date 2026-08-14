@@ -568,7 +568,7 @@ void count_memory(aClient *cptr, char *nick)
 	       me.name, RPL_STATSDEBUG, nick, totww, totch, totcl, totmisc,
 	       db, tothash, rm, linkallocsz, fludallocsz);
 
-    sendto_one(cptr, ":%s %d %s :TOTAL: %lu sbrk(0)-etext: %lu",
+    sendto_one(cptr, ":%s %d %s :TOTAL: %lu sbrk(0)-etext: %ld",
 	       me.name, RPL_STATSDEBUG, nick, tot,
 	       (void*) sbrk((size_t) 0) - (void*) sbrk0);
     return;
