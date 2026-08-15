@@ -93,7 +93,7 @@ cloak_init(void)
 		syslog(LOG_ERR, "Key provided in "CKPATH" is too short. (%d < %d)",
 			sz, MIN_CLOAK_KEY_LEN);
 #endif
-		fprintf(stderr, "Key provided in "CKPATH" is too short. (%d < %d)\n",
+		fprintf(stderr, "Key provided in "CKPATH" is too short. (%ld < %d)\n",
 			sz, MIN_CLOAK_KEY_LEN);
 		return 0;
 	    }
@@ -182,6 +182,15 @@ cloak_key_checksum(void)
     return(sha1_hash(cloak_key, cloak_key_len));
 }
 
+/* Downgrade format string errors to warnings, there isn't much that we can do here
+ * without completely breaking host cloaking (which notoriously relies on
+ * implementation-dependent behavior).
+ * TODO: remove and fix signedness issues when the hash is fully compliant with FNV-1a
+ */
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wformat"
+#endif /* __GNUC__ */
 int
 cloakhost(char *host, char *dest)
 {
@@ -290,6 +299,9 @@ cloakhost(char *host, char *dest)
     memcpy(dest, virt, HOSTLEN);
     return 1;
 }
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif /* __GNUC__ */
 
 static __inline host_type_t
 host_type(const char *host, unsigned int *dotCountPtr, unsigned int *colCountPtr)

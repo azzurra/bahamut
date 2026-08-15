@@ -875,7 +875,7 @@ static int proc_answer(ResRQ * rptr, HEADER *hptr, char *buf, char *eob)
 	{
 	    sendto_realops_lev(DEBUG_LEV,
 			       "rptr->type is unknown type %d! "
-			       "(rptr->name == %x)", 
+			       "(rptr->name == %p)",
 			       rptr->type, rptr->name);
 	    return -1;
 	}    
@@ -2175,7 +2175,7 @@ int m_dns(aClient *cptr, aClient *sptr, int parc, char *parv[])
         }
 	for (cp = cachetop; cp; cp = cp->list_next)
 	{ 
-	    sendto_one(sptr, "NOTICE %s :Ex %d ttl %d host %s(%s)",
+	    sendto_one(sptr, "NOTICE %s :Ex %ld ttl %ld host %s(%s)",
 		       parv[0], cp->expireat - timeofday, cp->ttl,
 		       cp->he.h_name, inet_ntop(AFINET, cp->he.h_addr,
 		       mydummy, sizeof(mydummy)));
@@ -2236,10 +2236,10 @@ u_long cres_mem(aClient *sptr)
 	    nm += strlen(h->h_name);
     }
     ts = ARES_CACSIZE * sizeof(CacheTable);
-    sendto_one(sptr, ":%s %d %s :RES table sz %d",
+    sendto_one(sptr, ":%s %d %s :RES table sz %lu",
 	       me.name, RPL_STATSDEBUG, sptr->name, ts);
-    sendto_one(sptr, ":%s %d %s :RES Structs sz %d IP storage sz %d "
-	       "Name storage sz %d", me.name, RPL_STATSDEBUG, sptr->name, sm,
+    sendto_one(sptr, ":%s %d %s :RES Structs sz %lu IP storage sz %lu "
+	       "Name storage sz %lu", me.name, RPL_STATSDEBUG, sptr->name, sm,
 	       im, nm);
     return ts + sm + im + nm;
 }

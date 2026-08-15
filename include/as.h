@@ -17,6 +17,11 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef AS_H
+#define AS_H
+
+#include "sys.h"
+
 #define OPATH "opers.txt"
 #define AS_FAILURE 0
 #define AS_SUCCESS 1
@@ -33,4 +38,6 @@
 #define AS_FILE_OK	1
 
 inline void as_free_buf();
-void as_msg(aClient *, char, char *, ...);
+void as_msg(aClient *, char, char *, ...) ATTRIBUTE_PRINTF(3, 4);
+
+#endif /* AS_H */

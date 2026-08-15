@@ -24,7 +24,7 @@ XFLAGS=
 # openssl related flags.
 SSLFLAGS=
 # Default CFLAGS
-CFLAGS= -fgnu89-inline -fcommon -O2 ${XFLAGS} ${SSLFLAGS}
+CFLAGS= -Wformat -Wformat-signedness -Werror=format -fgnu89-inline -fcommon -O2 ${XFLAGS} ${SSLFLAGS}
 # linker flags.
 LDFLAGS=
 
@@ -47,7 +47,10 @@ build:
 	@for i in $(SUBDIRS); do \
 		echo "Building $$i";\
 		cd $$i;\
-		${MAKE} build; cd ..;\
+		${MAKE} build; \
+		rc=$$?; \
+		[ $$rc != 0 ] && exit $$rc; \
+		cd ..;\
 	done
 	@echo "******************************************************************************"
 	@echo "* Note: Please do not send bug reports or feature inquiries to the mailing   *"

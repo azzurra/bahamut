@@ -459,51 +459,51 @@ void count_memory(aClient *cptr, char *nick)
     
     sendto_one(cptr, ":%s %d %s :Memory Use Summary",
 	       me.name, RPL_STATSDEBUG, nick);
-    sendto_one(cptr, ":%s %d %s :Client usage %d(%d) ALLOC %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Client usage %d(%lu) ALLOC %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, lc + rc, lcm + rcm, 
 	       lcalloc + rcalloc, lcallocsz + rcallocsz);
-    sendto_one(cptr, ":%s %d %s :   Local %d(%d) ALLOC %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   Local %d(%lu) ALLOC %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, lc, lcm, lcalloc, lcallocsz);
-    sendto_one(cptr, ":%s %d %s :   Remote %d(%d) ALLOC %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   Remote %d(%lu) ALLOC %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, rc, rcm, rcalloc, rcallocsz);
-    sendto_one(cptr, ":%s %d %s :Users %d(%d) ALLOC %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Users %d(%lu) ALLOC %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, us, us * sizeof(anUser),
 	       useralloc, userallocsz);
     
     totcl = lcallocsz + rcallocsz + userallocsz;
     
-    sendto_one(cptr, ":%s %d %s :Links %d(%d) ALLOC %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Links %d(%lu) ALLOC %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, totallinks,
 	       totallinks * sizeof(Link), linkalloc, linkallocsz);
-    sendto_one(cptr, ":%s %d %s :   UserInvites %d(%d) ChanInvites %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   UserInvites %d(%lu) ChanInvites %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, usi, usi * sizeof(Link), chi,
 	       chi * sizeof(Link));
-    sendto_one(cptr, ":%s %d %s :   UserChannels %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   UserChannels %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, usc, usc * sizeof(Link));
-    sendto_one(cptr, ":%s %d %s :   DCCAllow Local %d(%d) Remote %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   DCCAllow Local %d(%lu) Remote %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, usdm, usdm * sizeof(Link),
 	       usdr, usdr * sizeof(Link));
-    sendto_one(cptr, ":%s %d %s :   WATCH entries %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   WATCH entries %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, wle, wle*sizeof(Link));
-    sendto_one(cptr, ":%s %d %s :   Attached confs %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   Attached confs %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, lcc, lcc*sizeof(Link));
-    sendto_one(cptr, ":%s %d %s :   Fludees %d(%d)",
+    sendto_one(cptr, ":%s %d %s :   Fludees %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, fludlink, fludlink*sizeof(Link));
 	
-    sendto_one(cptr, ":%s %d %s :WATCH headers %d(%d)",
+    sendto_one(cptr, ":%s %d %s :WATCH headers %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, wlh, wlhm);
-    sendto_one(cptr, ":%s %d %s :Conflines %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Conflines %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, co, com);
-    sendto_one(cptr, ":%s %d %s :Classes %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Classes %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, cl, cl * sizeof(aClass));
-    sendto_one(cptr, ":%s %d %s :Away Messages %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Away Messages %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, aw, awm);
-    sendto_one(cptr, ":%s %d %s :MOTD structs %d(%d)",
+    sendto_one(cptr, ":%s %d %s :MOTD structs %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, motdlen,
 	       motdlen * sizeof(aMotd));
-    sendto_one(cptr, ":%s %d %s :Servers %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Servers %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, servn, servn * sizeof(aServer));
-    sendto_one(cptr, ":%s %d %s :Message Trees %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Message Trees %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, num_msg_trees,
 	       num_msg_trees * sizeof(MESSAGE_TREE));
 
@@ -511,32 +511,32 @@ void count_memory(aClient *cptr, char *nick)
 	(motdlen * sizeof(aMotd)) + (servn * sizeof(aServer)) +
 	(num_msg_trees * sizeof(MESSAGE_TREE));
 
-    sendto_one(cptr, ":%s %d %s :Fludbots ALLOC %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Fludbots ALLOC %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, fludalloc, fludallocsz);
 
-    sendto_one(cptr, ":%s %d %s :Channels %d(%d) ALLOC %d(%d) Bans %d(%d) "
-	       "Members %d(%d) ALLOC %d(%d)", me.name, RPL_STATSDEBUG, nick,
+    sendto_one(cptr, ":%s %d %s :Channels %d(%lu) ALLOC %d(%lu) Bans %d(%lu) "
+	       "Members %d(%lu) ALLOC %d(%lu)", me.name, RPL_STATSDEBUG, nick,
 	       ch, ch * sizeof(aChannel), chanalloc, chanallocsz, chb, chbm,
 	       chu, chu * sizeof(chanMember), cmemballoc, cmemballocsz);
 
     totch = chanallocsz + cmemballocsz + chbm;
 
-    sendto_one(cptr, ":%s %d %s :Whowas users %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Whowas users %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, wwu, wwu * sizeof(anUser));
-    sendto_one(cptr, ":%s %d %s :Whowas array %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Whowas array %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, NICKNAMEHISTORYLENGTH, wwm);
 
     totww = wwu * sizeof(anUser) + wwm;
 
-    sendto_one(cptr, ":%s %d %s :Hash: client %d(%d) chan %d(%d) whowas "
-	       "%d(%d) watch %d(%d)", me.name, RPL_STATSDEBUG, nick,
+    sendto_one(cptr, ":%s %d %s :Hash: client %d(%lu) chan %d(%lu) whowas "
+	       "%d(%lu) watch %d(%lu)", me.name, RPL_STATSDEBUG, nick,
 	       U_MAX, sizeof(aHashEntry) * U_MAX,
 	       CH_MAX, sizeof(aHashEntry) * CH_MAX,
 	       WW_MAX, sizeof(aWhowas *) * WW_MAX,
 	       WATCHHASHSIZE, sizeof(aWatch *) * WATCHHASHSIZE);
 
     count_dbuf_memory(&db, &db2);
-    sendto_one(cptr, ":%s %d %s :Dbuf blocks %d(%d) MAX %d(%d)",
+    sendto_one(cptr, ":%s %d %s :Dbuf blocks %d(%lu) MAX %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick, DBufUsedCount, db2,
 	       DBufCount, db);
 
@@ -544,13 +544,13 @@ void count_memory(aClient *cptr, char *nick)
 
     count_scache(&number_servers_cached, &mem_servers_cached);
 
-    sendto_one(cptr, ":%s %d %s :scache %d(%d)",
+    sendto_one(cptr, ":%s %d %s :scache %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick,
 	       number_servers_cached,
 	       mem_servers_cached);
 
     count_ip_hash(&number_ips_stored, &mem_ips_stored);
-    sendto_one(cptr, ":%s %d %s :iphash %d(%d)",
+    sendto_one(cptr, ":%s %d %s :iphash %d(%lu)",
 	       me.name, RPL_STATSDEBUG, nick,
 	       number_ips_stored,
 	       mem_ips_stored);
@@ -563,12 +563,12 @@ void count_memory(aClient *cptr, char *nick)
     tot = totww + totch + totcl + totmisc + db + rm + tothash + linkallocsz +
 	fludallocsz;
 
-    sendto_one(cptr, ":%s %d %s :whowas %d chan %d client/user %d misc %d "
-	       "dbuf %d hash %d res %d link %d flud %d",
+    sendto_one(cptr, ":%s %d %s :whowas %lu chan %lu client/user %lu misc %lu "
+	       "dbuf %lu hash %lu res %lu link %lu flud %lu",
 	       me.name, RPL_STATSDEBUG, nick, totww, totch, totcl, totmisc,
 	       db, tothash, rm, linkallocsz, fludallocsz);
 
-    sendto_one(cptr, ":%s %d %s :TOTAL: %d sbrk(0)-etext: %d",
+    sendto_one(cptr, ":%s %d %s :TOTAL: %lu sbrk(0)-etext: %ld",
 	       me.name, RPL_STATSDEBUG, nick, tot,
 	       (void*) sbrk((size_t) 0) - (void*) sbrk0);
     return;

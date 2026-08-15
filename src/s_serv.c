@@ -398,19 +398,19 @@ int m_svinfo(aClient *cptr, aClient *sptr, int parc, char *parv[])
     if (deltat > TS_MAX_DELTA) 
     {
 	sendto_gnotice("from %s: Link %s dropped, excessive TS delta (my "
-                       "TS=%d, their TS=%d, delta=%d)",
+                       "TS=%ld, their TS=%ld, delta=%ld)",
 		       me.name, get_client_name(sptr, HIDEME), tmptime,
 		       theirtime, deltat);
 	sendto_serv_butone(sptr, ":%s GNOTICE :Link %s dropped, excessive "
-			   "TS delta (delta=%d)",
+			   "TS delta (delta=%ld)",
 			   me.name, get_client_name(sptr, HIDEME), deltat);
 	return exit_client(sptr, sptr, sptr, "Excessive TS delta");
     }
 
     if (deltat > TS_WARN_DELTA) 
     {
-	sendto_realops("Link %s notable TS delta (my TS=%d, their TS=%d, "
-                       "delta=%d)", get_client_name(sptr, HIDEME), tmptime,
+	sendto_realops("Link %s notable TS delta (my TS=%ld, their TS=%ld, "
+                       "delta=%ld)", get_client_name(sptr, HIDEME), tmptime,
 		       theirtime, deltat);
     }
 
@@ -765,14 +765,14 @@ static void sendnick_TS(aClient *cptr, aClient *acptr)
 	{
 #ifndef INET6
 	    if (acptr->ip.s_addr)
-		sendto_one(cptr, "NICK %s %d %ld %s %s %s %s %lu %lu :%s",
+		sendto_one(cptr, "NICK %s %d %ld %s %s %s %s %u %u :%s",
 		       acptr->name, acptr->hopcount + 1, acptr->tsinfo, ubuf,
 		       acptr->user->username, acptr->user->host,
 		       acptr->user->server, acptr->user->servicestamp,
 		       htonl(acptr->ip.s_addr), acptr->info);
 	    else
 #endif
-	    sendto_one(cptr, "NICK %s %d %ld %s %s %s %s %lu %s :%s",
+	    sendto_one(cptr, "NICK %s %d %ld %s %s %s %s %u %s :%s",
 		       acptr->name, acptr->hopcount + 1, acptr->tsinfo, ubuf,
 		       acptr->user->username, acptr->user->host,
 		       acptr->user->server, acptr->user->servicestamp,
@@ -780,7 +780,7 @@ static void sendnick_TS(aClient *cptr, aClient *acptr)
 	}
 	else 
 	{
-	    sendto_one(cptr, "NICK %s %d %ld %s %s %s %s %lu :%s", acptr->name,
+	    sendto_one(cptr, "NICK %s %d %ld %s %s %s %s %u :%s", acptr->name,
 		       acptr->hopcount + 1, acptr->tsinfo, ubuf,
 		       acptr->user->username, acptr->user->host,
 		       acptr->user->server, acptr->user->servicestamp,
@@ -961,7 +961,7 @@ int do_server_estab(aClient *cptr)
 	    sendto_one(cptr, ":%s SQLINE %s :%s", me.name, 
 		       aconf->name, aconf->passwd);
 	if((aconf->status & CONF_GCOS) && (aconf->status & CONF_SGLINE))
-	    sendto_one(cptr, ":%s SGLINE %d :%s:%s", me.name,
+	    sendto_one(cptr, ":%s SGLINE %lu :%s:%s", me.name,
 		       strlen(aconf->name), aconf->name, aconf->passwd);
     }
     
@@ -1218,16 +1218,16 @@ int m_burst(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #ifdef HTM_LOCK_ON_NETBURST
 	HTMLOCK = NO;
 #endif
-	sendto_gnotice("from %s: synch to %s in %d %s at %s sendq", me.name,
+	sendto_gnotice("from %s: synch to %s in %ld %s at %s sendq", me.name,
 		       *parv, (timeofday-sptr->firsttime), 
 		       (timeofday-sptr->firsttime)==1?"sec":"secs", parv[1]);
 	sendto_serv_butone(NULL,
-			   ":%s GNOTICE :synch to %s in %d %s at %s sendq",
+			   ":%s GNOTICE :synch to %s in %ld %s at %s sendq",
 			   me.name, sptr->name, (timeofday-sptr->firsttime),
 			   (timeofday-sptr->firsttime)==1?"sec":"secs",
 			   parv[1]);
 #ifndef HUB
-	sendto_security(NULL, "synched to %s in %d %s at %s sendq. Cloak key SHA1: %s",
+	sendto_security(NULL, "synched to %s in %ld %s at %s sendq. Cloak key SHA1: %s",
 		*parv, (timeofday - sptr->firsttime), (timeofday - sptr->firsttime) == 1 ? "sec" : "secs",
 		parv[1], cloak_key_checksum());
 #endif
@@ -2246,7 +2246,7 @@ int send_lusers(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	fp=fopen(DPATH "/.maxclients", "w");
 	if (fp!=NULL)
 	{
-	    fprintf(fp, "%d %d %li %li %li %ld %ld %ld %ld", Count.max_loc,
+	    fprintf(fp, "%d %d %lu %lu %lu %ld %ld %ld %ld", Count.max_loc,
 		    Count.max_tot, Count.weekly, Count.monthly,
 		    Count.yearly, Count.start, Count.week, Count.month,
 		    Count.year);
@@ -3384,7 +3384,7 @@ int m_set(aClient *cptr, aClient *sptr, int parc, char *parv[])
 		    cloak_key[l] = '\0';
 		    cloak_key_len = l;
 
-		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%d bits)",
+		    sendto_realops("%s[%s@%s] has changed the cloak key with a new one (%lu bits)",
 			    parv[0], sptr->user->username, sptr->user->host, l * 8);
 
 		    strncpyzt(templ, CK_TEMPTPL, sizeof(templ));
@@ -5828,7 +5828,7 @@ int m_akill(aClient *cptr, aClient *sptr, int parc, char *parv[])
     zline_in_progress = NO;
 	
     /* now finally send it off to any other servers! */
-    sendto_serv_butone(cptr, ":%s AKILL %s %s %d %s %d :%s",
+    sendto_serv_butone(cptr, ":%s AKILL %s %s %ld %s %ld :%s",
 		       sptr->name, host, user, length, akiller,
 		       timeset, reason);
     return 0;
@@ -6519,7 +6519,7 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	cloak_key[l] = '\0';
 	cloak_key_len = l;
 
-	sendto_locops("Cloak key changed with a new one (%d bits), saved in memory", l * 8);
+	sendto_locops("Cloak key changed with a new one (%lu bits), saved in memory", l * 8);
 
 	strncpyzt(templ, CK_TEMPTPL, sizeof(templ));
 	if ((fd = mkstemp(templ)) != -1)
@@ -6528,7 +6528,7 @@ int m_cloakey(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	    if (rv == cloak_key_len)
 	    {
 		if (((rv = close(fd)) == 0) && ((rv = rename(templ, CKPATH)) == 0))
-		    sendto_locops("Cloak key changed with a new one (%d bits), saved to "CKPATH, l * 8);
+		    sendto_locops("Cloak key changed with a new one (%lu bits), saved to "CKPATH, l * 8);
 		else
 		{
 		    oerrno = errno;

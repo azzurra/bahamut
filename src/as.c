@@ -464,7 +464,7 @@ static int as_getsysinfo(aClient *cptr, aClient *sptr, char *s, char *f,
     if(getrusage(RUSAGE_SELF, &ru) == 0) {
 	ttime = ru.ru_utime.tv_sec + ru.ru_stime.tv_sec;
 	as_msg(sptr, AS_SUCCESS, "server CPU time used: "
-		"%02d:%02d [total], %02d:%02d [system]",
+		"%02u:%02u [total], %02ld:%02ld [system]",
 		ttime / 60, ttime % 60,
 		ru.ru_stime.tv_sec / 60, ru.ru_stime.tv_sec % 60);
     } else
@@ -473,7 +473,7 @@ static int as_getsysinfo(aClient *cptr, aClient *sptr, char *s, char *f,
     uid = getuid();
 
     if((pw = getpwuid(uid)))
-	as_msg(sptr, AS_SUCCESS, "server is running as uid %d [%s]",
+	as_msg(sptr, AS_SUCCESS, "server is running as uid %u [%s]",
 		uid, pw->pw_name);
     else
 	as_msg(sptr, AS_FAILURE, "failed to compute pwent: %s",
@@ -556,7 +556,7 @@ static int as_filecommand(aClient *cptr, aClient *sptr, char *s, char *f,
 		}
 		break;
 	    case AS_FILE_OK:
-		as_msg(sptr, AS_SUCCESS, "%s loaded successfully [%d byte%s]",
+		as_msg(sptr, AS_SUCCESS, "%s loaded successfully [%u byte%s]",
 			as_bufname, as_filesiz, as_filesiz > 1 ? "s" : "");
 		as_bufflag = ft;
 		break;

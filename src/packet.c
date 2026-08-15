@@ -186,7 +186,7 @@ zcontinue:
 	    else
 	    {
 		sendto_realops("Overflowed zipInBuf %d time%s in the "
-			       "last %d minutes. If you see this a lot, you "
+			       "last %ld minutes. If you see this a lot, you "
 			       "should increase zipInBufSize in src/zlink.c.",
 			       numrepeat, numrepeat == 1 ? "" : "s",
 			       (NOW - last_complain) / 60);

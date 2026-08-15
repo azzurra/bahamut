@@ -813,10 +813,9 @@ int check_server(aClient * cptr, struct hostent *hp, aConfItem * c_conf,
 	if (!hp->h_addr_list[i])
 	{ 
 	 sendto_realops_lev(DEBUG_LEV,
-			    "Server IP# Mismatch: %s != %s[%08x]",
+			    "Server IP# Mismatch: %s != %s",
 			    hp->h_name, inet_ntop(AFINET, (char *) &cptr->ip,
-			    mydummy, sizeof (mydummy)),
-			    *((unsigned long *) hp->h_addr));
+			    mydummy, sizeof (mydummy)));
 	    hp = NULL;
 	}
     }
@@ -1252,7 +1251,7 @@ static void set_sock_opts(int fd, aClient * cptr)
 	else if (optlen > 0)
 	{
 	    for (*readbuf = '\0'; optlen > 0; optlen--, s += 3)
-		(void) ircsprintf(s, "%02.2x:", *t++);
+		(void) ircsprintf(s, "%2.2x:", (unsigned char)(*t++));
 	    *s = '\0';
 	    sendto_realops("Connection %s using IP opts: (%s)",
 			   get_client_name(cptr, HIDEME), readbuf);	}
@@ -1752,7 +1751,7 @@ static int read_packet(aClient * cptr)
 	    !IsUmodez(cptr) && DBufLength(&cptr->recvQ) > CLIENT_FLOOD)
 	{
 	    sendto_realops_lev(FLOOD_LEV,
-			       "Flood -- %s!%s@%s (%d) Exceeds %d RecvQ",
+			       "Flood -- %s!%s@%s (%lu) Exceeds %d RecvQ",
 			       cptr->name[0] ? cptr->name : "*",
 			       cptr->user ? cptr->user->username : "*",
 			       cptr->user ? cptr->user->host : "*",

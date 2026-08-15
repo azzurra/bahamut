@@ -389,7 +389,7 @@ int m_svsnick(aClient *cptr, aClient *sptr, int parc, char *parv[])
 #endif
     sendto_common_channels(acptr, ":%s NICK :%s", parv[1], newnick);
     add_history(acptr, 1);
-    sendto_serv_butone(NULL, ":%s NICK %s :%d", parv[1], newnick,
+    sendto_serv_butone(NULL, ":%s NICK %s :%ld", parv[1], newnick,
 		       acptr->tsinfo);
     if(acptr->name[0]) 
 	del_from_client_hash_table(acptr->name, acptr);

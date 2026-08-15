@@ -111,7 +111,6 @@ extern void 	 do_pending_klines(void);
 int		activity_fd;
 int		activity_open();
 void		activity_close();
-void		activity_log(char *, ...);
 #ifdef ACTIVITY_LOG_ROTATE
 void		activity_rotate_check(time_t);
 #endif
@@ -199,7 +198,7 @@ VOIDSIG s_die()
     fp=fopen(DPATH "/.maxclients", "w");
     if(fp!=NULL) 
     {
-	fprintf(fp, "%d %d %li %li %li %ld %ld %ld %ld", Count.max_loc, 
+	fprintf(fp, "%d %d %lu %lu %lu %ld %ld %ld %ld", Count.max_loc,
 		Count.max_tot, Count.weekly, Count.monthly, 
 		Count.yearly, Count.start, Count.week, Count.month, 
 		Count.year);
@@ -283,7 +282,7 @@ void server_reboot()
 {
     int     i;
     FILE *err;
-    sendto_ops("Aieeeee!!!  Restarting server... sbrk(0)-etext: %d",
+    sendto_ops("Aieeeee!!!  Restarting server... sbrk(0)-etext: %ld",
 	       (void*)sbrk((size_t) 0) - (void*)sbrk0);
 	
     Debug((DEBUG_NOTICE, "Restarting server..."));
@@ -742,7 +741,7 @@ int main(int argc, char *argv[])
     if(mcsfp!=NULL) 
     {
 	int rv;
-	rv = fscanf(mcsfp, "%d %d %li %li %li %ld %ld %ld %ld", &Count.max_loc,
+	rv = fscanf(mcsfp, "%d %d %lu %lu %lu %ld %ld %ld %ld", &Count.max_loc,
 	       &Count.max_tot, &Count.weekly, &Count.monthly, &Count.yearly, 
 	       &Count.start, &Count.week, &Count.month, &Count.year);
 	if (rv < 9)
@@ -951,7 +950,7 @@ int main(int argc, char *argv[])
 	exit(-1);
     }
     else
-	fprintf(stderr, "Cloaking subsystem succesfully initialized (%d bits key).\n",
+	fprintf(stderr, "Cloaking subsystem succesfully initialized (%lu bits key).\n",
 		cloak_key_len * 8);
     
     {
@@ -1169,7 +1168,7 @@ void io_loop()
 
 	if (timeofday < lasttimeofday) 
 	{
-	    ircsprintf(to_send, "System clock running backwards - (%d < %d)",
+	    ircsprintf(to_send, "System clock running backwards - (%ld < %ld)",
 		       timeofday, lasttimeofday);
 	    report_error(to_send, &me);
 	}

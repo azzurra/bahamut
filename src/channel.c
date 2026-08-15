@@ -2892,7 +2892,7 @@ int m_topic(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	 * sends with the topic, so I changed everything to work like that. 
 	 * -wd */
 	
-	sendto_match_servs(chptr, cptr, ":%s TOPIC %s %s %lu :%s", parv[0],
+	sendto_match_servs(chptr, cptr, ":%s TOPIC %s %s %ld :%s", parv[0],
 			   chptr->chname, chptr->topic_nick, 
 			   chptr->topic_time, chptr->topic);
 	sendto_channel_butserv(chptr, sptr, ":%s TOPIC %s :%s", parv[0],

@@ -447,7 +447,7 @@ int throttle_check(char *host, int fd, time_t sotime) {
 
 	    /* let +c ops know */
 	    sendto_ops_lev(CCONN_LEV,
-		    "throttled connections from %s (%d in %d seconds) for %d minutes (offense %d)",
+		    "throttled connections from %s (%d in %ld seconds) for %d minutes (offense %d)",
 		    tp->addr, tp->conns, sotime - tp->first, zlength / 60, tp->stage + 1);
 
             elength = ircsnprintf(errbufr, 512, ":%s NOTICE ZUSR :You have been throttled for %d minutes for too "
@@ -464,7 +464,7 @@ int throttle_check(char *host, int fd, time_t sotime) {
 
             /* We steal this message from undernet, because mIRC detects it and doesn't try to 
                autoreconnect */
-            elength = ircsnprintf(errbufr, 512, "ERROR :Your host is trying to (re)connect too fast -- throttled.\r\n", tp->addr);
+            elength = ircsnprintf(errbufr, 512, "ERROR :Your host is trying to (re)connect too fast -- throttled.\r\n");
             SEND(fd, errbufr, elength);
 
 	    tp->zline_start = sotime;
@@ -534,8 +534,8 @@ void throttle_stats(aClient *cptr, char *name) {
 
     sendto_one(cptr, ":%s %d %s :throttles: %d", me.name, RPL_STATSDEBUG, name,
 	    numthrottles);
-    sendto_one(cptr, ":%s %d %s :alloc memory: %d throttles (%d bytes), "
-            "%d hashents (%d bytes)", me.name, RPL_STATSDEBUG, name,
+    sendto_one(cptr, ":%s %d %s :alloc memory: %u throttles (%u bytes), "
+            "%u hashents (%u bytes)", me.name, RPL_STATSDEBUG, name,
             tcnt, tsz, hcnt, hsz);            
     sendto_one(cptr, ":%s %d %s :throttle hash table size: %d", me.name,
 	    RPL_STATSDEBUG, name, throttle_hash->size);
@@ -554,7 +554,7 @@ void throttle_stats(aClient *cptr, char *name) {
         int ztime = throttle_get_zline_time(tp->stage);
 
 	if (tp->zline_start && tp->zline_start + ztime > NOW)
-	    sendto_one(cptr, ":%s %d %s :throttled: %s [stage %d, %d secs remain, %d futile retries]", me.name,
+	    sendto_one(cptr, ":%s %d %s :throttled: %s [stage %d, %ld secs remain, %d futile retries]", me.name,
 		    RPL_STATSDEBUG, name, tp->addr, tp->stage, 
 		    (tp->zline_start + ztime) - NOW, tp->re_zlines);
     }

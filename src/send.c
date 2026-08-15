@@ -175,7 +175,7 @@ static int send_message(aClient *to, char *msg, int len)
 	 * Kept in. - lucas
 	 */
 	if (IsServer(to)) 
-	    sendto_ops("Max SendQ limit exceeded for %s: %d > %d",
+	    sendto_ops("Max SendQ limit exceeded for %s: %lu > %ld",
 		       get_client_name(to, HIDEME), DBufLength(&to->sendQ),
 		       get_sendq(to));
 	to->flags |= FLAGS_SENDQEX;
@@ -367,7 +367,7 @@ int send_queued(aClient *to)
 	if (!(to->flags & FLAGS_BURST))
 	{
 	    to->flags &= (~FLAGS_SOBSENT);
-	    sendto_one(to, "BURST %d", DBufLength(&to->sendQ));
+	    sendto_one(to, "BURST %lu", DBufLength(&to->sendQ));
 	    if (!(to->flags & FLAGS_EOBRECV)) /* hey we're the last to synch */
 	    { 
 #ifdef HTM_LOCK_ON_NETBURST

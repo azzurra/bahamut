@@ -45,10 +45,6 @@ extern int  server_was_split;
 extern time_t server_split_time;
 #endif
 
-#ifdef USE_ACTIVITY_LOG
-extern void activity_log(char *, ...);
-#endif
-
 #ifdef ALWAYS_SEND_DURING_SPLIT
 int currently_processing_netsplit = NO;
 #endif
@@ -644,7 +640,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 			       IsSSL(sptr) || IsStud(sptr) ? "SSL" : "");
 	    
 #ifdef USE_ACTIVITY_LOG
-		activity_log("(EXIT): %s (%s@%s) [%s] [%s] %lu %luKb %lu %luKb %s",
+		activity_log("(EXIT): %s (%s@%s) [%s] [%s] %ld %ldKb %ld %ldKb %s",
 			 sptr->name, sptr->user->username,
 			 sptr->user->host,
 			 (sptr->flags & FLAGS_NORMALEX) ?
@@ -748,7 +744,7 @@ int exit_client(aClient *cptr, aClient *sptr, aClient *from, char *comment)
 	 */
 	if (IsServer(sptr)) 
 	{
-	    sendto_ops("%s was connected for %lu seconds.  %lu/%lu "
+	    sendto_ops("%s was connected for %ld seconds.  %ld/%ld "
 		       "sendK/recvK.", sptr->name, timeofday - sptr->firsttime,
 		       sptr->sendK, sptr->receiveK);
 #ifdef USE_SYSLOG
@@ -1027,13 +1023,13 @@ void tstats(aClient *cptr, char *name)
 	       me.name, RPL_STATSDEBUG, name);
     sendto_one(cptr, ":%s %d %s :connected %u %u",
 	       me.name, RPL_STATSDEBUG, name, sp->is_cl, sp->is_sv);
-    sendto_one(cptr, ":%s %d %s :bytes sent %u.%uK %u.%uK",
+    sendto_one(cptr, ":%s %d %s :bytes sent %lu.%uK %lu.%uK",
 	       me.name, RPL_STATSDEBUG, name,
 	       sp->is_cks, sp->is_cbs, sp->is_sks, sp->is_sbs);
-    sendto_one(cptr, ":%s %d %s :bytes recv %u.%uK %u.%uK",
+    sendto_one(cptr, ":%s %d %s :bytes recv %lu.%uK %lu.%uK",
 	       me.name, RPL_STATSDEBUG, name,
 	       sp->is_ckr, sp->is_cbr, sp->is_skr, sp->is_sbr);
-    sendto_one(cptr, ":%s %d %s :time connected %u %u",
+    sendto_one(cptr, ":%s %d %s :time connected %ld %ld",
 	       me.name, RPL_STATSDEBUG, name, sp->is_cti, sp->is_sti);
 #ifdef FLUD
     sendto_one(cptr, ":%s %d %s :CTCP Floods Blocked %u",
@@ -1093,14 +1089,14 @@ void serv_info(aClient *cptr, char *name)
 	    zip_out_get_stats(acptr->serv->zip_out, &ib, &ob, &rat);
 	    if(ib)
 	    {
-		sendto_one(cptr, ":%s %d %s : - Zip inbytes %d, outbytes %d "
+		sendto_one(cptr, ":%s %d %s : - Zip inbytes %lu, outbytes %lu "
 			   "(%3.2f%%)",
 			   me.name, RPL_STATSDEBUG, name, ib, ob, rat);
 	    }
 	}
 	i++;
     }
-    sendto_one(cptr, ":%s %d %s :%u total server%s",
+    sendto_one(cptr, ":%s %d %s :%d total server%s",
 	       me.name, RPL_STATSDEBUG, name, i, (i == 1) ? "" : "s");
     
     sendto_one(cptr, ":%s %d %s :Sent total : %7.2f %s",
@@ -1146,7 +1142,7 @@ void show_opers(aClient *cptr, char *name)
 	{
 	    if (cptr2->umode & UMODE_h)
 	    {
-		sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %d",
+		sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %ld",
 			   me.name, RPL_STATSDEBUG, name, cptr2->name,
 			   cptr2->user->username, 
 			   IsUmodex(cptr2) ? cptr2->user->virthost : cptr2->user->host,
@@ -1156,7 +1152,7 @@ void show_opers(aClient *cptr, char *name)
 	} 
 	else
 	{
-	    sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %d",
+	    sendto_one(cptr, ":%s %d %s :%s (%s@%s) Idle: %ld",
 		       me.name, RPL_STATSDEBUG, name, cptr2->name,
 		       cptr2->user->username,
 		       IsUmodex(cptr2) ? cptr2->user->virthost : cptr2->user->host,
@@ -1191,7 +1187,7 @@ void show_servers(aClient *cptr, char *name)
 	    continue;
 #endif
 	j++;
-	sendto_one(cptr, ":%s %d %s :%s (%s!%s@%s) Idle: %d",
+	sendto_one(cptr, ":%s %d %s :%s (%s!%s@%s) Idle: %ld",
 		   me.name, RPL_STATSDEBUG, name, cptr2->name,
 		   (cptr2->serv->bynick[0] ? cptr2->serv->bynick : "Remote."),
 		   (cptr2->serv->byuser[0] ? cptr2->serv->byuser : "*"),
