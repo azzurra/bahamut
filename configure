@@ -7872,7 +7872,7 @@ fi
 
 if test ! -f include/options.h; then
 	echo running ./config...
-	./config
+	./config <& 7
 fi
 
 # EOF
