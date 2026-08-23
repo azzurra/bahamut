@@ -435,7 +435,7 @@ AC_OUTPUT
 
 if test ! -f include/options.h; then
 	echo running ./config...
-	./config
+	./config <& AS_ORIGINAL_STDIN_FD
 fi
 
 # EOF
