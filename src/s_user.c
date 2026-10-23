@@ -895,6 +895,14 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
     if (IsIPv6(sptr) || !cloakhost(user->host, user->virthost))
 	strncpyzt(user->virthost, user->host, HOSTLEN);
 
+    /*
+     * Also cloak the textual IP, so that bans on the IP cloak still
+     * match when the client resolved to a hostname (and vice versa).
+     */
+    if (!MyConnect(sptr) || IsIPv6(sptr) ||
+	!cloakhost(sptr->hostip, user->ipvirthost))
+	strncpyzt(user->ipvirthost, user->virthost, HOSTLEN);
+
     SetClient(sptr);
     /* Increment our total user count here */
     if (++Count.total > Count.max_tot)
@@ -990,6 +998,8 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 			    LOCALOP_ADDRESS, HOSTLEN + 1);
 		    strncpyzt(sptr->user->virthost, global ? STAFF_ADDRESS :
 			    LOCALOP_ADDRESS, HOSTLEN + 1);
+		    strncpyzt(sptr->user->ipvirthost, sptr->user->virthost,
+			    HOSTLEN + 1);
 		    sptr->umode &= ~UMODE_x;
 		    strncpyzt(sptr->user->username, onick, USERLEN + 1);
 		    strncpyzt(sptr->username, onick, USERLEN + 1);
@@ -1051,6 +1061,8 @@ int register_user(aClient *cptr, aClient *sptr, char *nick, char *username)
 		    strcpy(sptr->user->real_helper_ip, sptr->hostip);
 		    strncpyzt(sptr->user->host, HELPER_ADDRESS, HOSTLEN + 1);
 		    strncpyzt(sptr->user->virthost, HELPER_ADDRESS, HOSTLEN + 1);
+		    strncpyzt(sptr->user->ipvirthost, sptr->user->virthost,
+			    HOSTLEN + 1);
 		    sptr->umode &= ~UMODE_x;
 		    strncpyzt(sptr->user->username, onick, USERLEN + 1);
 		    strncpyzt(sptr->username, onick, USERLEN + 1);
@@ -2114,6 +2126,7 @@ int m_whois(aClient *cptr, aClient *sptr, int parc, char *parv[])
 	"<Unknown>",		/* user */
 	"<Unknown>",		/* host */
 	"<Unknown>",		/* virthost */
+	"<Unknown>",		/* ipvirthost */
 	"<Unknown>",		/* server */
 	0,  /* servicestamp */
 	NULL /* silenced */

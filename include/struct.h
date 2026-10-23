@@ -802,6 +802,7 @@ struct User
     char        username[USERLEN + 1];
     char        host[HOSTLEN + 1];
     char	virthost[HOSTLEN + 1];
+    char	ipvirthost[HOSTLEN + 1]; /* cloak of hostip, for bans */
     char       *server;        /* pointer to scached server name */
     u_int32_t servicestamp;    /* Services id - Raistlin */
     /*

@@ -299,6 +299,7 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid)
     chanMember 	*cm;
     char 	*s, nickuhost[NICKLEN+USERLEN+HOSTLEN+6];
     char	nickuvirthost[NICKLEN+USERLEN+HOSTLEN+6];
+    char	nickuipvirthost[NICKLEN+USERLEN+HOSTLEN+6];
     
     for (ban = chptr->banlist; ban; ban = ban->next)
     {
@@ -360,13 +361,16 @@ static int add_banid(aClient *cptr, aChannel *chptr, char *banid)
 	    continue;
 	strcpy(nickuvirthost, make_nick_user_host(cm->cptr->name,
 		    cm->cptr->user->username, cm->cptr->user->virthost));
+	strcpy(nickuipvirthost, make_nick_user_host(cm->cptr->name,
+		    cm->cptr->user->username, cm->cptr->user->ipvirthost));
 	strcpy(nickuhost, make_nick_user_host(cm->cptr->name,
 					      cm->cptr->user->username,
 					      cm->cptr->hostip));
 	s = make_nick_user_host(cm->cptr->name, cm->cptr->user->username,
 				cm->cptr->user->host);
 	if (match(banid, nickuhost) == 0 || match(banid, s) == 0 
-		|| (match(banid, nickuvirthost) == 0))
+		|| (match(banid, nickuvirthost) == 0)
+		|| (match(banid, nickuipvirthost) == 0))
 	    cm->bans++;
     }
     return 0;
@@ -383,6 +387,7 @@ static int del_banid(aChannel *chptr, char *banid)
    chanMember 	*cm;
    char 	*s, nickuhost[NICKLEN+USERLEN+HOSTLEN+6];
    char 	 nickuvirthost[NICKLEN+USERLEN+HOSTLEN+6];
+   char 	 nickuipvirthost[NICKLEN+USERLEN+HOSTLEN+6];
 
    if (!banid)
        return -1;
@@ -399,6 +404,8 @@ static int del_banid(aChannel *chptr, char *banid)
 
 	       strcpy(nickuvirthost, make_nick_user_host(cm->cptr->name,
 			       cm->cptr->user->username, cm->cptr->user->virthost));
+	       strcpy(nickuipvirthost, make_nick_user_host(cm->cptr->name,
+			       cm->cptr->user->username, cm->cptr->user->ipvirthost));
 	       
 	       strcpy(nickuhost, make_nick_user_host(cm->cptr->name,
 			   cm->cptr->user->username, cm->cptr->hostip));
@@ -406,7 +413,8 @@ static int del_banid(aChannel *chptr, char *banid)
 				       cm->cptr->user->username,
 				       cm->cptr->user->host);
 	       if (match(banid, nickuhost) == 0 || match(banid, s) == 0
-		       || (match(banid, nickuvirthost) == 0))
+		       || (match(banid, nickuvirthost) == 0)
+		       || (match(banid, nickuipvirthost) == 0))
 		   cm->bans--;
 	   }
 	   
@@ -432,11 +440,14 @@ static aBan *is_restricted(aClient *cptr, aChannel *chptr)
     char        s[NICKLEN + USERLEN + HOSTLEN + 6];
     char       *s2;
     char	sv[NICKLEN + USERLEN + HOSTLEN + 6];
+    char	sipv[NICKLEN + USERLEN + HOSTLEN + 6];
 
     if (!IsPerson(cptr))
 	return NULL;
     strcpy(sv, make_nick_user_host(cptr->name, cptr->user->username,
 		    cptr->user->virthost));
+    strcpy(sipv, make_nick_user_host(cptr->name, cptr->user->username,
+		    cptr->user->ipvirthost));
     
     strcpy(s, make_nick_user_host(cptr->name, cptr->user->username,
 				  cptr->user->host));
@@ -447,6 +458,7 @@ static aBan *is_restricted(aClient *cptr, aChannel *chptr)
 	if ((match(tmp->banstr, s) == 0) ||
 	    (match(tmp->banstr, s2) == 0)
 	    || (match(tmp->banstr, sv) == 0)
+	    || (match(tmp->banstr, sipv) == 0)
 	    )
 	    break;
     return (tmp);
@@ -465,12 +477,15 @@ static aBan *is_banned(aClient *cptr, aChannel *chptr)
     char        s[NICKLEN + USERLEN + HOSTLEN + 6];
     char       *s2;
     char	sv[NICKLEN + USERLEN + HOSTLEN + 6];
+    char	sipv[NICKLEN + USERLEN + HOSTLEN + 6];
     
     if (!IsPerson(cptr))
 	return NULL;
 
     strcpy(sv, make_nick_user_host(cptr->name, cptr->user->username,
 		    cptr->user->virthost));
+    strcpy(sipv, make_nick_user_host(cptr->name, cptr->user->username,
+		    cptr->user->ipvirthost));
     
     strcpy(s, make_nick_user_host(cptr->name, cptr->user->username,
 				  cptr->user->host));
@@ -480,7 +495,8 @@ static aBan *is_banned(aClient *cptr, aChannel *chptr)
     for (tmp = chptr->banlist; tmp; tmp = tmp->next)
 	if ((match(tmp->banstr, s) == 0)  ||
 	    (match(tmp->banstr, s2) == 0) ||
-	    (match(tmp->banstr, sv) == 0))
+	    (match(tmp->banstr, sv) == 0) ||
+	    (match(tmp->banstr, sipv) == 0))
 	    break;
     return (tmp);
 }
@@ -490,6 +506,7 @@ aBan *nick_is_banned(aChannel *chptr, char *nick, aClient *cptr)
     aBan *tmp;
     char *s, s2[NICKLEN+USERLEN+HOSTLEN+6];
     char sv[NICKLEN+USERLEN+HOSTLEN+6];
+    char sipv[NICKLEN+USERLEN+HOSTLEN+6];
     
     if (!IsPerson(cptr)) return NULL;
     
@@ -499,13 +516,17 @@ aBan *nick_is_banned(aChannel *chptr, char *nick, aClient *cptr)
     strcpy(sv, make_nick_user_host(nick, cptr->user->username,
 		    		   cptr->user->virthost));
 
+    strcpy(sipv, make_nick_user_host(nick, cptr->user->username,
+		    		     cptr->user->ipvirthost));
+
     s = make_nick_user_host(nick, cptr->user->username, cptr->hostip);
 
     for (tmp = chptr->banlist; tmp; tmp = tmp->next)
 	if (tmp->type == MTYP_FULL &&        /* only check applicable bans */
 	    ((match(tmp->banstr, s2) == 0) ||    /* check host before IP */
 	     (match(tmp->banstr, s) == 0)  ||
-	     (match(tmp->banstr, sv) == 0)))
+	     (match(tmp->banstr, sv) == 0)  ||
+	     (match(tmp->banstr, sipv) == 0)))
 	    break;
     return (tmp);
 }
@@ -518,6 +539,7 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
     char *m;
     int count = 0, send = 0;
     char targvirthost[NICKLEN+USERLEN+HOSTLEN+6];
+    char targipvirthost[NICKLEN+USERLEN+HOSTLEN+6];
     
     if (!IsPerson(cptr)) return;
     
@@ -527,6 +549,8 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
 					 cptr->hostip));
     strcpy(targvirthost, make_nick_user_host(cptr->name,
 		    cptr->user->username, cptr->user->virthost));
+    strcpy(targipvirthost, make_nick_user_host(cptr->name,
+		    cptr->user->username, cptr->user->ipvirthost));
   
   m = modebuf;  
   *m++ = '-';
@@ -541,7 +565,8 @@ void remove_matching_bans(aChannel *chptr, aClient *cptr, aClient *from)
       bnext = ban->next;
       if((match(ban->banstr, targhost) == 0) ||
 	 (match(ban->banstr, targip) == 0)   ||
-	 (match(ban->banstr, targvirthost) == 0))
+	 (match(ban->banstr, targvirthost) == 0) ||
+	 (match(ban->banstr, targipvirthost) == 0))
       {
 	  if (strlen(parabuf) + strlen(ban->banstr) + 10 < (size_t) MODEBUFLEN)
 	  {
